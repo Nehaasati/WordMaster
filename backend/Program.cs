@@ -1,4 +1,5 @@
 using WordMaster.Services;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,42 +16,30 @@ var wordDictionary = WordDictionaryLoader.LoadFromFiles
 // temporary test to print the number of words loaded
 Console.WriteLine($"Loaded words: {wordDictionary.Count}");
 
-if (wordDictionary.Contains("katt"))
-{
-    Console.WriteLine("Test word found: katt");
-}
-else
-{
-    Console.WriteLine("Test word NOT found: katt");
-}
+// Load categories.json
+var categoriesJson = File.ReadAllText(Path.Combine("Data", "categories.json"));
+var categories = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(categoriesJson)
+                ?? new Dictionary<string, List<string>>();
 
-
-//TEMPORARY: TEST WordValidator with a sample word
 var validator = new WordValidator();
-
-// Fake dictionary
-var dictionary = new HashSet<string>
-{
-    "fågel", "katt", "hund", "äpple"
-};
-
-// Fake categories
-var categories = new Dictionary<string, List<string>>
-{
-    { "Animal", new List<string> { "fågel", "katt", "hund" } },
-    { "Food", new List<string> { "äpple" } }
-};
 
 // Used words list
 var usedWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-// Required letter for this test round
-char requiredLetter = 'f';
+// Choose category
+Console.WriteLine("Available categories:");
+foreach (var cat in categories.Keys)
+    Console.WriteLine($"- {cat}");
 
-// Selected category
-string category = "Animal";
+Console.Write("\nChoose a category: ");
+string category = Console.ReadLine() ?? "Animal";
 
-Console.WriteLine("=== Word Validator Test Console ===");
+// Choose required letter
+Console.Write("Enter required starting letter: ");
+char requiredLetter = Console.ReadKey().KeyChar;
+Console.WriteLine();
+
+Console.WriteLine("\n=== Word Validator Test Console ===");
 Console.WriteLine($"Category: {category}");
 Console.WriteLine($"Required starting letter: {requiredLetter}");
 Console.WriteLine("Type 'exit' to quit.");
@@ -71,14 +60,14 @@ while (true)
         word: input,
         category: category,
         requiredLetter: requiredLetter,
-        dictionary: dictionary,
-        categories: categories,
+        dictionary: wordDictionary,   // the full real word dictionary loaded from the text files
+        categories: categories,       // the category definitions loaded from categories.json
         usedWords: usedWords
     );
 
     Console.WriteLine(result.IsValid
-        ? $"✔ VALID: {result.Message}"
-        : $"✘ INVALID: {result.Message}");
+        ? $"VALID: {result.Message}"
+        : $"INVALID: {result.Message}");
 
     if (result.IsValid)
     {
@@ -86,7 +75,6 @@ while (true)
         Console.WriteLine($"Added '{input}' to used words.");
     }
 }
-
 
 // Register the word dictionary as a singleton service
 builder.Services.AddSingleton(wordDictionary);
