@@ -154,4 +154,33 @@ public class WordValidatorTests
         Assert.Equal(expected, result);
     }
 
+    // -------------------------------
+    // ValidateWord - integration test for all checks together 
+    //-------------------------------
+
+    // validates that the word is valid when all checks pass 
+    [Fact]
+    public void ValidateWord_ReturnsValid_WhenAllChecksPass()
+    {
+        var validator = new WordValidator();
+
+        var dictionary = new HashSet<string> { "fågel" };
+        var categories = new Dictionary<string, List<string>>
+    {
+        { "Animal", new List<string> { "fågel" } }
+    };
+        var usedWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var result = validator.ValidateWord(
+            word: "fågel",
+            category: "Animal",
+            requiredLetter: 'f',
+            dictionary: dictionary,
+            categories: categories,
+            usedWords: usedWords
+        );
+
+        Assert.True(result.IsValid);
+    }
+
 }
