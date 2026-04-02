@@ -150,5 +150,11 @@ test-results/
 playwright-report/
 playwright/.cache/
 
+# IDE files
+.idea/
+*.iws
+*.iml
+*.ipr
+
 # XML files
 *.xml
