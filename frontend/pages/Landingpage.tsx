@@ -38,3 +38,35 @@ if (!stars.current.length) {
     </div>
   )
 };
+const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
+  const [code] = useState<string>(() =>
+    Math.random().toString(36).substring(2, 6).toUpperCase()
+  )
+ 
+  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose()
+    };
+ return (
+    <div className="wm-modal-overlay" onClick={handleBackdrop} data-testid="create-modal">
+      <div className="wm-modal">
+        <h2 className="wm-modal-title">Lobby Created</h2>
+        <p className="wm-modal-label">Share this code with your opponent</p>
+        <div className="wm-modal-code" data-testid="lobby-code">{code}</div>
+        <div className="wm-modal-btns">
+          <button
+            className="wm-modal-btn wm-modal-btn--confirm"
+            onClick={onClose}
+          >
+            Enter Lobby
+          </button>
+          <button
+            className="wm-modal-btn wm-modal-btn--cancel"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
