@@ -17,4 +17,24 @@ if (!stars.current.length) {
         min: (0.2 + Math.random() * 0.3).toFixed(2),
       })
     }
-  }
+    }
+ return (
+    <div className="wm-stars" data-testid="stars">
+      {stars.current.map((s) => (
+        <div
+          key={s.id}
+          className="wm-star"
+          style={{
+            left:   s.left + '%',
+            top:    s.top + '%',
+            width:  s.size + 'px',
+            height: s.size + 'px',
+            ['--d'   as string]: s.d,
+            ['--del' as string]: s.del,
+            ['--min' as string]: s.min,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  )
+};
