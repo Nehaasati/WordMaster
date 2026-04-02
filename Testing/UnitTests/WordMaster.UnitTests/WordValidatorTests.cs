@@ -19,7 +19,7 @@ public class WordValidatorTests
         Assert.False(result);
     }
 
-// Test for IsValidCharacters method
+    // Test for IsValidCharacters method NOT passed
     [Fact]
     public void IsValidCharacters_ReturnsFalse_WhenWordContainsNonSwedishLetters()
     {
@@ -31,5 +31,15 @@ public class WordValidatorTests
 
         // Assert
         Assert.False(result);
+    }
+    // Test for IsValidCharacters method passed
+    [Fact]
+    public void IsValidCharacters_ReturnsTrue_WhenWordContainsOnlySwedishLetters()
+    {
+        var validator = new WordValidator();
+
+        var result = validator.IsValidCharacters("fågel");
+
+        Assert.True(result);
     }
 }
