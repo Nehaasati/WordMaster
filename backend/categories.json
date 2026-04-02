@@ -1,65 +1,83 @@
 {
-    "animal":
+  "animal": [
+    "hund","katt","häst","ko","gris","får","get","kyckling","anka","gås",
+    "kalkon","kanin","hamster","marsvin","mus","råtta","ekorre","igelkott","fladdermus","älg",
+    "ren","hjort","rådjur","björn","varg","räv","grävling","mård","utter","lodjur",
+    "lejon","tiger","elefant","giraff","zebra","apa","gorilla","schimpans","panda","koala",
+    "känguru","flodhäst","noshörning","hyena","gepard","panter","leopard","antilop","buffel","bison",
+    "kamel","lama","alpacka","åsna","mule","säl","sjölejon","val","delfin","haj",
+    "rocka","bläckfisk","manet","krabba","hummer","räka","snäcka","mussla","ostron","sjöstjärna",
+    "torsk","lax","abborre","gädda","karp","sill","makrill","ål","tonfisk","öring",
+    "örn","falk","hök","uggla","kråka","skata","duva","sparv","mes","svala",
+    "tornseglare","hackspett","trana","stork","flamingo","pelikan","albatross","pingvin","påfågel","höna",
+    "tupp","kycklingunge","ankaunge","gåsunge","svan","svanunge","papegoja","kanariefågel","undulat","kolibri",
+    "struts","emu","kassuari","groda","padda","salamander","ödla","gecko","kameleont","orm",
+    "huggorm","pytonorm","boaorm","sköldpadda","krokodil","alligator","insekt","spindel","skorpion","myra",
+    "bi","geting","humla","fjäril","mal","flugor","mygga","skalbagge","gräshoppa","syrsa",
+    "trollslända","silverfisk","lus","loppa","fästing","mask","daggmask","bandmask","snigel","larv",
+    "valp","kattunge","föl","kalv","lamm","kid","grisunge","ungdjur","rovdjur","växtätare",
+    "allätare","djurpark","bondgård","vilda djur","husdjur","tam","vild","päls","fjäll","fjädrar",
+    "näbb","klor","tassar","hovar","svans","vingar","gälar","fenor","pälsdjur","däggdjur",
+    "fågel","reptil","amfibie","fisk","invertebrat","ryggradsdjur","rovdjurstand","horn","betar","bo",
+    "lya","rede","gryt","stack","kupa","akvarium","terrarium","bur","hage","habitat",
+    "ekosystem","art","population","flock","hjord","stim","koloni","parning","fortplantning","ägg",
+    "kläckning","ungar","föda","jakt","bytesdjur","rovdjur","migration","vinterdvala","spår","spillning",
+    "revir","kamouflage","varningsfärg","giftig","ofarlig","snabb","långsam","nattaktiv","dagaktiv","skyddad art",
+    "utrotningshotad","bevarande","naturreservat","nationalpark","vilt","tamdjur","lantbruk","zoologi","biologi"
+  ],
 
-[
-"hund","katt","häst","ko","gris","får","get","kyckling","anka","gås",
-"kalkon","kanin","hamster","marsvin","mus","råtta","ekorre","igelkott","fladdermus","älg",
-"ren","hjort","rådjur","björn","varg","räv","grävling","mård","utter","lodjur",
-"lejon","tiger","elefant","giraff","zebra","apa","gorilla","schimpans","panda","koala",
-"känguru","flodhäst","noshörning","hyena","gepard","panter","leopard","antilop","buffel","bison",
-"kamel","lama","alpacka","åsna","mule","säl","sjölejon","val","delfin","haj",
-"rocka","bläckfisk","manet","krabba","hummer","räka","snäcka","mussla","ostron","sjöstjärna",
-"torsk","lax","abborre","gädda","karp","sill","makrill","ål","tonfisk","öring",
-"örn","falk","hök","uggla","kråka","skata","duva","sparv","mes","svala",
-"tornseglare","hackspett","trana","stork","flamingo","pelikan","albatross","pingvin","påfågel","höna",
-"tupp","kycklingunge","ankaunge","gåsunge","svan","svanunge","papegoja","kanariefågel","undulat","kolibri",
-"struts","emu","kassuari","groda","padda","salamander","ödla","gecko","kameleont","orm",
-"huggorm","pytonorm","boaorm","sköldpadda","krokodil","alligator","insekt","spindel","skorpion","myra",
-"bi","geting","humla","fjäril","mal","flugor","mygga","skalbagge","gräshoppa","syrsa",
-"trollslända","silverfisk","lus","loppa","fästing","mask","daggmask","bandmask","snigel","larv",
-"valp","kattunge","föl","kalv","lamm","kid","grisunge","kyckling","ungdjur","rovdjur",
-"växtätare","allätare","djurpark","bondgård","vilda djur","husdjur","tam","vild","päls","fjäll",
-"fjädrar","näbb","klor","tassar","hovar","svans","vingar","gälar","fenor","pälsdjur",
-"däggdjur","fågel","reptil","amfibie","fisk","invertebrat","ryggradsdjur","rovdjurstand","horn","betar",
-"bo","lya","rede","gryt","stack","kupa","akvarium","terrarium","bur","hage",
-"habitat","ekosystem","art","population","flock","hjord","stim","koloni","parning","fortplantning",
-"ägg","kläckning","ungar","föda","jakt","bytesdjur","rovdjur","migration","vinterdvala","spår",
-"spillning","revir","kamouflage","varningsfärg","giftig","ofarlig","snabb","långsam","nattaktiv","dagaktiv",
-"skyddad art","utrotningshotad","bevarande","naturreservat","nationalpark","vilt","tamdjur","lantbruk","zoologi","biologi"
-]
+  "country/stad": [
+    "Afghanistan","Albanien","Algeriet","Andorra","Angola","Antigua och Barbuda","Argentina","Armenien","Australien","Österrike",
+    "Azerbajdzjan","Bahamas","Bahrain","Bangladesh","Barbados","Belgien","Belize","Benin","Bhutan","Bolivia",
+    "Bosnien och Hercegovina","Botswana","Brasilien","Brunei","Bulgarien","Burkina Faso","Burundi","Kambodja","Kamerun","Kanada",
+    "Kap Verde","Centralafrikanska republiken","Tchad","Chile","Kina","Colombia","Komorerna","Kongo","Costa Rica","Kroatien",
+    "Kuba","Cypern","Tjeckien","Danmark","Djibouti","Dominica","Dominikanska republiken","Ecuador","Egypten","El Salvador",
+    "Ekvatorialguinea","Eritrea","Estland","Eswatini","Etiopien","Fiji","Finland","Frankrike","Gabon","Gambia",
+    "Georgien","Tyskland","Ghana","Grekland","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti",
+    "Honduras","Ungern","Island","Indien","Indonesien","Iran","Irak","Irland","Israel","Italien",
+    "Jamaica","Japan","Jordanien","Kazakstan","Kenya","Kiribati","Kuwait","Kirgizistan","Laos","Lettland",
+    "Libanon","Lesotho","Liberia","Libyen","Liechtenstein","Litauen","Luxemburg","Madagaskar","Malawi","Malaysia",
+    "Maldiverna","Mali","Malta","Marshallöarna","Mauretanien","Mauritius","Mexiko","Mikronesien","Moldavien","Monaco",
+    "Mongoliet","Montenegro","Marocko","Moçambique","Myanmar","Namibia","Nauru","Nepal","Nederländerna","Nya Zeeland",
+    "Nicaragua","Niger","Nigeria","Nordkorea","Nordmakedonien","Norge","Oman","Pakistan","Palau","Panama",
+    "Papua Nya Guinea","Paraguay","Peru","Filippinerna","Polen","Portugal","Qatar","Rumänien","Ryssland","Rwanda",
+    "Saint Kitts och Nevis","Saint Lucia","Saint Vincent och Grenadinerna","Samoa","San Marino","São Tomé och Príncipe","Saudiarabien","Senegal","Serbien","Seychellerna",
+    "Sierra Leone","Singapore","Slovakien","Slovenien","Salomonöarna","Somalia","Sydafrika","Sydkorea","Sydsudan","Spanien",
+    "Sri Lanka","Sudan","Surinam","Sverige","Schweiz","Syrien","Tadzjikistan","Tanzania","Thailand","Togo",
+    "Tonga","Trinidad och Tobago","Tunisien","Turkiet","Turkmenistan","Tuvalu","Uganda","Ukraina","Förenade Arabemiraten","Storbritannien",
+    "USA","Uruguay","Uzbekistan","Vanuatu","Vatikanstaten","Venezuela","Vietnam","Jemen","Zambia","Zimbabwe",
+    "Stockholm","Göteborg","Malmö","Uppsala","Västerås","Örebro","Linköping","Helsingborg","Jönköping","Norrköping",
+    "Lund","Umeå","Gävle","Borås","Södertälje","Eskilstuna","Halmstad","Växjö","Karlstad","Sundsvall"
+  ],
 
-"country":
-[
-"Afghanistan","Albanien","Algeriet","Andorra","Angola","Antigua och Barbuda","Argentina","Armenien","Australien","Österrike",
-"Azerbajdzjan","Bahamas","Bahrain","Bangladesh","Barbados","Belgien","Belize","Benin","Bhutan","Bolivia",
-"Bosnien och Hercegovina","Botswana","Brasilien","Brunei","Bulgarien","Burkina Faso","Burundi","Kambodja","Kamerun","Kanada",
-"Kap Verde","Centralafrikanska republiken","Tchad","Chile","Kina","Colombia","Komorerna","Kongo","Costa Rica","Kroatien",
-"Kuba","Cypern","Tjeckien","Danmark","Djibouti","Dominica","Dominikanska republiken","Ecuador","Egypten","El Salvador",
-"Ekvatorialguinea","Eritrea","Estland","Eswatini","Etiopien","Fiji","Finland","Frankrike","Gabon","Gambia",
-"Georgien","Tyskland","Ghana","Grekland","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti",
-"Honduras","Ungern","Island","Indien","Indonesien","Iran","Irak","Irland","Israel","Italien",
-"Jamaica","Japan","Jordanien","Kazakstan","Kenya","Kiribati","Kuwait","Kirgizistan","Laos","Lettland",
-"Libanon","Lesotho","Liberia","Libyen","Liechtenstein","Litauen","Luxemburg","Madagaskar","Malawi","Malaysia",
-"Maldiverna","Mali","Malta","Marshallöarna","Mauretanien","Mauritius","Mexiko","Mikronesien","Moldavien","Monaco",
-"Mongoliet","Montenegro","Marocko","Moçambique","Myanmar","Namibia","Nauru","Nepal","Nederländerna","Nya Zeeland",
-"Nicaragua","Niger","Nigeria","Nordkorea","Nordmakedonien","Norge","Oman","Pakistan","Palau","Panama",
-"Papua Nya Guinea","Paraguay","Peru","Filippinerna","Polen","Portugal","Qatar","Rumänien","Ryssland","Rwanda",
-"Saint Kitts och Nevis","Saint Lucia","Saint Vincent och Grenadinerna","Samoa","San Marino","São Tomé och Príncipe","Saudiarabien","Senegal","Serbien","Seychellerna",
-"Sierra Leone","Singapore","Slovakien","Slovenien","Salomonöarna","Somalia","Sydafrika","Sydkorea","Sydsudan","Spanien",
-"Sri Lanka","Sudan","Surinam","Sverige","Schweiz","Syrien","Tadzjikistan","Tanzania","Thailand","Togo",
-"Tonga","Trinidad och Tobago","Tunisien","Turkiet","Turkmenistan","Tuvalu","Uganda","Ukraina","Förenade Arabemiraten","Storbritannien",
-"USA","Uruguay","Uzbekistan","Vanuatu","Vatikanstaten","Venezuela","Vietnam","Jemen","Zambia","Zimbabwe",
+  "Name": [
+    "Lars","Anders","Karl","Erik","Johan","Per","Nils","Olof","Gustav","Mats",
+    "Henrik","Fredrik","Daniel","Marcus","Viktor","Emil","Anton","Filip","Alexander","Sebastian",
+    "Lena","Anna","Eva","Maria","Karin","Sara","Camilla","Helena","Annika","Linda",
+    "Svensson","Johansson","Andersson","Karlsson","Nilsson","Eriksson","Larsson","Olsson","Persson","Gustafsson"
+  ],
 
-"Grönland","Färöarna","Hongkong","Macau","Taiwan","Palestina","Kosovo","Västsahara","Gibraltar","Bermuda",
-"Guadeloupe","Martinique","Franska Guyana","Réunion","Mayotte","Aruba","Curaçao","Sint Maarten","Cooköarna","Niue",
-"Tokelau","Guam","Nordmarianerna","Amerikanska Samoa","Brittiska Jungfruöarna","Turks- och Caicosöarna","Caymanöarna","Falklandsöarna","Saint Helena","Pitcairnöarna",
-"Franska Polynesien","Nya Kaledonien","Wallis och Futuna","Sydgeorgien","Antarktis","Åland","Svalbard","Jan Mayen","Isle of Man","Jersey",
-"Guernsey","Transnistrien","Abchazien","Sydossetien","Nagorno-Karabach","Somaliland","Zanzibar","Katalonien","Skottland","Wales",
-"England","Baskien","Quebec","Kalifornien","Texas","Florida","Alaska","Hawaii","Ontario","Quebecprovinsen",
-"British Columbia","Alberta","Bayern","Sachsen","Hessen","Normandie","Bretagne","Andalusien","Galicien","Sicilien",
-"Sardinien","Lombardiet","Toscana","Krim","Sibirien","Lappland","Karelen","Punjab","Kashmir","Tibet",
-"Xinjiang","Inre Mongoliet","Hokkaido","Okinawa","Tasmanien","Queensland","Victoria","Nya Sydwales","Patagonien","Amazonas",
-"Alperna","Pyrenéerna","Balkan","Skandinavien","Norden","Baltikum","Mellanöstern","Centralasien","Sydasien","Sydostasien",
-"Östasien","Västafrika","Östafrika","Nordafrika","Södra Afrika","Karibien","Oceanien","Polynesien","Melanesien","Mikronesien"
-]
+  "food/fruit": [
+    "äpple","banan","apelsin","päron","vindruvor","jordgubbar","hallon","blåbär","lingon","körsbär",
+    "plommon","persika","nektarin","ananas","mango","papaya","kiwi","citron","lime","granatäpple",
+    "melon","vattenmelon","honungsmelon","fikon","dadlar","kokosnöt","avokado","passionsfrukt","guava","durian",
+    "stjärnfrukt","tranbär","björnbär","krusbär","svarta vinbär","röda vinbär","mandarin","clementin","blodapelsin","pomelo",
+    "grapefrukt","tomat","gurka","morot","potatis","sötpotatis","lök","rödlök","vitlök","purjolök",
+    "paprika","chili","majs","ärtor","bönor","linser","kikärtor","broccoli","blomkål","kål"
+  ],
+
+  "colour": [
+    "röd","blå","gul","grön","svart","vit","grå","rosa","lila","orange",
+    "brun","beige","turkos","cyan","magenta","vinröd","mörkröd","ljusröd","himmelsblå","marinblå"
+  ],
+
+  "job": [
+    "läkare","sjuksköterska","undersköterska","tandläkare","tandhygienist","farmaceut","psykolog","psykiater","fysioterapeut","arbetsterapeut"
+  ],
+
+  "object": [
+    "bord","stol","soffa","säng","lampa","fönster","dörr","matta","kudde","täcke",
+    "garderob","hylla","bokhylla","skrivbord","spegel","klocka","tavla","vas","ljus","gardin",
+    "kylskåp","frys","ugn","spis","mikrovågsugn","diskmaskin","tvättmaskin","torktumlare","brödrost","kaffebryggare"
+  ]
 }
