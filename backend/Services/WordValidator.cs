@@ -7,7 +7,9 @@ public class WordValidator
   public bool IsValidLength(string word)
   {
     if (string.IsNullOrWhiteSpace(word))
+    {
       return false;
+    }
 
     return word.Length >= 2;
   }
@@ -18,5 +20,15 @@ public class WordValidator
       return false;
 
     return Regex.IsMatch(word, "^[a-zA-ZåäöÅÄÖ]+$");
+  }
+  // validates that the word exists in the dictionary
+  public bool IsInDictionary(string word, HashSet<string> dictionary)
+  {
+    if (string.IsNullOrWhiteSpace(word))
+    {
+      return false;
+    }
+
+    return dictionary.Contains(word.ToLower());
   }
 }
