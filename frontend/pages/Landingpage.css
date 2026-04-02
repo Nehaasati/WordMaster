@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&display=swap');
+
+/* ── SCENE ── */
+.wm-scene {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ── BACKGROUND IMAGE ──
+   Place your image at: public/bg-landing.jpg
+   Export it from Figma: right-click the frame → Export → JPG
+*/
+.wm-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/bg-landing.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  /* Fallback color while image loads */
+  background-color: #0a0020;
+}
+
+/* ── DARK OVERLAY — deepens the image slightly ── */
+.wm-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 0, 20, 0.25);
+  z-index: 1;
+}
+
+/* ── VIGNETTE ── */
+.wm-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.65) 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── STARS ── */
+.wm-stars {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.wm-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: wmTwinkle var(--d) ease-in-out infinite var(--del);
+}
+
+@keyframes wmTwinkle {
+  0%, 100% { opacity: var(--min); transform: scale(1); }
+  50%       { opacity: 1;         transform: scale(1.5); }
+}
+
+/* ── MAIN UI ── */
+.wm-ui {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  text-align: center;
+  animation: wmFadeIn 1s ease forwards;
+}
+
+@keyframes wmFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── TITLE — matches Figma exactly ── */
+.wm-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  margin: 0;
+  /* Red glow + thick shadow matching the Figma design */
+  text-shadow:
+    0 0 20px rgba(255, 60, 60, 0.9),
+    0 0 50px rgba(220, 30, 30, 0.6),
+    0 0 90px rgba(180, 0, 0, 0.3),
+    3px 3px 0px #7a0000,
+    5px 5px 0px #5a0000,
+    7px 7px 0px rgba(50, 0, 0, 0.4);
+  animation: wmTitlePulse 4s ease-in-out infinite;
+}
+
+@keyframes wmTitlePulse {
+  0%, 100% {
+    text-shadow:
+      0 0 20px rgba(255, 60, 60, 0.9),
+      0 0 50px rgba(220, 30, 30, 0.6),
+      0 0 90px rgba(180, 0, 0, 0.3),
+      3px 3px 0px #7a0000,
+      5px 5px 0px #5a0000,
+      7px 7px 0px rgba(50, 0, 0, 0.4);
+  }
+  50% {
+    text-shadow:
+      0 0 30px rgba(255, 80, 80, 1),
+      0 0 70px rgba(240, 40, 40, 0.8),
+      0 0 120px rgba(200, 0, 0, 0.4),
+      3px 3px 0px #7a0000,
+      5px 5px 0px #5a0000,
+      7px 7px 0px rgba(50, 0, 0, 0.4);
+  }
+}
+
+/* ── BUTTONS — cream/beige pill style from Figma ── */
+.wm-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 280px;
+}
+
+.wm-btn {
+  width: 100%;
+  padding: 16px 0;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #1a0a2e;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  /* Cream/parchment gradient from Figma */
+  background: linear-gradient(
+    160deg,
+    #f0ebe0 0%,
+    #faf6ee 40%,
+    #ede6d6 100%
+  );
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.wm-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0);
+  transition: background 0.18s ease;
+}
+
+.wm-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.wm-btn:hover::after {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.wm-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ── MODAL OVERLAY ── */
+.wm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  animation: wmFadeIn 0.2s ease;
+}
+
+/* ── MODAL BOX ── */
+.wm-modal {
+  background: linear-gradient(160deg, #1c0b42 0%, #0e0428 100%);
+  border: 1px solid rgba(160, 80, 255, 0.35);
+  border-radius: 18px;
+  padding: 36px 40px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 0 60px rgba(120, 40, 220, 0.45), 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.wm-modal-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #eedeff;
+  text-align: center;
+  margin: 0;
+}
+
+.wm-modal-label {
+  color: rgba(210, 175, 255, 0.6);
+  font-family: 'Cinzel', serif;
+  font-size: 0.82rem;
+  text-align: center;
+  margin: 0;
+}
+
+.wm-modal-code {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #d09fff;
+  text-align: center;
+  letter-spacing: 0.25em;
+  text-shadow: 0 0 24px rgba(160, 80, 255, 0.7);
+}
+
+.wm-modal-input {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(160, 80, 255, 0.3);
+  border-radius: 10px;
+  padding: 13px 18px;
+  color: #eedeff;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.wm-modal-input:focus {
+  border-color: rgba(180, 100, 255, 0.7);
+}
+
+.wm-modal-input::placeholder {
+  color: rgba(200, 170, 255, 0.35);
+  letter-spacing: 0.05em;
+}
+
+.wm-modal-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.wm-modal-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.wm-modal-btn:hover  { transform: translateY(-1px); opacity: 0.9; }
+.wm-modal-btn:active { transform: translateY(0);    opacity: 1; }
+
+.wm-modal-btn--confirm {
+  background: linear-gradient(135deg, #7b2fff 0%, #5a1ecc 100%);
+  color: #fff;
+}
+
+.wm-modal-btn--cancel {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(160, 80, 255, 0.25);
+  color: #c8b0f0;
+}
