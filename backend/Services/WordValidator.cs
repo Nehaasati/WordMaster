@@ -31,4 +31,15 @@ public class WordValidator
 
     return dictionary.Contains(word.ToLower());
   }
-}
+  // validates that the word exists in the specified category
+  public bool IsInCategory(string word, string category, Dictionary<string, List<string>> categories)
+  {
+    if (string.IsNullOrWhiteSpace(word) || string.IsNullOrWhiteSpace(category))
+      return false;
+
+    if (!categories.ContainsKey(category))
+      return false;
+
+    return categories[category]
+        .Any(w => w.Equals(word, StringComparison.OrdinalIgnoreCase));
+  }
