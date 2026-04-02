@@ -58,7 +58,7 @@ public class WordValidatorTests
     }
 
     // Test for IsInDictionary method not found
-    [Fact]  
+    [Fact]
     public void IsInDictionary_ReturnsFalse_WhenWordDoesNotExistInDictionary()
     {
         // Arrange
@@ -71,4 +71,58 @@ public class WordValidatorTests
         // Assert
         Assert.False(result);
     }
+
+    // Test for IsInCategory method found in correct category
+    [Fact]
+    public void IsInCategory_ReturnsTrue_WhenWordExistsInCorrectCategory()
+    {
+        // Arrange
+        var categories = new Dictionary<string, List<string>>
+    {
+        { "Animal", new List<string> { "fågel", "katt", "hund" } }
+    };
+
+        var validator = new WordValidator();
+
+        // Act
+        var result = validator.IsInCategory("fågel", "Animal", categories);
+
+        // Assert
+        Assert.True(result);
+    }
+    // Test for IsInCategory method found in different category
+
+    [Fact]
+    public void IsInCategory_ReturnsFalse_WhenWordExistsButInDifferentCategory()
+    {
+        var categories = new Dictionary<string, List<string>>
+    {
+        { "Animal", new List<string> { "fågel" } },
+        { "Food", new List<string> { "äpple" } }
+    };
+
+        var validator = new WordValidator();
+
+        var result = validator.IsInCategory("äpple", "Animal", categories);
+
+        Assert.False(result);
+    }
+    // Test for IsInCategory method not found in any category
+
+    [Fact]
+    public void IsInCategory_ReturnsFalse_WhenWordDoesNotExistInAnyCategory()
+    {
+        var categories = new Dictionary<string, List<string>>
+    {
+        { "Animal", new List<string> { "fågel" } }
+    };
+
+        var validator = new WordValidator();
+
+        var result = validator.IsInCategory("björn", "Animal", categories);
+
+        Assert.False(result);
+    }
+
+
 }
