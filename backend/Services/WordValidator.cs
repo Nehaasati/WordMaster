@@ -43,3 +43,4 @@ public class WordValidator
     return categories[category]
         .Any(w => w.Equals(word, StringComparison.OrdinalIgnoreCase));
   }
+}
