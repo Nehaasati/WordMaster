@@ -156,5 +156,51 @@ public class WordValidatorTests
         Assert.True(result);
     }
 
+    // Test for IsNotUsedBefore method passed 
+    [Fact]
+    public void IsNotUsedBefore_ReturnsTrue_WhenWordHasNotBeenUsed()
+    {
+        var validator = new WordValidator();
+        var usedWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Katt"
+        };
+
+
+        var result = validator.IsNotUsedBefore("fågel", usedWords);
+
+        Assert.True(result);
+    }
+
+    // Test for IsNotUsedBefore method when word has been used
+    [Fact]
+    public void IsNotUsedBefore_ReturnsFalse_WhenWordHasBeenUsed()
+    {
+        var validator = new WordValidator();
+        var usedWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Katt"
+        };
+
+        var result = validator.IsNotUsedBefore("katt", usedWords);
+
+        Assert.False(result);
+    }
+
+    // Test for IsNotUsedBefore method ignores case
+    [Fact]
+    public void IsNotUsedBefore_IgnoresCase()
+    {
+        var validator = new WordValidator();
+        var usedWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Katt"
+        };
+
+        var result = validator.IsNotUsedBefore("katt", usedWords);
+
+        Assert.False(result);
+    }
+
 
 }
