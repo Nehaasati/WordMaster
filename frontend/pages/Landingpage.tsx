@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import './Landingpage.css'
-import type { ModalType, StarData, CreateModalProps, JoinModalProps } from '../interfaces/landing';
+import type { ModalType, StarData, CreateModalProps, JoinModalProps } from '../interfaces/Landing';
 
 const Stars: React.FC = () => {
     const stars = useRef<StarData[]>([])
@@ -116,3 +116,41 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
     </div>
   )
 }
+//Landing page
+const LandingPage: React.FC = () => {
+  const [modal, setModal] = useState<ModalType>(null)
+ 
+  return (
+    <div className="wm-scene" data-testid="landing-page">
+      <div className="wm-bg" />
+      <div className="wm-overlay" />
+      <Stars />
+      <div className="wm-vignette" />
+ 
+      <div className="wm-ui">
+        <h1 className="wm-title">Word Master</h1>
+        <div className="wm-btn-group">
+          <button
+            className="wm-btn"
+            onClick={() => setModal('create')}
+            data-testid="btn-create"
+          >
+            Create a lobby
+          </button>
+          <button
+            className="wm-btn"
+            onClick={() => setModal('join')}
+            data-testid="btn-join"
+          >
+            Join a lobby
+          </button>
+        </div>
+      </div>
+ 
+      {modal === 'create' && <CreateModal onClose={() => setModal(null)} />}
+      {modal === 'join'   && <JoinModal   onClose={() => setModal(null)} />}
+    </div>
+  )
+}
+ 
+export default LandingPage
