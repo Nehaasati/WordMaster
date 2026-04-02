@@ -79,4 +79,40 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
       onClose()
     }
   }
+  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose()
+  }
  
+  return (
+    <div className="wm-modal-overlay" onClick={handleBackdrop} data-testid="join-modal">
+      <div className="wm-modal">
+        <h2 className="wm-modal-title">Join a Lobby</h2>
+        <input
+          className="wm-modal-input"
+          placeholder="Enter lobby code..."
+          value={value}
+          maxLength={6}
+          onChange={(e) => setValue(e.target.value.toUpperCase())}
+          onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+          autoFocus
+          data-testid="join-input"
+        />
+        <div className="wm-modal-btns">
+          <button
+            className="wm-modal-btn wm-modal-btn--confirm"
+            onClick={handleJoin}
+            data-testid="join-submit"
+          >
+            Join
+          </button>
+          <button
+            className="wm-modal-btn wm-modal-btn--cancel"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
