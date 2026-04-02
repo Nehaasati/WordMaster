@@ -1,10 +1,20 @@
-﻿namespace WordMaster.UnitTests;
+﻿using WordMaster.Services;
+using Xunit;
 
-public class UnitTest1
+namespace WordMaster.Tests;
+
+public class WordValidatorTests
 {
     [Fact]
-    public void Test1()
+    public void IsValidLength_ReturnsFalse_WhenWordIsTooShort()
     {
+        // Arrange
+        var validator = new WordValidator();
 
+        // Act
+        var result = validator.IsValidLength("h");
+
+        // Assert
+        Assert.False(result);
     }
 }
