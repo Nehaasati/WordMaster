@@ -43,4 +43,13 @@ public class WordValidator
     return categories[category]
         .Any(w => w.Equals(word, StringComparison.OrdinalIgnoreCase));
   }
+
+  // validates that the word starts with the required letter
+  public bool StartsWithCorrectLetter(string word, char requiredLetter)
+  {
+    if (string.IsNullOrWhiteSpace(word))
+      return false;
+
+    return word.StartsWith(requiredLetter.ToString(), StringComparison.OrdinalIgnoreCase);
+  }
 }

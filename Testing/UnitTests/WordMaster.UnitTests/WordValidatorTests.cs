@@ -124,5 +124,37 @@ public class WordValidatorTests
         Assert.False(result);
     }
 
+    // Test for StartsWithCorrectLetter method passed
+    [Fact]
+    public void StartsWithCorrectLetter_ReturnsTrue_WhenWordStartsWithRequiredLetter()
+    {
+        var validator = new WordValidator();
+
+        var result = validator.StartsWithCorrectLetter("björn", 'b');
+
+        Assert.True(result);
+    }
+
+    // Test for StartsWithCorrectLetter method not passed
+    [Fact]
+    public void StartsWithCorrectLetter_ReturnsFalse_WhenWordDoesNotStartWithRequiredLetter()
+    {
+        var validator = new WordValidator();
+
+        var result = validator.StartsWithCorrectLetter("björn", 'k');
+
+        Assert.False(result);
+    }
+    // Test for StartsWithCorrectLetter method ignores case
+    [Fact]
+    public void StartsWithCorrectLetter_IgnoresCase()
+    {
+        var validator = new WordValidator();
+
+        var result = validator.StartsWithCorrectLetter("Älg", 'ä');
+
+        Assert.True(result);
+    }
+
 
 }
