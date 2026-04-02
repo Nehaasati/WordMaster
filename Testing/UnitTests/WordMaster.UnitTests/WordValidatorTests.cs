@@ -27,7 +27,7 @@ public class WordValidatorTests
         var validator = new WordValidator();
 
         // Act
-        var result = validator.IsValidCharacters("höna");
+        var result = validator.IsValidCharacters("hello!");
 
         // Assert
         Assert.False(result);
