@@ -1,5 +1,6 @@
 {
-  "animal": [
+  
+  "ANIMAL": [
     "hund","katt","häst","ko","gris","får","get","kyckling","anka","gås",
     "kalkon","kanin","hamster","marsvin","mus","råtta","ekorre","igelkott","fladdermus","älg",
     "ren","hjort","rådjur","björn","varg","räv","grävling","mård","utter","lodjur",
@@ -15,18 +16,18 @@
     "huggorm","pytonorm","boaorm","sköldpadda","krokodil","alligator","insekt","spindel","skorpion","myra",
     "bi","geting","humla","fjäril","mal","flugor","mygga","skalbagge","gräshoppa","syrsa",
     "trollslända","silverfisk","lus","loppa","fästing","mask","daggmask","bandmask","snigel","larv",
-    "valp","kattunge","föl","kalv","lamm","kid","grisunge","ungdjur","rovdjur","växtätare",
-    "allätare","djurpark","bondgård","vilda djur","husdjur","tam","vild","päls","fjäll","fjädrar",
-    "näbb","klor","tassar","hovar","svans","vingar","gälar","fenor","pälsdjur","däggdjur",
-    "fågel","reptil","amfibie","fisk","invertebrat","ryggradsdjur","rovdjurstand","horn","betar","bo",
-    "lya","rede","gryt","stack","kupa","akvarium","terrarium","bur","hage","habitat",
-    "ekosystem","art","population","flock","hjord","stim","koloni","parning","fortplantning","ägg",
-    "kläckning","ungar","föda","jakt","bytesdjur","rovdjur","migration","vinterdvala","spår","spillning",
-    "revir","kamouflage","varningsfärg","giftig","ofarlig","snabb","långsam","nattaktiv","dagaktiv","skyddad art",
-    "utrotningshotad","bevarande","naturreservat","nationalpark","vilt","tamdjur","lantbruk","zoologi","biologi"
+    "valp","kattunge","föl","kalv","lamm","kid","grisunge","kyckling","ungdjur","rovdjur",
+    "växtätare","allätare","djurpark","bondgård","vilda djur","husdjur","tam","vild","päls","fjäll",
+    "fjädrar","näbb","klor","tassar","hovar","svans","vingar","gälar","fenor","pälsdjur",
+    "däggdjur","fågel","reptil","amfibie","fisk","invertebrat","ryggradsdjur","rovdjurstand","horn","betar",
+    "bo","lya","rede","gryt","stack","kupa","akvarium","terrarium","bur","hage",
+    "habitat","ekosystem","art","population","flock","hjord","stim","koloni","parning","fortplantning",
+    "ägg","kläckning","ungar","föda","jakt","bytesdjur","rovdjur","migration","vinterdvala","spår",
+    "spillning","revir","kamouflage","varningsfärg","giftig","ofarlig","snabb","långsam","nattaktiv","dagaktiv",
+    "skyddad art","utrotningshotad","bevarande","naturreservat","nationalpark","vilt","tamdjur","lantbruk","zoologi","biologi"
   ],
 
-  "country/stad": [
+  "LAND": [
     "Afghanistan","Albanien","Algeriet","Andorra","Angola","Antigua och Barbuda","Argentina","Armenien","Australien","Österrike",
     "Azerbajdzjan","Bahamas","Bahrain","Bangladesh","Barbados","Belgien","Belize","Benin","Bhutan","Bolivia",
     "Bosnien och Hercegovina","Botswana","Brasilien","Brunei","Bulgarien","Burkina Faso","Burundi","Kambodja","Kamerun","Kanada",
@@ -47,37 +48,60 @@
     "Tonga","Trinidad och Tobago","Tunisien","Turkiet","Turkmenistan","Tuvalu","Uganda","Ukraina","Förenade Arabemiraten","Storbritannien",
     "USA","Uruguay","Uzbekistan","Vanuatu","Vatikanstaten","Venezuela","Vietnam","Jemen","Zambia","Zimbabwe",
     "Stockholm","Göteborg","Malmö","Uppsala","Västerås","Örebro","Linköping","Helsingborg","Jönköping","Norrköping",
-    "Lund","Umeå","Gävle","Borås","Södertälje","Eskilstuna","Halmstad","Växjö","Karlstad","Sundsvall"
+    "Lund","Umeå","Gävle","Borås","Södertälje","Eskilstuna","Halmstad","Växjö","Karlstad","Sundsvall",
+    "Trollhättan","Östersund","Luleå","Trelleborg","Kalmar","Skövde","Falun","Kristianstad","Karlskrona","Haparanda",
+    "Ystad","Hudiksvall","Motala","Piteå","Landskrona","Ängelholm","Värnamo","Lidköping","Sandviken","Kiruna"
   ],
 
-  "Name": [
-    "Lars","Anders","Karl","Erik","Johan","Per","Nils","Olof","Gustav","Mats",
-    "Henrik","Fredrik","Daniel","Marcus","Viktor","Emil","Anton","Filip","Alexander","Sebastian",
-    "Lena","Anna","Eva","Maria","Karin","Sara","Camilla","Helena","Annika","Linda",
-    "Svensson","Johansson","Andersson","Karlsson","Nilsson","Eriksson","Larsson","Olsson","Persson","Gustafsson"
-  ],
-
-  "food/fruit": [
+  "FOOD": [
     "äpple","banan","apelsin","päron","vindruvor","jordgubbar","hallon","blåbär","lingon","körsbär",
     "plommon","persika","nektarin","ananas","mango","papaya","kiwi","citron","lime","granatäpple",
     "melon","vattenmelon","honungsmelon","fikon","dadlar","kokosnöt","avokado","passionsfrukt","guava","durian",
     "stjärnfrukt","tranbär","björnbär","krusbär","svarta vinbär","röda vinbär","mandarin","clementin","blodapelsin","pomelo",
     "grapefrukt","tomat","gurka","morot","potatis","sötpotatis","lök","rödlök","vitlök","purjolök",
-    "paprika","chili","majs","ärtor","bönor","linser","kikärtor","broccoli","blomkål","kål"
+    "paprika","chili","majs","ärtor","bönor","linser","kikärtor","broccoli","blomkål","kål",
+    "vitkål","rödkål","grönkål","spenat","ruccola","sallad","isbergssallad","zucchini","aubergine","svamp",
+    "champinjoner","kantareller","tryffel","kött","nötkött","fläskkött","kyckling","kalkon","lamm","fisk",
+    "lax","torsk","sill","makrill","räkor","kräftor","musslor","bläckfisk","ägg","mjölk",
+    "ost","smör","yoghurt","grädde","glass","bröd","limpa","baguette","fralla","knäckebröd",
+    "toast","pasta","spaghetti","makaroner","lasagne","ris","nudlar","pizza","hamburgare","korv",
+    "köttbullar","falukorv","bacon","skinka","soppa","gryta","sallad","sås","ketchup","senap",
+    "majonnäs","olja","olivolja","vinäger","socker","salt","peppar","kanel","kardemumma","vanilj",
+    "choklad","godis","lakrits","kaka","tårta","bulle","kanelbulle","semla","pannkakor","våfflor",
+    "honung","sylt","marmelad","nötter","mandel","hasselnöt","valnöt","cashewnöt","pistasch","jordnötter",
+    "frön","solrosfrön","pumpafrön","chiafrön","sesamfrön","havre","havregryn","vete","råg","korn",
+    "müsli","granola","smoothie","juice","apelsinjuice","äppeljuice","te","kaffe","espresso","latte",
+    "cappuccino","mineralvatten","läsk","cola","saft","energidryck","proteinbar","glasspinne","sorbet","fruktsallad",
+    "potatismos","stekt potatis","kokt potatis","pommes frites","gratäng","potatisgratäng","pastasallad","risotto","sushi","tacos",
+    "burrito","enchiladas","quesadilla","falafel","hummus","kebab","shawarma","gyros","curry","stekt ris",
+    "wok","ramen","pho","dumplings","vårrullar","sashimi","tempura","croissant","bagel","muffins",
+    "cupcake","brownie","cheesecake","glasskaka","maräng","marängtårta","kladdkaka","sockerkaka","äppelpaj","blåbärspaj",
+    "rabarberpaj","vaniljsås","gröt","risgrynsgröt","havregröt","fil","kefir","smörgås","macka","wrap",
+    "pitabröd","tortilla","focaccia","ciabatta","brie","camembert","cheddar","mozzarella","fetaost","parmesan",
+    "getost","salami","prosciutto","rostbiff","leverpastej","kaviar","rom","wasabi","sojasås","teriyakisås"
   ],
 
-  "colour": [
+
+  "COLOUR": [
     "röd","blå","gul","grön","svart","vit","grå","rosa","lila","orange",
-    "brun","beige","turkos","cyan","magenta","vinröd","mörkröd","ljusröd","himmelsblå","marinblå"
+    "brun","beige","turkos","cyan","magenta","vinröd","mörkröd","ljusröd","himmelsblå","marinblå",
+    "ljusblå","indigo","lavendel","plommon","aprikos","persika","korall","mintgrön","olivgrön","skoggrön",
+    "limegrön","mörkgrön","ljusgrön","smaragdgrön","jadegrön","teal","akvamarin","azurblå","koboltblå","stålblå",
+    "isblå","duvblå","pastellblå","pastellrosa","pastellgul","pastellgrön","pastelllila","neonröd","neonblå","neongrön",
+    "neongul","neonrosa","guld","silver","brons","koppar","mässing","rost","terracotta","chokladbrun"
   ],
 
-  "job": [
-    "läkare","sjuksköterska","undersköterska","tandläkare","tandhygienist","farmaceut","psykolog","psykiater","fysioterapeut","arbetsterapeut"
+  "JOB": [
+    "läkare","sjuksköterska","undersköterska","tandläkare","tandhygienist","farmaceut","psykolog","psykiater","fysioterapeut","arbetsterapeut",
+    "barnmorska","kirurg","biomedicinsk analytiker","veterinär","ingenjör","civilingenjör","systemutvecklare","programmerare","webbutvecklare","apputvecklare"
   ],
 
-  "object": [
+  "OBJECT": [
     "bord","stol","soffa","säng","lampa","fönster","dörr","matta","kudde","täcke",
     "garderob","hylla","bokhylla","skrivbord","spegel","klocka","tavla","vas","ljus","gardin",
-    "kylskåp","frys","ugn","spis","mikrovågsugn","diskmaskin","tvättmaskin","torktumlare","brödrost","kaffebryggare"
+    "kylskåp","frys","ugn","spis","mikrovågsugn","diskmaskin","tvättmaskin","torktumlare","brödrost","kaffebryggare",
+    "vattenkokare","stekpanna","kastrull","tallrik","skål","glas","kopp","bestick","kniv","gaffel",
+    "sked","flaska","burk","låda","väska","ryggsäck","plånbok","nyckel","paraply","jacka",
+    "skor","hatt","halsduk","handskar","bälte","byxor","tröja","t-shirt","klänning","kjol"
   ]
 }
