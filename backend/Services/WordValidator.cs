@@ -52,4 +52,12 @@ public class WordValidator
 
     return word.StartsWith(requiredLetter.ToString(), StringComparison.OrdinalIgnoreCase);
   }
+  // validates that the word has not been used before in the game
+  public bool IsNotUsedBefore(string word, HashSet<string> usedWords)
+  {
+    if (string.IsNullOrWhiteSpace(word))
+      return false;
+
+    return !usedWords.Contains(word.ToLower());
+  }
 }
