@@ -42,4 +42,33 @@ public class WordValidatorTests
 
         Assert.True(result);
     }
+    // Test for IsInDictionary method found passed
+    [Fact]
+    public void IsInDictionary_ReturnsTrue_WhenWordExistsInDictionary()
+    {
+        // Arrange
+        var dictionary = new HashSet<string> { "fågel", "katt", "hund" };
+        var validator = new WordValidator();
+
+        // Act
+        var result = validator.IsInDictionary("fågel", dictionary);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    // Test for IsInDictionary method not found
+    [Fact]  
+    public void IsInDictionary_ReturnsFalse_WhenWordDoesNotExistInDictionary()
+    {
+        // Arrange
+        var dictionary = new HashSet<string> { "fågel", "katt", "hund" };
+        var validator = new WordValidator();
+
+        // Act
+        var result = validator.IsInDictionary("bil", dictionary);
+
+        // Assert
+        Assert.False(result);
+    }
 }
