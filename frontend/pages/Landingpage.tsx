@@ -70,3 +70,13 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
     </div>
   )
 }
+const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
+  const [value, setValue] = useState<string>('')
+ 
+  const handleJoin = () => {
+    if (value.trim().length >= 4) {
+      console.log('Joining lobby:', value.toUpperCase())
+      onClose()
+    }
+  }
+ 
