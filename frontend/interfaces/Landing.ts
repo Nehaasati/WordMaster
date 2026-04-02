@@ -8,3 +8,10 @@ export interface StarData {
   del: string
   min: string
 }
+export interface CreateModalProps {
+  onClose: () => void
+}
+ 
+export interface JoinModalProps {
+  onClose: () => void
+}
