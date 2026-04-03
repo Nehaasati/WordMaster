@@ -21,6 +21,7 @@ var categories = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(ca
 builder.Services.AddSingleton(wordDictionary);
 builder.Services.AddSingleton(categories);
 builder.Services.AddSingleton<WordValidator>();
+builder.Services.AddSingleton<GameEngine>();
 
 builder.Services.AddCors(options =>
 {
@@ -44,38 +45,20 @@ if (app.Environment.IsDevelopment())
 
 app.MapPost("/api/word/validate", (
     ValidateRequest request, 
-    WordValidator validator, 
-    HashSet<string> dictionary, 
-    Dictionary<string, List<string>> categoriesList) =>
+    GameEngine engine) =>
 {
-    if (request == null || string.IsNullOrWhiteSpace(request.Word) || string.IsNullOrWhiteSpace(request.Category))
-    {
-        return Results.Ok(new { isValid = false, message = "Invalid request" });
-    }
+    var (isValid, message) = engine.ValidateWord(request.Word, request.Category, request.Letters);
+    return Results.Ok(new { isValid, message });
+});
 
-    if (!validator.IsValidLength(request.Word))
-    {
-        return Results.Ok(new { isValid = false, message = "Too short" });
-    }
-
-    if (!validator.IsValidCharacters(request.Word))
-    {
-        return Results.Ok(new { isValid = false, message = "Word contains invalid characters" });
-    }
-
-    bool inDictionary = validator.IsInDictionary(request.Word, dictionary);
-    bool inCategory = validator.IsInCategory(request.Word, request.Category, categoriesList);
-
-    if (!inDictionary || !inCategory)
-    {
-        return Results.Ok(new { isValid = false, message = "Word not found" });
-    }
-
-    return Results.Ok(new { isValid = true, message = "Word found" });
+app.MapGet("/api/game/letters", (GameEngine engine, int count = 15) =>
+{
+    var letters = engine.GenerateLetters(count);
+    return Results.Ok(letters);
 });
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
 
 app.Run();
 
-public record ValidateRequest(string Word, string Category);
+public record ValidateRequest(string Word, string Category, List<char> Letters);

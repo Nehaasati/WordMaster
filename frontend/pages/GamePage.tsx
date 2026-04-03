@@ -9,17 +9,29 @@ const GamePage: React.FC = () => {
     isExtra: boolean;
   }
 
+  interface CategoryData {
+    word: string;
+    valid: boolean;
+    feedback: string;
+  }
+
+  const CATEGORY_LIST = [
+    { id: 'Colour', label: 'Färg' },
+    { id: 'Food', label: 'Mat' },
+    { id: 'Animal', label: 'Djur' },
+    { id: 'Land', label: 'Land' }
+  ]
+
   const [allLetters, setAllLetters] = useState<Letter[]>([])
-  const [colorWord, setColorWord] = useState('')
-  const [foodWord, setFoodWord] = useState('')
-  const [colorValid, setColorValid] = useState(false)
-  const [foodValid, setFoodValid] = useState(false)
-  const [colorFeedback, setColorFeedback] = useState('')
-  const [foodFeedback, setFoodFeedback] = useState('')
+  const [categories, setCategories] = useState<Record<string, CategoryData>>({
+    'Colour': { word: '', valid: false, feedback: '' },
+    'Food': { word: '', valid: false, feedback: '' },
+    'Animal': { word: '', valid: false, feedback: '' },
+    'Land': { word: '', valid: false, feedback: '' },
+  })
   const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
 
-  const colorInputRef = useRef<HTMLInputElement>(null)
-  const foodInputRef = useRef<HTMLInputElement>(null)
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
 
@@ -69,23 +81,56 @@ const GamePage: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    setAllLetters(generateRandomLetters(15))
+    const fetchInitialLetters = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:5024/api/game/letters')
+        if (response.ok) {
+          const letters: string[] = await response.json()
+          setAllLetters(letters.map(char => ({
+            id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
+            char,
+            used: false,
+            isExtra: false
+          })))
+        } else {
+          setAllLetters(generateRandomLetters(15))
+        }
+      } catch {
+        setAllLetters(generateRandomLetters(15))
+      }
+    }
+    fetchInitialLetters()
   }, [])
 
-  const addExtraLetters = () => {
-    setAllLetters(prev => [...prev, ...generateRandomLetters(5, prev, true)])
+  const addExtraLetters = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5024/api/game/letters?count=5')
+      if (response.ok) {
+        const letters: string[] = await response.json()
+        const newLetters = letters.map(char => ({
+          id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
+          char,
+          used: false,
+          isExtra: true
+        }))
+        setAllLetters(prev => [...prev, ...newLetters])
+      }
+    } catch {
+      setAllLetters(prev => [...prev, ...generateRandomLetters(5, prev, true)])
+    }
   }
 
-  const updateUsedLetters = (word1: string, word2: string) => {
-    const w1 = colorValid ? '' : word1
-    const w2 = foodValid ? '' : word2
-    const combinedWord = (w1 + w2).toUpperCase()
+  const updateUsedLetters = () => {
+    let combinedWord = ''
+    for (const catId in categories) {
+      if (!categories[catId].valid) {
+        combinedWord += categories[catId].word
+      }
+    }
+    combinedWord = combinedWord.toUpperCase()
 
     setAllLetters(prev => {
-      // Reset used status first
       const nextLetters = prev.map(l => ({ ...l, used: false }))
-      
-      // Mark as used one by one
       for (const char of combinedWord) {
         const letter = nextLetters.find(l => !l.used && l.char === char)
         if (letter) {
@@ -96,13 +141,27 @@ const GamePage: React.FC = () => {
     })
   }
 
-  const checkWordWithLetters = (word: string, otherWord: string, isColor: boolean) => {
+  const checkWordWithLetters = (word: string, categoryId: string) => {
     const wordUpper = word.toUpperCase()
-    const otherUpper = otherWord.toUpperCase()
-    const combined = wordUpper + ((isColor ? foodValid : colorValid) ? '' : otherUpper)
     
+    // Get pool of available letters (all minus those used by OTHER non-valid categories)
+    let otherUsedWord = ''
+    for (const catId in categories) {
+      if (catId !== categoryId && !categories[catId].valid) {
+        otherUsedWord += categories[catId].word
+      }
+    }
+    otherUsedWord = otherUsedWord.toUpperCase()
+
     const pool = allLetters.map(l => l.char)
-    for (const char of combined) {
+    // Remove other used letters from pool first
+    for (const char of otherUsedWord) {
+      const index = pool.indexOf(char)
+      if (index !== -1) pool.splice(index, 1)
+    }
+
+    // Now check if current word can be formed
+    for (const char of wordUpper) {
       const index = pool.indexOf(char)
       if (index === -1) return false
       pool.splice(index, 1)
@@ -110,26 +169,47 @@ const GamePage: React.FC = () => {
     return true
   }
 
-  const validateWord = async (word: string, category: string, setValid: (v: boolean) => void, setFeedback: (m: string) => void, otherWord: string) => {
+  const validateWord = async (word: string, categoryId: string) => {
     if (word.length === 0) {
-      setFeedback('')
-      setValid(false)
+      setCategories(prev => ({
+        ...prev,
+        [categoryId]: { ...prev[categoryId], feedback: '', valid: false, word }
+      }))
       return
     }
 
     if (word.length < 2) {
-      setFeedback('Too short')
-      setValid(false)
+      setCategories(prev => ({
+        ...prev,
+        [categoryId]: { ...prev[categoryId], feedback: 'Too short', valid: false, word }
+      }))
       return
     }
 
-    if (!checkWordWithLetters(word, otherWord, category === 'Colour')) {
-      // Om man har lyckats skriva in bokstäver som inte finns (skulle inte hända med handleXChange)
-      setValid(false)
+    if (!checkWordWithLetters(word, categoryId)) {
+      setCategories(prev => ({
+        ...prev,
+        [categoryId]: { ...prev[categoryId], valid: false, word }
+      }))
       return
     }
 
     try {
+      // Determine letters available for THIS validation
+      let otherUsedWord = ''
+      for (const catId in categories) {
+        if (catId !== categoryId && !categories[catId].valid) {
+          otherUsedWord += categories[catId].word
+        }
+      }
+      otherUsedWord = otherUsedWord.toUpperCase()
+      
+      const availablePool = allLetters.map(l => l.char)
+      for (const char of otherUsedWord) {
+        const index = availablePool.indexOf(char)
+        if (index !== -1) availablePool.splice(index, 1)
+      }
+
       const url = 'http://127.0.0.1:5024/api/word/validate'
       const response = await fetch(url, {
         method: 'POST',
@@ -138,94 +218,146 @@ const GamePage: React.FC = () => {
           'Accept': 'application/json'
         },
         mode: 'cors',
-        body: JSON.stringify({ word: word.trim(), category })
+        body: JSON.stringify({ 
+          word: word.trim(), 
+          category: categoryId,
+          letters: availablePool
+        })
       })
       
       if (!response.ok) {
-        setFeedback('Error fetching')
-        setValid(false)
+        setCategories(prev => ({
+          ...prev,
+          [categoryId]: { ...prev[categoryId], feedback: 'Error fetching', valid: false, word }
+        }))
         return
       }
 
       const data = await response.json()
       if (data.isValid) {
-        setFeedback('')
-        // Omedelbar ersättning när ordet är godkänt medan bokstäverna fortfarande är markerade som 'used'
+        // Fetch replacement letters from backend
+        let newLetterChars: string[] = []
+        try {
+          const resp = await fetch(`http://127.0.0.1:5024/api/game/letters?count=${word.length}`)
+          if (resp.ok) newLetterChars = await resp.json()
+        } catch { /* fallback to local generation below */ }
+
         setAllLetters(prev => {
-          const unusedLetters = prev.filter(l => !l.used)
+          let replaceIdx = 0
+          const currentUnused = prev.filter(l => !l.used)
+          
           return prev.map(l => {
-            if (l.used) {
-              return generateRandomLetters(1, unusedLetters, l.isExtra)[0]
+            if (l.used && word.toUpperCase().includes(l.char)) {
+              // We need to be careful here to only replace the letters actually used for THIS word
+              // But since we marked them 'used' in updateUsedLetters, we can find them.
+              // Actually, a simpler way: if l.used is true now, and it matches a char in word, 
+              // but we need to match exactly the number of chars.
             }
             return l
           })
         })
-        
-        // Sätt valid efteråt för att trigga omräkning av använda bokstäver för det ANDRA fältet
-        setValid(true)
+
+        // Re-implementing letter replacement more robustly
+        setAllLetters(prev => {
+          const nextLetters = [...prev]
+          const wordUpper = word.toUpperCase()
+          const charsToReplace = wordUpper.split('')
+          
+          for (let i = 0; i < nextLetters.length; i++) {
+            const l = nextLetters[i]
+            if (l.used) {
+              const charIdx = charsToReplace.indexOf(l.char)
+              if (charIdx !== -1) {
+                // Replace this letter
+                const newChar = newLetterChars[0] || generateRandomLetters(1, nextLetters.filter((_, idx) => idx !== i))[0].char
+                if (newLetterChars.length > 0) newLetterChars.shift()
+                
+                nextLetters[i] = {
+                  ...l,
+                  char: newChar,
+                  used: false,
+                  id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
+                }
+                charsToReplace.splice(charIdx, 1)
+              }
+            }
+          }
+          return nextLetters
+        })
+
+        setCategories(prev => ({
+          ...prev,
+          [categoryId]: { ...prev[categoryId], feedback: '', valid: true, word }
+        }))
       } else {
-        setFeedback(data.message || 'Word not found')
-        setValid(false)
+        setCategories(prev => ({
+          ...prev,
+          [categoryId]: { ...prev[categoryId], feedback: data.message || 'Word not found', valid: false, word }
+        }))
       }
     } catch (error: any) {
-      setFeedback('Error fetching')
-      setValid(false)
+      setCategories(prev => ({
+        ...prev,
+        [categoryId]: { ...prev[categoryId], feedback: 'Error fetching', valid: false, word }
+      }))
     }
   }
 
 
+  // Automatic focus shift
   useEffect(() => {
-    if (colorValid && !foodValid) {
-      foodInputRef.current?.focus()
+    const nextCat = CATEGORY_LIST.find(cat => !categories[cat.id].valid)
+    if (nextCat) {
+      inputRefs.current[nextCat.id]?.focus()
     }
-  }, [colorValid])
+  }, [
+    categories['Colour'].valid,
+    categories['Food'].valid,
+    categories['Animal'].valid,
+    categories['Land'].valid
+  ])
 
   useEffect(() => {
-    if (foodValid && !colorValid) {
-      colorInputRef.current?.focus()
-    }
-  }, [foodValid])
+    updateUsedLetters()
+  }, [categories])
 
-  useEffect(() => {
-    updateUsedLetters(colorWord, foodWord)
-  }, [colorWord, foodWord, colorValid, foodValid])
-
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (categoryId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.toUpperCase()
-    if (colorValid) setColorValid(false)
+    
+    // If it was valid, typing in it again (if allowed) should reset valid
+    // But it's disabled when valid, so this only happens if we programmatically reset it.
+    if (categories[categoryId].valid) {
+      setCategories(prev => ({
+        ...prev,
+        [categoryId]: { ...prev[categoryId], valid: false }
+      }))
+    }
 
-    if (val.length > colorWord.length) {
+    if (val.length > categories[categoryId].word.length) {
       const addedChar = val[val.length - 1]
-      const currentOtherWord = foodValid ? '' : foodWord
-      const combined = (val + currentOtherWord).toUpperCase()
       
-      const charCountInWord = combined.split('').filter(c => c === addedChar).length
-      const charCountInPool = allLetters.filter(l => l.char === addedChar).length
+      // Check if we have this letter available (not used by other NON-VALID categories)
+      let otherUsedWord = ''
+      for (const catId in categories) {
+        if (catId !== categoryId && !categories[catId].valid) {
+          otherUsedWord += categories[catId].word
+        }
+      }
+      otherUsedWord = otherUsedWord.toUpperCase()
+      
+      const pool = allLetters.map(l => l.char)
+      for (const char of otherUsedWord) {
+        const index = pool.indexOf(char)
+        if (index !== -1) pool.splice(index, 1)
+      }
+
+      const charCountInWord = val.split('').filter(c => c === addedChar).length
+      const charCountInPool = pool.filter(c => c === addedChar).length
       
       if (charCountInPool < charCountInWord) return
     }
     
-    setColorWord(val)
-    validateWord(val, 'Colour', setColorValid, setColorFeedback, foodWord)
-  }
-
-  const handleFoodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.toUpperCase()
-    if (foodValid) setFoodValid(false)
-
-    if (val.length > foodWord.length) {
-      const addedChar = val[val.length - 1]
-      const currentOtherWord = colorValid ? '' : colorWord
-      const combined = (val + currentOtherWord).toUpperCase()
-      
-      const charCountInWord = combined.split('').filter(c => c === addedChar).length
-      const charCountInPool = allLetters.filter(l => l.char === addedChar).length
-      
-      if (charCountInPool < charCountInWord) return
-    }
-    
-    setFoodWord(val)
-    validateWord(val, 'Food', setFoodValid, setFoodFeedback, colorWord)
+    validateWord(val, categoryId)
   }
 
   return (
@@ -242,32 +374,21 @@ const GamePage: React.FC = () => {
       </div>
 
       <div className="inputs-container">
-        <div className="input-group">
-          <label>Färg</label>
-          <input
-            type="text"
-            ref={colorInputRef}
-            className={`category-input ${colorValid ? 'valid' : ''}`}
-            value={colorWord}
-            onChange={handleColorChange}
-            placeholder=""
-            disabled={colorValid}
-          />
-          <div className="feedback-message">{colorFeedback}</div>
-        </div>
-        <div className="input-group">
-          <label>Mat</label>
-          <input
-            type="text"
-            ref={foodInputRef}
-            className={`category-input ${foodValid ? 'valid' : ''}`}
-            value={foodWord}
-            onChange={handleFoodChange}
-            placeholder=""
-            disabled={foodValid}
-          />
-          <div className="feedback-message">{foodFeedback}</div>
-        </div>
+        {CATEGORY_LIST.map((cat) => (
+          <div className="input-group" key={cat.id}>
+            <label>{cat.label}</label>
+            <input
+              type="text"
+              ref={(el) => inputRefs.current[cat.id] = el}
+              className={`category-input ${categories[cat.id].valid ? 'valid' : ''}`}
+              value={categories[cat.id].word}
+              onChange={(e) => handleInputChange(cat.id, e)}
+              placeholder=""
+              disabled={categories[cat.id].valid}
+            />
+            <div className="feedback-message">{categories[cat.id].feedback}</div>
+          </div>
+        ))}
       </div>
 
       <div className="game-right-side">
