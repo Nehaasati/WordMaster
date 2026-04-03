@@ -10,3 +10,8 @@ export interface CreateLobbyResponse {
 export interface JoinLobbyProps {
   lobbyId: string
 }
+export interface JoinLobbyResponse {
+  lobbyId: string
+  playerToken: string
+  status: string
+}
