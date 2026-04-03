@@ -7,75 +7,116 @@ public class GameEngine
     private readonly WordValidator _validator;
     private readonly HashSet<string> _dictionary;
     private readonly Dictionary<string, List<string>> _categories;
+
+    private readonly List<string> _categoryList;
+    private int _currentCategoryIndex = 0;
+
     private static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
-    // Weighted randomizer weights (trying to mirror frontend randomizeer here)
+    // Weighted randomizer (matching frontend logic)
     private static readonly Dictionary<char, int> Weights = new()
     {
-        { 'A', 5 }, { 'E', 5 }, { 'I', 5 }, { 'O', 5 }, { 'U', 5 }, { 'Y', 5 }, { 'Å', 2 }, { 'Ä', 2 }, { 'Ö', 2 },
-        { 'B', 3 }, { 'C', 1 }, { 'D', 3 }, { 'F', 2 }, { 'G', 3 }, { 'H', 3 }, { 'J', 2 }, { 'K', 4 }, { 'L', 4 },
-        { 'M', 4 }, { 'N', 4 }, { 'P', 3 }, { 'R', 5 }, { 'S', 5 }, { 'T', 5 }, { 'V', 3 }, { 'W', 1 }, { 'X', 1 }, { 'Z', 1 }
+        { 'A', 5 }, { 'E', 5 }, { 'I', 5 }, { 'O', 5 }, { 'U', 5 }, { 'Y', 5 },
+        { 'Å', 2 }, { 'Ä', 2 }, { 'Ö', 2 },
+        { 'B', 3 }, { 'C', 1 }, { 'D', 3 }, { 'F', 2 }, { 'G', 3 }, { 'H', 3 },
+        { 'J', 2 }, { 'K', 4 }, { 'L', 4 }, { 'M', 4 }, { 'N', 4 }, { 'P', 3 },
+        { 'R', 5 }, { 'S', 5 }, { 'T', 5 }, { 'V', 3 }, { 'W', 1 }, { 'X', 1 }, { 'Z', 1 }
     };
 
-    public GameEngine(WordValidator validator, HashSet<string> dictionary, Dictionary<string, List<string>> categories)
+    public HashSet<string> UsedWords { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public string CurrentCategory => _categoryList[_currentCategoryIndex];
+    public char RequiredLetter { get; private set; }
+
+    public GameEngine(
+        WordValidator validator,
+        HashSet<string> dictionary,
+        Dictionary<string, List<string>> categories)
     {
         _validator = validator;
         _dictionary = dictionary;
         _categories = categories;
+
+        _categoryList = _categories.Keys.ToList();
+        if (_categoryList.Count == 0)
+            throw new InvalidOperationException("No categories loaded.");
+
+        GenerateRequiredLetter();
     }
 
-    public List<char> GenerateLetters(int count = 15)
+    // Issue #16 — Auto advance to next category after valid submission (handled in SubmitWord method)
+    public void AdvanceToNextCategory()
+    {
+        _currentCategoryIndex++;
+
+        if (_currentCategoryIndex >= _categoryList.Count)
+            _currentCategoryIndex = 0; // this can be changed later to end the game instead of looping
+
+        GenerateRequiredLetter();
+    }
+
+    // Weighted Random Letter Generator (matching frontend logic)
+    private void GenerateRequiredLetter()
     {
         var random = new Random();
-        var letters = new List<char>();
-        
         var weightedPool = new List<char>();
+
         foreach (var c in Alphabet)
         {
-            int w = Weights.TryGetValue(c, out int weight) ? weight : 2;
-            for (int i = 0; i < w; i++) weightedPool.Add(c);
+            int weight = Weights.TryGetValue(c, out int w) ? w : 2;
+            for (int i = 0; i < weight; i++)
+                weightedPool.Add(c);
         }
 
-        for (int i = 0; i < count; i++)
-        {
-            letters.Add(weightedPool[random.Next(weightedPool.Count)]);
-        }
-        return letters;
+        RequiredLetter = weightedPool[random.Next(weightedPool.Count)];
     }
 
-    public (bool IsValid, string Message) ValidateWord(string word, string category, List<char> availableLetters)
+    // Issue #15 — Word submission and validation
+    public (bool IsValid, string Message) SubmitWord(string word)
     {
+        // Basic validations 
         if (string.IsNullOrWhiteSpace(word))
             return (false, "Invalid request");
+
+        // Normalize the word to uppercase for consistent validation
 
         if (!_validator.IsValidLength(word))
             return (false, "Too short");
 
+        // Check for invalid characters before normalizing to uppercase
+
         if (!_validator.IsValidCharacters(word))
             return (false, "Word contains invalid characters");
 
-        // Check if word can be formed with available letters or nah
-        if (!CanFormWord(word, availableLetters))
-            return (false, "Word uses unavailable letters");
+        // Normalize the word to uppercase for consistent validation
 
-        bool inDictionary = _validator.IsInDictionary(word, _dictionary);
-        bool inCategory = _validator.IsInCategory(word, category, _categories);
+        if (!_validator.StartsWithCorrectLetter(word, RequiredLetter))
+            return (false, "Word does not start with required letter");
 
-        if (!inDictionary || !inCategory)
-            return (false, "Word not found");
+        // Check if the word has been used before (case-insensitive)
 
-        return (true, "Word found");
-    }
+        if (!_validator.IsNotUsedBefore(word, UsedWords))
+            return (false, "Word already used");
 
-    private bool CanFormWord(string word, List<char> availableLetters)
-    {
-        var tempLetters = new List<char>(availableLetters);
-        foreach (var c in word.ToUpper())
-        {
-            if (!tempLetters.Contains(c))
-                return false;
-            tempLetters.Remove(c);
-        }
-        return true;
+        // Check if the word is in the dictionary (case-insensitive)
+
+        if (!_validator.IsNotUsedBefore(word, UsedWords))
+            return (false, "Word already used");
+
+        // Check if the word is in the dictionary (case-insensitive)
+
+        if (!_validator.IsInDictionary(word, _dictionary))
+            return (false, "Word not found in dictionary");
+            
+        // Check if the word belongs to the current category (case-insensitive)
+
+        if (!_validator.IsInCategory(word, CurrentCategory, _categories))
+            return (false, "Word not found in category");
+
+        // If we reach here, the word is valid and we can add it to the used words and advance to the next category (handled in AdvanceToNextCategory method) 
+        UsedWords.Add(word);
+        AdvanceToNextCategory();
+
+        return (true, "Valid word");
     }
 }
