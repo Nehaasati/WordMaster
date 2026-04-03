@@ -17,6 +17,7 @@ export default function LobbyPage(){
     const prev = () => setIndex((i) => (i - 1 + Characters.length) % Characters.length);  // + Characters.length för att undvika negativ index
     const next = () => setIndex((i) => (i + 1) % Characters.length); //i är nuvarande index och adderas med 1, % används för att hoppa tillbaka till första index
 
+    const [ready, setReady] = useState(false);
 
 
     return(
@@ -27,7 +28,7 @@ export default function LobbyPage(){
 
                     <div className="character-carousel">
                         <button className="ch-arrow" onClick={prev}>
-                            <img src="/images/next.png" className="ch-arrow-img ch-arrow-img--flipped" />
+                            <img src="/images/prev.png" className="ch-arrow-img" />
                         </button>
 
                         <div className="characters">
@@ -38,9 +39,11 @@ export default function LobbyPage(){
                             <img src="/images/next.png" className="ch-arrow-img" />
                         </button>
                     </div>
-                    <button>
-                        Redo
+
+                    <button className='ready-btn ${ready? "isReady-btn" : ""}'>
+                        {ready? "Ok" : "Redo"}
                     </button>
+
                 </div>
             </div>
             
