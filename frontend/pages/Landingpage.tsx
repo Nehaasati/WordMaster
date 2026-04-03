@@ -1,7 +1,8 @@
 import React, { useState} from 'react'
-import './Landingpage.css' 
+import { useNavigate } from 'react-router-dom'
+import '../css/Landingpage.css'
 import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
-
+/////
 const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
   const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose()
@@ -77,13 +78,14 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
 //Landing page
 const LandingPage: React.FC = () => {
   const [modal, setModal] = useState<ModalType>(null)
- 
+  const navigate = useNavigate();
+
   return (
     <div className="wm-scene" data-testid="landing-page">
       <div className="wm-bg" />
       <div className="wm-overlay" />
       <div className="wm-vignette" />
- 
+
       <div className="wm-ui">
         <h1 className="wm-title">Word Master</h1>
         <div className="wm-btn-group">
@@ -92,14 +94,21 @@ const LandingPage: React.FC = () => {
             onClick={() => setModal('create')}
             data-testid="btn-create"
           >
-            Create a lobby
+            Skapa en lobby
           </button>
           <button
             className="wm-btn"
             onClick={() => setModal('join')}
             data-testid="btn-join"
           >
-            Join a lobby
+            Gå med i en lobby
+          </button>
+          <button
+            className="wm-btn"
+            onClick={() => navigate('/game')}
+            data-testid="btn-dev"
+          >
+            Oskars DEV knapp till spel sidan
           </button>
         </div>
       </div>
