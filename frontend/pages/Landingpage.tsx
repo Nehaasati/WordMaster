@@ -1,4 +1,5 @@
 import React, { useState} from 'react'
+import { useNavigate } from 'react-router-dom'
 import '../css/Landingpage.css'
 import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
 /////
@@ -75,12 +76,9 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
   )
 }
 //Landing page
-interface LandingPageProps {
-  onDev?: () => void;
-}
-
-const LandingPage: React.FC<LandingPageProps> = ({ onDev }) => {
+const LandingPage: React.FC = () => {
   const [modal, setModal] = useState<ModalType>(null)
+  const navigate = useNavigate();
 
   return (
     <div className="wm-scene" data-testid="landing-page">
@@ -107,7 +105,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onDev }) => {
           </button>
           <button
             className="wm-btn"
-            onClick={onDev}
+            onClick={() => navigate('/game')}
             data-testid="btn-dev"
           >
             Oskars DEV knapp till spel sidan
