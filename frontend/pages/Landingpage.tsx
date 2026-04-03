@@ -1,5 +1,5 @@
 import React, { useState} from 'react'
-import './Landingpage.css' 
+import '../css/Landingpage.css'
 import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
 /////
 const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
@@ -96,14 +96,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onDev }) => {
             onClick={() => setModal('create')}
             data-testid="btn-create"
           >
-            Create a lobby
+            Skapa en lobby
           </button>
           <button
             className="wm-btn"
             onClick={() => setModal('join')}
             data-testid="btn-join"
           >
-            Join a lobby
+            Gå med i en lobby
           </button>
           <button
             className="wm-btn"
