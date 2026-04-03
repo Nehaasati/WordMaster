@@ -63,6 +63,8 @@ app.MapPost("/api/word/validate", (
     return Results.Ok(new { isValid });
 });
 
+app.MapGet("/api/health", () => Results.Ok("OK"));
+
 app.Run();
 
 public record ValidateRequest(string Word, string Category);

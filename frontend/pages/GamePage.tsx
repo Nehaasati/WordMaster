@@ -14,6 +14,7 @@ const GamePage: React.FC = () => {
   const [foodWord, setFoodWord] = useState('')
   const [colorValid, setColorValid] = useState(false)
   const [foodValid, setFoodValid] = useState(false)
+  const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
 
@@ -46,6 +47,21 @@ const GamePage: React.FC = () => {
     }
     return letters
   }
+
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:5024/api/health')
+        setBackendConnected(response.ok)
+      } catch {
+        setBackendConnected(false)
+      }
+    }
+    
+    checkBackend()
+    const interval = setInterval(checkBackend, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     setAllLetters(generateRandomLetters(15))
@@ -191,6 +207,9 @@ const GamePage: React.FC = () => {
 
       <div className="disclaimer-text">
         Detta är bara för testning, vi saknar front end m.m / Oskar
+        <div className="backend-status">
+          Connected to backend: {backendConnected === null ? 'Checking...' : backendConnected ? 'Yes' : 'No'}
+        </div>
       </div>
 
       <div className="inputs-container">

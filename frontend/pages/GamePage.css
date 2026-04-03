@@ -96,6 +96,13 @@
     text-align: center;
 }
 
+.backend-status {
+    font-size: 0.9rem;
+    margin-top: 5px;
+    font-weight: normal;
+    opacity: 0.9;
+}
+
 .game-right-side {
     display: flex;
     flex-direction: column;
