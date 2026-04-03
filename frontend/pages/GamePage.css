@@ -53,6 +53,22 @@
     text-shadow: 0 0 5px rgba(68, 255, 68, 0.5);
 }
 
+.category-input:disabled {
+    cursor: not-allowed;
+}
+
+.category-input.valid:disabled {
+    background: rgba(68, 255, 68, 0.1);
+}
+
+.feedback-message {
+    height: 1.2rem;
+    color: #ff8888;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
 .letters-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

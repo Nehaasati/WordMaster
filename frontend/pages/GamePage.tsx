@@ -14,6 +14,8 @@ const GamePage: React.FC = () => {
   const [foodWord, setFoodWord] = useState('')
   const [colorValid, setColorValid] = useState(false)
   const [foodValid, setFoodValid] = useState(false)
+  const [colorFeedback, setColorFeedback] = useState('')
+  const [foodFeedback, setFoodFeedback] = useState('')
   const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
@@ -105,13 +107,21 @@ const GamePage: React.FC = () => {
     return true
   }
 
-  const validateWord = async (word: string, category: string, setValid: (v: boolean) => void, otherWord: string) => {
+  const validateWord = async (word: string, category: string, setValid: (v: boolean) => void, setFeedback: (m: string) => void, otherWord: string) => {
+    if (word.length === 0) {
+      setFeedback('')
+      setValid(false)
+      return
+    }
+
     if (word.length < 2) {
+      setFeedback('Too short')
       setValid(false)
       return
     }
 
     if (!checkWordWithLetters(word, otherWord, category === 'Colour')) {
+      // Om man har lyckats skriva in bokstäver som inte finns (skulle inte hända med handleXChange)
       setValid(false)
       return
     }
@@ -129,12 +139,14 @@ const GamePage: React.FC = () => {
       })
       
       if (!response.ok) {
+        setFeedback('Error fetching')
         setValid(false)
         return
       }
 
       const data = await response.json()
       if (data.isValid) {
+        setFeedback('')
         // Omedelbar ersättning när ordet är godkänt medan bokstäverna fortfarande är markerade som 'used'
         setAllLetters(prev => {
           const unusedLetters = prev.filter(l => !l.used)
@@ -149,9 +161,11 @@ const GamePage: React.FC = () => {
         // Sätt valid efteråt för att trigga omräkning av använda bokstäver för det ANDRA fältet
         setValid(true)
       } else {
+        setFeedback(data.message || 'Word not found')
         setValid(false)
       }
     } catch (error: any) {
+      setFeedback('Error fetching')
       setValid(false)
     }
   }
@@ -177,7 +191,7 @@ const GamePage: React.FC = () => {
     }
     
     setColorWord(val)
-    validateWord(val, 'Colour', setColorValid, foodWord)
+    validateWord(val, 'Colour', setColorValid, setColorFeedback, foodWord)
   }
 
   const handleFoodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,7 +210,7 @@ const GamePage: React.FC = () => {
     }
     
     setFoodWord(val)
-    validateWord(val, 'Food', setFoodValid, colorWord)
+    validateWord(val, 'Food', setFoodValid, setFoodFeedback, colorWord)
   }
 
   return (
@@ -221,7 +235,9 @@ const GamePage: React.FC = () => {
             value={colorWord}
             onChange={handleColorChange}
             placeholder=""
+            disabled={colorValid}
           />
+          <div className="feedback-message">{colorFeedback}</div>
         </div>
         <div className="input-group">
           <label>Mat</label>
@@ -231,7 +247,9 @@ const GamePage: React.FC = () => {
             value={foodWord}
             onChange={handleFoodChange}
             placeholder=""
+            disabled={foodValid}
           />
+          <div className="feedback-message">{foodFeedback}</div>
         </div>
       </div>
 

@@ -50,17 +50,28 @@ app.MapPost("/api/word/validate", (
 {
     if (request == null || string.IsNullOrWhiteSpace(request.Word) || string.IsNullOrWhiteSpace(request.Category))
     {
-        return Results.Ok(new { isValid = false });
+        return Results.Ok(new { isValid = false, message = "Invalid request" });
+    }
+
+    if (!validator.IsValidLength(request.Word))
+    {
+        return Results.Ok(new { isValid = false, message = "Too short" });
+    }
+
+    if (!validator.IsValidCharacters(request.Word))
+    {
+        return Results.Ok(new { isValid = false, message = "Word contains invalid characters" });
     }
 
     bool inDictionary = validator.IsInDictionary(request.Word, dictionary);
     bool inCategory = validator.IsInCategory(request.Word, request.Category, categoriesList);
-    bool validLength = validator.IsValidLength(request.Word);
-    bool validChars = validator.IsValidCharacters(request.Word);
 
-    bool isValid = inDictionary && inCategory && validLength && validChars;
+    if (!inDictionary || !inCategory)
+    {
+        return Results.Ok(new { isValid = false, message = "Word not found" });
+    }
 
-    return Results.Ok(new { isValid });
+    return Results.Ok(new { isValid = true, message = "Word found" });
 });
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
