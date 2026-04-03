@@ -19,15 +19,18 @@ const GamePage: React.FC = () => {
     { id: 'Colour', label: 'Färg' },
     { id: 'Food', label: 'Mat' },
     { id: 'Animal', label: 'Djur' },
-    { id: 'Land', label: 'Land' }
+    { id: 'Land', label: 'Land' },
+    { id: 'Job', label: 'Jobb' },
+    { id: 'Object', label: 'Objekt' }
   ]
 
   const [allLetters, setAllLetters] = useState<Letter[]>([])
-  const [categories, setCategories] = useState<Record<string, CategoryData>>({
-    'Colour': { word: '', valid: false, feedback: '' },
-    'Food': { word: '', valid: false, feedback: '' },
-    'Animal': { word: '', valid: false, feedback: '' },
-    'Land': { word: '', valid: false, feedback: '' },
+  const [categories, setCategories] = useState<Record<string, CategoryData>>(() => {
+    const initial: Record<string, CategoryData> = {}
+    CATEGORY_LIST.forEach(cat => {
+      initial[cat.id] = { word: '', valid: false, feedback: '' }
+    })
+    return initial
   })
   const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
 
@@ -310,12 +313,7 @@ const GamePage: React.FC = () => {
     if (nextCat) {
       inputRefs.current[nextCat.id]?.focus()
     }
-  }, [
-    categories['Colour'].valid,
-    categories['Food'].valid,
-    categories['Animal'].valid,
-    categories['Land'].valid
-  ])
+  }, CATEGORY_LIST.map(cat => categories[cat.id].valid))
 
   useEffect(() => {
     updateUsedLetters()
