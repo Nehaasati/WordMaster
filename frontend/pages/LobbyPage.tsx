@@ -1,6 +1,6 @@
 import {useState} from "react";
-import type {Character} from "../interfaces/interface.tsx";
-import "/sass/lobby.css";
+import type {Character} from "../src/interfaces/interface.tsx";
+import "../css/lobby.css";
 
 
 const Characters: Character[] = [
