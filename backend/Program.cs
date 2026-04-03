@@ -21,6 +21,7 @@ var categories = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(ca
 builder.Services.AddSingleton(wordDictionary);
 builder.Services.AddSingleton(categories);
 builder.Services.AddSingleton<WordValidator>();
+builder.Services.AddSingleton<GameEngine>();
 
 builder.Services.AddCors(options =>
 {
@@ -44,25 +45,20 @@ if (app.Environment.IsDevelopment())
 
 app.MapPost("/api/word/validate", (
     ValidateRequest request, 
-    WordValidator validator, 
-    HashSet<string> dictionary, 
-    Dictionary<string, List<string>> categoriesList) =>
+    GameEngine engine) =>
 {
-    if (request == null || string.IsNullOrWhiteSpace(request.Word) || string.IsNullOrWhiteSpace(request.Category))
-    {
-        return Results.Ok(new { isValid = false });
-    }
-
-    bool inDictionary = validator.IsInDictionary(request.Word, dictionary);
-    bool inCategory = validator.IsInCategory(request.Word, request.Category, categoriesList);
-    bool validLength = validator.IsValidLength(request.Word);
-    bool validChars = validator.IsValidCharacters(request.Word);
-
-    bool isValid = inDictionary && inCategory && validLength && validChars;
-
-    return Results.Ok(new { isValid });
+    var (isValid, message) = engine.ValidateWord(request.Word, request.Category, request.Letters);
+    return Results.Ok(new { isValid, message });
 });
+
+app.MapGet("/api/game/letters", (GameEngine engine, int count = 15) =>
+{
+    var letters = engine.GenerateLetters(count);
+    return Results.Ok(letters);
+});
+
+app.MapGet("/api/health", () => Results.Ok("OK"));
 
 app.Run();
 
-public record ValidateRequest(string Word, string Category);
+public record ValidateRequest(string Word, string Category, List<char> Letters);
