@@ -18,3 +18,17 @@ export interface StarData {
   del: string
   min: string
 }
+export interface Category {
+  id: string
+  label: string
+}
+ 
+export interface ValidateRequest {
+  word: string
+  category: string
+  letters: string[]
+}
+export interface ValidateResponse {
+  isValid: boolean
+  message?: string
+}
