@@ -1,7 +1,7 @@
 import React, { useState} from 'react'
 import '../css/Landingpage.css'
 import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
-
+/////
 const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
   const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose()
