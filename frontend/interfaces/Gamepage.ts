@@ -4,3 +4,8 @@ export interface Letter {
   used: boolean
   isExtra: boolean
 }
+export interface CategoryData {
+  word: string
+  valid: boolean
+  feedback: string
+}
