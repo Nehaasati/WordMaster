@@ -67,6 +67,18 @@ app.MapPost("/api/game/submit-word", (
 //It can be used by the frontend or monitoring tools to check the health of the application.
 app.MapGet("/api/health", () => Results.Ok("OK"));
 
+// Game state endpoint
+// This endpoint allows the frontend to retrieve the current game state, including the current category and required letter. 
+// It can be used to initialize the game state on the frontend or to refresh it after a word submission.
+app.MapGet("/api/game/state", (GameEngine engine) =>
+{
+    return Results.Ok(new
+    {
+        currentCategory = engine.CurrentCategory,
+        requiredLetter = engine.RequiredLetter
+    });
+});
+
 app.Run();
 
 // Request DTO
