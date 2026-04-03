@@ -75,15 +75,19 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
   )
 }
 //Landing page
-const LandingPage: React.FC = () => {
+interface LandingPageProps {
+  onDev?: () => void;
+}
+
+const LandingPage: React.FC<LandingPageProps> = ({ onDev }) => {
   const [modal, setModal] = useState<ModalType>(null)
- 
+
   return (
     <div className="wm-scene" data-testid="landing-page">
       <div className="wm-bg" />
       <div className="wm-overlay" />
       <div className="wm-vignette" />
- 
+
       <div className="wm-ui">
         <h1 className="wm-title">Word Master</h1>
         <div className="wm-btn-group">
@@ -100,6 +104,13 @@ const LandingPage: React.FC = () => {
             data-testid="btn-join"
           >
             Join a lobby
+          </button>
+          <button
+            className="wm-btn"
+            onClick={onDev}
+            data-testid="btn-dev"
+          >
+            Oskars DEV knapp till spel sidan
           </button>
         </div>
       </div>
