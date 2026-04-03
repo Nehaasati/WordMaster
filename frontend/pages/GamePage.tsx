@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect, useRef } from 'react'
 import './GamePage.css'
 
 const GamePage: React.FC = () => {
@@ -17,6 +17,9 @@ const GamePage: React.FC = () => {
   const [colorFeedback, setColorFeedback] = useState('')
   const [foodFeedback, setFoodFeedback] = useState('')
   const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
+
+  const colorInputRef = useRef<HTMLInputElement>(null)
+  const foodInputRef = useRef<HTMLInputElement>(null)
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
 
@@ -172,6 +175,18 @@ const GamePage: React.FC = () => {
 
 
   useEffect(() => {
+    if (colorValid && !foodValid) {
+      foodInputRef.current?.focus()
+    }
+  }, [colorValid])
+
+  useEffect(() => {
+    if (foodValid && !colorValid) {
+      colorInputRef.current?.focus()
+    }
+  }, [foodValid])
+
+  useEffect(() => {
     updateUsedLetters(colorWord, foodWord)
   }, [colorWord, foodWord, colorValid, foodValid])
 
@@ -231,6 +246,7 @@ const GamePage: React.FC = () => {
           <label>Färg</label>
           <input
             type="text"
+            ref={colorInputRef}
             className={`category-input ${colorValid ? 'valid' : ''}`}
             value={colorWord}
             onChange={handleColorChange}
@@ -243,6 +259,7 @@ const GamePage: React.FC = () => {
           <label>Mat</label>
           <input
             type="text"
+            ref={foodInputRef}
             className={`category-input ${foodValid ? 'valid' : ''}`}
             value={foodWord}
             onChange={handleFoodChange}
