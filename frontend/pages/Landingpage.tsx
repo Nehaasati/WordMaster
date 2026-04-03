@@ -1,5 +1,5 @@
 import React, { useState} from 'react'
-import './Landingpage.css' 
+import '../css/Landingpage.css'
 import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
 
 const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
