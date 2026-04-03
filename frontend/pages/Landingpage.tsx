@@ -74,7 +74,7 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
     </div>
   )
 }
-//Landing page
+///Landing page
 const LandingPage: React.FC = () => {
   const [modal, setModal] = useState<ModalType>(null)
  
