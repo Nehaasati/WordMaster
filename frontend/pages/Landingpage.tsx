@@ -92,14 +92,14 @@ const LandingPage: React.FC = () => {
             onClick={() => setModal('create')}
             data-testid="btn-create"
           >
-            Create a lobby
+            Skapa en lobby
           </button>
           <button
             className="wm-btn"
             onClick={() => setModal('join')}
             data-testid="btn-join"
           >
-            Join a lobby
+            Gå med i en lobby
           </button>
         </div>
       </div>
