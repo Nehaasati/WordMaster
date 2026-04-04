@@ -190,29 +190,42 @@ export default function LobbyPage() {
           <button
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
             onClick={async () => {
-                if (!ready) {
-                    setReady(true);
+              if (!ready) {
+                // Första gången: spelaren är inte redo, så vi försöker gå med i lobbyn
+                const response = await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      name: character.name,
+                      isHost: isHost,
+                    }),
+                  },
+                );
 
-                    // skicka POST-förfrågan för att gå med i lobbyn
-                    await fetch(
-                        `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
-                        {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                name: character.name,
-                                isHost: isHost,
-                            }),
-                        },
-                    );
-                } else {
-                    if (isHost) {
-                        navigate(`/game/${lobbyId || ""}`);
-                    }
+                // Om det inte gick att gå med i lobbyn (t.ex. lobby full)
+                if (!response.ok) {
+                  const data = await response.json();
+                  alert(data.error || "Lobbyen är full");
+                  return; // Avbryt om det inte gick att gå med
                 }
+
+                // Om det lyckades att gå med i lobbyn, markera spelaren som redo
+                setReady(true);
+              } else {
+                // Spelaren är redo och vill starta spelet
+                if (isHost) {
+                  navigate(`/game/${lobbyId || ""}`);
+                }
+              }
             }}
           >
-            {ready ? (isHost ? "Starta spelet" : "Väntar på värden...") : "Redo"}
+            {ready
+              ? isHost
+                ? "Starta spelet"
+                : "Väntar på värden..."
+              : "Redo"}
           </button>
         </div>
       </div>
