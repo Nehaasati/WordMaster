@@ -53,8 +53,8 @@ app.MapPost("/api/word/validate", (
 
 app.MapPost("/api/lobby", (GameEngine engine) =>
 {
-    var lobbyId = engine.CreateLobby();
-    return Results.Ok(new { lobbyId });
+    var lobby = engine.CreateLobby();
+    return Results.Ok(new { lobbyId = lobby.Id, inviteCode = lobby.InviteCode });
 });
 
 app.MapGet("/api/lobby/{lobbyId}", (string lobbyId, GameEngine engine) =>

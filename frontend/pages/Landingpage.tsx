@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import '../css/Landingpage.css'
 import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
 /////
-const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId }) => {
+const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId, inviteCode }) => {
   const navigate = useNavigate();
   const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose()
@@ -21,7 +21,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId }) => {
         <div className="wm-modal-btns">
           <button
             className="wm-modal-btn wm-modal-btn--confirm"
-            onClick={() => navigate(`/lobby/${lobbyId}`)}
+            onClick={() => navigate(`/lobby/${inviteCode || lobbyId}`)}
           >
             Enter Lobby
           </button>
@@ -41,6 +41,7 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
   const navigate = useNavigate();
  
   const handleJoin = () => {
+
     if (value.trim().length >= 4) {
       navigate(`/lobby/${value.trim().toUpperCase()}`)
       onClose()
@@ -87,6 +88,7 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
 const LandingPage: React.FC = () => {
   const [modal, setModal] = useState<ModalType>(null)
   const [lobbyId, setLobbyId] = useState<string>('')
+  const [inviteCode, setInviteCode] = useState<string>('')
   const navigate = useNavigate();
 
   const handleCreateClick = async () => {
@@ -95,12 +97,14 @@ const LandingPage: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setLobbyId(data.lobbyId);
+        setInviteCode(data.inviteCode);
         setModal('create');
       }
     } catch (error) {
       console.error("Failed to create lobby", error);
       // Fallback
       setLobbyId('ERROR');
+      setInviteCode('');
       setModal('create');
     }
   }
@@ -131,7 +135,13 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
  
-      {modal === 'create' && <CreateModal onClose={() => setModal(null)} lobbyId={lobbyId} />}
+      {modal === 'create' && (
+        <CreateModal 
+          onClose={() => setModal(null)} 
+          lobbyId={lobbyId} 
+          inviteCode={inviteCode} 
+        />
+      )}
       {modal === 'join'   && <JoinModal   onClose={() => setModal(null)} />}
     </div>
   )
