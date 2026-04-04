@@ -1,5 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&display=swap');
 
+/* WordMaster Game Page Styles */
+:root {
+  --bubble-animal: #f28f33;
+  --bubble-land: #12a07a;
+  --bubble-food: #b84444;
+  --bubble-colour: #34a9c3;
+  --bubble-job: #cb9e3d;
+  --bubble-object: #817bd8;
+}
+
 /* ─────────────────────────────── */
 /* SCENE + BACKGROUND */
 /* ─────────────────────────────── */
@@ -181,5 +191,86 @@
   .wm-info-box {
     grid-template-columns: 1fr;
     text-align: center;
+  }
+}
+
+
+/* ─────────────────────────────── */
+/* LETTER BUBBLES */
+/* ─────────────────────────────── */
+/* الحاوية */
+.wm-letter-bubbles {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+/* الفقاعة الأساسية */
+.wm-bubble {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.3rem;
+  color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  user-select: none;
+  pointer-events: none;
+
+  transition: 0.25s ease;
+}
+
+/* ───────────────────────────── */
+/*  Categories colors  */
+/* ───────────────────────────── */
+
+/* Animal */
+.category-Animal .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-animal), #b85e00);
+  box-shadow: 0 0 20px var(--bubble-animal);
+}
+
+/* Land */
+.category-Land .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-land), #0b8f6a);
+  box-shadow: 0 0 20px var(--bubble-land);
+}
+
+/* Food */
+.category-Food .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-food), #b33939);
+  box-shadow: 0 0 20px var(--bubble-food);
+}
+
+/* Colour */
+.category-Colour .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-colour), #0a3d62);
+  box-shadow: 0 0 20px var(--bubble-colour);
+}
+
+/* Job */
+.category-Job .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-job), #b8860b);
+  box-shadow: 0 0 20px var(--bubble-job);
+}
+
+/* Object */
+.category-Object .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-object), #4b4b9f);
+  box-shadow: 0 0 20px var(--bubble-object);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .wm-bubble {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
   }
 }
