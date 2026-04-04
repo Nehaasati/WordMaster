@@ -87,3 +87,69 @@
 .gp-btn--freeze { background: #111; }
 .gp-btn--black  { background: #555; }
 .gp-btn--mix    { background: #3b82f6; }
+/* ── MAIN CONTENT ── */
+.gp-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1;
+  padding: 0 20px 16px;
+  gap: 20px;
+  overflow: hidden;
+}
+ 
+/* ── LEFT — CATEGORIES ── */
+.gp-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 0 400px;
+  justify-content: center;
+}
+ 
+.gp-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+ 
+.gp-cat-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  font-style: italic;
+  min-width: 85px;
+  text-align: right;
+}
+ 
+.gp-cat-input-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+ 
+.gp-cat-input {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a0a2e;
+  outline: none;
+  text-transform: uppercase;
+}
+ 
+.gp-cat-input--valid {
+  background: rgba(200, 255, 200, 0.92);
+  color: #155c15;
+}
+ 
+.gp-cat-input:disabled { opacity: 0.85; cursor: not-allowed; }
+ 
+.gp-feedback {
+  font-size: 0.75rem;
+  color: #ff6b6b;
+  padding-left: 14px;
