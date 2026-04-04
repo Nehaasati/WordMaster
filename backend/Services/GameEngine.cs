@@ -8,6 +8,9 @@ public class GameEngine
     private readonly HashSet<string> _dictionary;
     private readonly Dictionary<string, List<string>> _categories;
 
+    // Random generator for letter selection (weighted)
+    private static readonly Random _random = new Random();
+
     private readonly List<string> _categoryList;
     private int _currentCategoryIndex = 0;
 
@@ -49,26 +52,30 @@ public class GameEngine
     {
         _currentCategoryIndex++;
 
+        // If all categories are completed
         if (_currentCategoryIndex >= _categoryList.Count)
-            _currentCategoryIndex = 0; // this can be changed later to end the game instead of looping
+        {
+             _currentCategoryIndex = 0;
 
-        GenerateRequiredLetter();
+             // Generate new letter ONLY after finishing all categories
+            GenerateRequiredLetter();
+        }
     }
 
     // Weighted Random Letter Generator (matching frontend logic)
     private void GenerateRequiredLetter()
     {
-        var random = new Random();
         var weightedPool = new List<char>();
 
         foreach (var c in Alphabet)
         {
             int weight = Weights.TryGetValue(c, out int w) ? w : 2;
+
             for (int i = 0; i < weight; i++)
-                weightedPool.Add(c);
+            weightedPool.Add(c);
         }
 
-        RequiredLetter = weightedPool[random.Next(weightedPool.Count)];
+        RequiredLetter = weightedPool[_random.Next(weightedPool.Count)];
     }
 
     // Issue #15 — Word submission and validation
@@ -77,6 +84,9 @@ public class GameEngine
         // Basic validations 
         if (string.IsNullOrWhiteSpace(word))
             return (false, "Invalid request");
+
+        // Trim and normalize the word to uppercase for consistent validation
+        word = word.Trim().ToUpperInvariant();
 
         // Normalize the word to uppercase for consistent validation
 
@@ -94,11 +104,6 @@ public class GameEngine
             return (false, "Word does not start with required letter");
 
         // Check if the word has been used before (case-insensitive)
-
-        if (!_validator.IsNotUsedBefore(word, UsedWords))
-            return (false, "Word already used");
-
-        // Check if the word is in the dictionary (case-insensitive)
 
         if (!_validator.IsNotUsedBefore(word, UsedWords))
             return (false, "Word already used");
