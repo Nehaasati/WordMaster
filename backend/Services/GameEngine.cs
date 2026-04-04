@@ -7,6 +7,8 @@ public class GameEngine
     private readonly WordValidator _validator;
     private readonly HashSet<string> _dictionary;
     private readonly Dictionary<string, List<string>> _categories;
+    private readonly Dictionary<string, Lobby> _lobbies = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _inviteCodesToId = new(StringComparer.OrdinalIgnoreCase);
     private static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
     // Weighted randomizer weights (trying to mirror frontend randomizeer here)
@@ -22,6 +24,41 @@ public class GameEngine
         _validator = validator;
         _dictionary = dictionary;
         _categories = categories;
+    }
+
+    public Lobby CreateLobby()
+    {
+        var lobbyId = Guid.NewGuid().ToString("N")[..6].ToUpper();
+        var inviteCode = Guid.NewGuid().ToString("N")[..12]; // 12-char longer string
+        
+        var lobby = new Lobby { 
+            Id = lobbyId, 
+            InviteCode = inviteCode, 
+            Letters = GenerateLetters() 
+        };
+        
+        _lobbies[lobbyId] = lobby;
+        _inviteCodesToId[inviteCode] = lobbyId;
+        
+        return lobby;
+    }
+
+    public Lobby? GetLobby(string idOrCode)
+    {
+        if (string.IsNullOrEmpty(idOrCode)) return null;
+
+        // Check by short ID
+        if (_lobbies.TryGetValue(idOrCode, out var lobby))
+            return lobby;
+
+        // Check by long invite code
+        if (_inviteCodesToId.TryGetValue(idOrCode, out var lobbyId))
+        {
+            if (_lobbies.TryGetValue(lobbyId, out var inviteLobby))
+                return inviteLobby;
+        }
+
+        return null;
     }
 
     public List<char> GenerateLetters(int count = 15)
@@ -78,4 +115,11 @@ public class GameEngine
         }
         return true;
     }
+}
+
+public class Lobby
+{
+    public string Id { get; set; } = string.Empty;
+    public string InviteCode { get; set; } = string.Empty;
+    public List<char> Letters { get; set; } = new();
 }

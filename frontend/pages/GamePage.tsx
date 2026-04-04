@@ -1,7 +1,9 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import './GamePage.css'
 
 const GamePage: React.FC = () => {
+  const { lobbyId } = useParams<{ lobbyId: string }>();
   interface Letter {
     id: string;
     char: string;
@@ -86,9 +88,14 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     const fetchInitialLetters = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:5024/api/game/letters')
+        const url = lobbyId 
+          ? `http://127.0.0.1:5024/api/lobby/${lobbyId}`
+          : 'http://127.0.0.1:5024/api/game/letters'
+          
+        const response = await fetch(url)
         if (response.ok) {
-          const letters: string[] = await response.json()
+          const data = await response.json()
+          const letters: string[] = lobbyId ? data.letters : data;
           setAllLetters(letters.map(char => ({
             id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
             char,
@@ -103,7 +110,7 @@ const GamePage: React.FC = () => {
       }
     }
     fetchInitialLetters()
-  }, [])
+  }, [lobbyId])
 
   const addExtraLetters = async () => {
     try {
