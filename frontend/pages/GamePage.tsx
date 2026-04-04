@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react'
-import type { Letter,CategoryData,StarData,Category,ValidateResponse } from '../interfaces/GamePage'
+import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
 import './GamePage.css'
 ///Star annimation
 const Stars: React.FC = () => {
@@ -38,7 +38,16 @@ const Stars: React.FC = () => {
     </div>
   )
 }
-
+const CATEGORY_LIST: Category[] = [
+  { id: 'Name',   label: 'Namn'      },
+  { id: 'Food',   label: 'Mat/Frukt' },
+  { id: 'Job',    label: 'Jobb'      },
+  { id: 'Land',   label: 'Stad/Land' },
+  { id: 'Colour', label: 'Färg'      },
+  { id: 'Animal', label: 'Djur'      },
+  { id: 'Object', label: 'Sak'       },
+]
+const GamePage: React.FC = () => {
   const [allLetters, setAllLetters] = useState<Letter[]>([])
   const [colorWord, setColorWord] = useState('')
   const [foodWord, setFoodWord] = useState('')
