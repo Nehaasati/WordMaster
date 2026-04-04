@@ -56,8 +56,10 @@ const GamePage: React.FC = () => {
     })
     return initial
   })
-  const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
-
+  const [timeLeft,  setTimeLeft]  = useState(60)
+  const [frozen,    setFrozen]    = useState(false)
+  const [freezeMsg, setFreezeMsg] = useState('')
+  const [stopped,   setStopped]   = useState(false)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
