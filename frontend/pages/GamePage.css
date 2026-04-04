@@ -205,3 +205,27 @@
 .gp-stop-btn:active   { transform: translateY(0); }
 .gp-stop-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .gp-stop-btn--ready   { background: #22c55e; box-shadow: 0 4px 20px rgba(0,180,0,0.5); }
+/* ── STOPPED OVERLAY ── */
+.gp-stopped-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+ 
+.gp-stopped-card {
+  background: linear-gradient(160deg, #1c0b42 0%, #0e0428 100%);
+  border: 1px solid rgba(160,80,255,0.4);
+  border-radius: 20px;
+  padding: 40px 60px;
+  text-align: center;
+  color: #fff;
+  font-family: 'Cinzel Decorative', serif;
+}
+ 
+.gp-stopped-card h2 { font-size: 3rem; color: #ff6b6b; margin-bottom: 16px; }
+.gp-stopped-card p  { font-size: 1.2rem; color: #d09fff; font-family: 'Cinzel', serif; }
+ 
