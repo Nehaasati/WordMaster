@@ -454,3 +454,16 @@ const handleFreeze = () => {
           </button>
         </div>
       </div>
+    {stopped && (
+        <div className="gp-stopped-overlay" data-testid="stopped-overlay">
+          <div className="gp-stopped-card">
+            <h2>Stopp!</h2>
+            <p>Din tid: {60 - timeLeft} sekunder</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+ 
+export default GamePage
