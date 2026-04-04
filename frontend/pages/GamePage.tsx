@@ -408,3 +408,28 @@ const handleFreeze = () => {
         <button className="gp-btn gp-btn--black" onClick={addExtraLetters} data-testid="btn-black">Bläck</button>
         <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
       </div>
+     <div className="gp-content">
+        <div className="gp-categories" data-testid="categories">
+          {CATEGORY_LIST.map(cat => (
+            <div className="gp-cat-row" key={cat.id}>
+              <label className="gp-cat-label">{cat.label}:</label>
+              <div className="gp-cat-input-wrap">
+                <input
+                  type="text"
+                  ref={el => inputRefs.current[cat.id] = el}
+                  className={`gp-cat-input ${categories[cat.id].valid ? 'gp-cat-input--valid' : ''}`}
+                  value={categories[cat.id].word}
+                  onChange={e => handleInputChange(cat.id, e)}
+                  disabled={categories[cat.id].valid || frozen || stopped}
+                  data-testid={`input-${cat.id}`}
+                />
+                {categories[cat.id].feedback && (
+                  <span className="gp-feedback" data-testid={`feedback-${cat.id}`}>
+                    {categories[cat.id].feedback}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+ 
