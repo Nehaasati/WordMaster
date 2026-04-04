@@ -3,16 +3,20 @@
     width: 100vw;
     height: 100vh;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     padding: 0 50px;
     box-sizing: border-box;
 }
 
 .inputs-container {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 20px;
     z-index: 10;
     width: 300px;
 }
@@ -51,6 +55,22 @@
     color: #44ff44;
     border-color: #44ff44;
     text-shadow: 0 0 5px rgba(68, 255, 68, 0.5);
+}
+
+.category-input:disabled {
+    cursor: not-allowed;
+}
+
+.category-input.valid:disabled {
+    background: rgba(68, 255, 68, 0.1);
+}
+
+.feedback-message {
+    height: 1.2rem;
+    color: #ff8888;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .letters-container {
@@ -94,6 +114,13 @@
     pointer-events: none;
     white-space: nowrap;
     text-align: center;
+}
+
+.backend-status {
+    font-size: 0.9rem;
+    margin-top: 5px;
+    font-weight: normal;
+    opacity: 0.9;
 }
 
 .game-right-side {

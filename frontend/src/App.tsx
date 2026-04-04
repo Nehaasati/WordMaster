@@ -1,15 +1,26 @@
-import React, { useState } from 'react'
+//import React from 'react' (It is causing errors, -Oskar)
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import LandingPage from '../pages/Landingpage'
 import GamePage from '../pages/GamePage'
+import LobbyPage from '../pages/LobbyPage'
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'game'>('landing')
+  return (
+    <Router>
+      <Routes>
+        {/* Main landing page */}
+        <Route path="/" element={<LandingPage />} />
 
-  if (currentPage === 'game') {
-    return <GamePage />
-  }
+        <Route path="/lobby" element={<LobbyPage />} />
+        
+        {/* Game page with its own URL */}
+        <Route path="/game" element={<GamePage />} />
 
-  return <LandingPage onDev={() => setCurrentPage('game')} />
+        {/* Future: Unique game links (e.g., /game/ABC-123) */}
+        <Route path="/game/:gameId" element={<GamePage />} />
+      </Routes>
+    </Router>
+  )
 }
 
 export default App

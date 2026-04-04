@@ -1,5 +1,6 @@
 import React, { useState} from 'react'
-import './Landingpage.css' 
+import { useNavigate } from 'react-router-dom'
+import '../css/Landingpage.css'
 import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
 /////
 const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
@@ -75,12 +76,9 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
   )
 }
 //Landing page
-interface LandingPageProps {
-  onDev?: () => void;
-}
-
-const LandingPage: React.FC<LandingPageProps> = ({ onDev }) => {
+const LandingPage: React.FC = () => {
   const [modal, setModal] = useState<ModalType>(null)
+  const navigate = useNavigate();
 
   return (
     <div className="wm-scene" data-testid="landing-page">
@@ -96,18 +94,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onDev }) => {
             onClick={() => setModal('create')}
             data-testid="btn-create"
           >
-            Create a lobby
+            Skapa en lobby
           </button>
           <button
             className="wm-btn"
             onClick={() => setModal('join')}
             data-testid="btn-join"
           >
-            Join a lobby
+            Gå med i en lobby
           </button>
           <button
             className="wm-btn"
-            onClick={onDev}
+            onClick={() => navigate('/game')}
             data-testid="btn-dev"
           >
             Oskars DEV knapp till spel sidan
