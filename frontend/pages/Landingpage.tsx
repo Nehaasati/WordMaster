@@ -14,8 +14,8 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId }) => {
         <h2 className="wm-modal-title">Lobby Created</h2>
         <p className="wm-modal-label">Your lobby is ready</p>
         {lobbyId && (
-          <div style={{ marginBottom: '1rem', color: '#666' }}>
-            Lobby ID: <strong>{lobbyId}</strong>
+          <div style={{ marginBottom: '1.2rem', color: 'rgba(225, 200, 255, 0.9)', fontSize: '1rem', textAlign: 'center' }}>
+            Lobby ID: <strong style={{ color: '#eedeff', textShadow: '0 0 8px rgba(160, 80, 255, 0.4)' }}>{lobbyId}</strong>
           </div>
         )}
         <div className="wm-modal-btns">
@@ -127,13 +127,6 @@ const LandingPage: React.FC = () => {
             data-testid="btn-join"
           >
             Gå med i en lobby
-          </button>
-          <button
-            className="wm-btn"
-            onClick={() => navigate('/game')}
-            data-testid="btn-dev"
-          >
-            Oskars DEV knapp till spel sidan
           </button>
         </div>
       </div>
