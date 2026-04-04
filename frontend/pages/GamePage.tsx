@@ -103,7 +103,6 @@ const GamePage: React.FC = () => {
     }
     return letters
   }
-/////
   useEffect(() => {
     const checkBackend = async () => {
       try {
@@ -158,7 +157,6 @@ const GamePage: React.FC = () => {
       setAllLetters(prev => [...prev, ...generateRandomLetters(5, prev, true)])
     }
   }
-///////////////////////////////////////////////
   const updateUsedLetters = () => {
     let combinedWord = ''
     for (const catId in categories) {
@@ -179,13 +177,6 @@ const GamePage: React.FC = () => {
       return nextLetters
     })
   }
-    useEffect(() => {
-    updateUsedLetters()
-  }, [categories])
- useEffect(() => {
-    const next = CATEGORY_LIST.find(c => !categories[c.id].valid)
-    if (next) inputRefs.current[next.id]?.focus()
-  }, CATEGORY_LIST.map(c => categories[c.id].valid))
   const checkWordWithLetters = (word: string, categoryId: string) => {
     const wordUpper = word.toUpperCase()
     
@@ -287,21 +278,6 @@ const GamePage: React.FC = () => {
           if (resp.ok) newLetterChars = await resp.json()
         } catch { /* fallback to local generation below */ }
 
-        setAllLetters(prev => {
-          let replaceIdx = 0
-          const currentUnused = prev.filter(l => !l.used)
-          
-          return prev.map(l => {
-            if (l.used && word.toUpperCase().includes(l.char)) {
-              // We need to be careful here to only replace the letters actually used for THIS word
-              // But since we marked them 'used' in updateUsedLetters, we can find them.
-              // Actually, a simpler way: if l.used is true now, and it matches a char in word, 
-              // but we need to match exactly the number of chars.
-            }
-            return l
-          })
-        })
-
         // Re-implementing letter replacement more robustly
         setAllLetters(prev => {
           const nextLetters = [...prev]
@@ -362,6 +338,7 @@ const GamePage: React.FC = () => {
   }, [categories])
 
   const handleInputChange = (categoryId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+      if (frozen || stopped) return
     const val = e.target.value.toUpperCase()
     
     // If it was valid, typing in it again (if allowed) should reset valid
@@ -399,7 +376,24 @@ const GamePage: React.FC = () => {
     
     validateWord(val, categoryId)
   }
-
+const handleFreeze = () => {
+    setFrozen(true)
+    setFreezeMsg('Freeze: Du kan inte skriva i 5 sekunder')
+    setTimeout(() => { setFrozen(false); setFreezeMsg('') }, 5000)
+  }
+ 
+  const handleMix = () => {
+    setAllLetters(prev => {
+      const shuffled = [...prev]
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      }
+      return shuffled
+    })
+  }
+ 
+  const allDone = CATEGORY_LIST.every(c => categories[c.id].valid)
   return (
       <div className="wm-scene game-page" data-testid="game-page">
       <div className="wm-bg" />
