@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
-import './GamePage.css'
+import '../css/GamePage.css'
 ///Star annimation
 const Stars: React.FC = () => {
   const stars = useRef<StarData[]>([])
