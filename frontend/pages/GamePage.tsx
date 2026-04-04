@@ -416,7 +416,7 @@ const handleFreeze = () => {
               <div className="gp-cat-input-wrap">
                 <input
                   type="text"
-                  ref={el => inputRefs.current[cat.id] = el}
+                  ref={(el: HTMLInputElement | null) => { inputRefs.current[cat.id] = el }}
                   className={`gp-cat-input ${categories[cat.id].valid ? 'gp-cat-input--valid' : ''}`}
                   value={categories[cat.id].word}
                   onChange={e => handleInputChange(cat.id, e)}
