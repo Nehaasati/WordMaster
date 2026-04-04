@@ -1,5 +1,5 @@
 import {useState, useEffect} from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
@@ -15,11 +15,18 @@ const Characters: Character[] = [
 export default function LobbyPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
+  // Hämta isHost från navigation state
+  const location = useLocation();
+  // Om isHost inte skickas via navigation, defaulta till false
+  const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
+  const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
+  
   const [realLobbyId, setRealLobbyId] = useState<string>("");
   
   // State för att hålla koll på spelare i lobbyn
   const [players, setPlayers] = useState<Player[]>([]);
 
+  // fetch lobby data
   useEffect(() => {
     const fetchLobby = async () => {
       if (!lobbyId) return;
@@ -98,15 +105,17 @@ export default function LobbyPage() {
         <div className="col">
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
+          {/* Players list */}
           <div className="players-list">
             {players.map((p, index) => (
               <div key={p.id} className="player-box">
                 <p>
-                  Player {index + 1}: {p.name}
+                  Spelare {index + 1}: {p.name}
                 </p>
               </div>
             ))}
           </div>
+          {/* Lobby info */}
           {realLobbyId && (
             <div
               className="lobby-info"
@@ -158,6 +167,7 @@ export default function LobbyPage() {
             </div>
           )}
 
+          {/* Character carousel */}
           <div className="character-carousel">
             <button className="ch-arrow" onClick={prev}>
               <img src="/images/prev.png" className="ch-arrow-img" />
@@ -176,30 +186,33 @@ export default function LobbyPage() {
             </button>
           </div>
 
+          {/* Ready/ Start button */}
           <button
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
             onClick={async () => {
-              if (!ready) {
-                setReady(true);
+                if (!ready) {
+                    setReady(true);
 
-                // skicka POST-förfrågan för att gå med i lobbyn
-                await fetch(
-                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      name: character.name,
-                      isHost: false,
-                    }),
-                  },
-                );
-              } else {
-                navigate(`/game/${lobbyId || ""}`);
-              }
+                    // skicka POST-förfrågan för att gå med i lobbyn
+                    await fetch(
+                        `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                name: character.name,
+                                isHost: isHost,
+                            }),
+                        },
+                    );
+                } else {
+                    if (isHost) {
+                        navigate(`/game/${lobbyId || ""}`);
+                    }
+                }
             }}
           >
-            {ready ? "Starta spelet" : "Redo"}
+            {ready ? (isHost ? "Starta spelet" : "Väntar på värden...") : "Redo"}
           </button>
         </div>
       </div>
