@@ -123,3 +123,33 @@ public class Lobby
     public string InviteCode { get; set; } = string.Empty;
     public List<char> Letters { get; set; } = new();
 }
+
+
+public class Player
+{
+    // For simplicity, we're using a string ID here. In a real application, you might want to use a more robust identifier.
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    // Player name, can be set by the client when they join the lobby
+    public string Name { get; set; } = string.Empty;
+
+    // Indicates if this player is the host of the lobby (the one who created it)
+    public bool IsHost { get; set; }
+
+    // ConnectionId can be used to track the player's connection for real-time updates (e.g., via SignalR)
+    public string? ConnectionId { get; set; }
+
+    // Player's current score in the game, can be updated as they submit valid words
+    public int Score { get; set; }
+
+    // Indicates if the player is ready to start the game. This can be used to ensure all players are ready before starting.
+    public bool IsReady { get; set; }
+
+    // Timestamp for when the player joined the lobby, can be useful for sorting players or handling timeouts
+    public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+
+    // we can add more player-specific properties here later, like avatar, language preference, etc.
+    // public string PreferredLanguage { get; set; } = "sv, en, etc.";
+    // public string Language { get; set; } = "sv";
+    // public string AvatarColor { get; set; } = "#c300ff";
+}
