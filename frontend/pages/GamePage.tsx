@@ -403,3 +403,8 @@ const handleFreeze = () => {
         <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
         <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
       </div>
+    <div className="gp-powerups">
+        <button className="gp-btn gp-btn--freeze" onClick={handleFreeze} data-testid="btn-freeze">Freeze</button>
+        <button className="gp-btn gp-btn--black" onClick={addExtraLetters} data-testid="btn-black">Bläck</button>
+        <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
+      </div>
