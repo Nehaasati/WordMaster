@@ -10,3 +10,31 @@
   overflow: hidden;
   font-family: 'Cinzel', serif;
 }
+/* ── BACKGROUND ── */
+.gp-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #6a4fd8 0%, #9b3ec8 50%, #7b5fe8 100%);
+  z-index: 0;
+}
+ 
+/* ── STARS ── */
+.gp-stars {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+ 
+.gp-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: gpTwinkle var(--d) ease-in-out infinite var(--del);
+}
+ 
+@keyframes gpTwinkle {
+  0%, 100% { opacity: var(--min); transform: scale(1); }
+  50%       { opacity: 1;         transform: scale(1.5); }
+}
+ 
