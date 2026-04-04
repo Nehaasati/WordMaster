@@ -162,3 +162,27 @@
   justify-content: space-between;
   padding-bottom: 8px;
 }
+/* ── BIG GREEN LETTERS ── */
+.gp-letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+  align-content: flex-start;
+  max-width: 340px;
+}
+ 
+.gp-letter {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 3rem;
+  font-weight: 900;
+  color: #00ff00;
+  text-shadow: 2px 2px 0 #006600, 4px 4px 0 rgba(0,80,0,0.4);
+  min-width: 65px;
+  text-align: center;
+  line-height: 1.1;
+  transition: opacity 0.2s;
+}
+ 
+.gp-letter--used  { opacity: 0.2; text-decoration: line-through; }
+.gp-letter--extra { color: #ffdd00; text-shadow: 2px 2px 0 #886600; }
