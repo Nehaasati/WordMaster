@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import LandingPage from '../pages/Landingpage'
 import GamePage from '../pages/GamePage'
+import LobbyPage from '../pages/LobbyPage'
 
 function App() {
   return (
@@ -9,6 +10,8 @@ function App() {
       <Routes>
         {/* Main landing page */}
         <Route path="/" element={<LandingPage />} />
+
+        <Route path="/lobby" element={<LobbyPage />} />
         
         {/* Game page with its own URL */}
         <Route path="/game" element={<GamePage />} />
