@@ -102,7 +102,7 @@ const GamePage: React.FC = () => {
     }
     return letters
   }
-
+/////
   useEffect(() => {
     const checkBackend = async () => {
       try {
@@ -157,7 +157,7 @@ const GamePage: React.FC = () => {
       setAllLetters(prev => [...prev, ...generateRandomLetters(5, prev, true)])
     }
   }
-
+///////////////////////////////////////////////
   const updateUsedLetters = () => {
     let combinedWord = ''
     for (const catId in categories) {
@@ -178,7 +178,13 @@ const GamePage: React.FC = () => {
       return nextLetters
     })
   }
-
+    useEffect(() => {
+    updateUsedLetters()
+  }, [categories])
+ useEffect(() => {
+    const next = CATEGORY_LIST.find(c => !categories[c.id].valid)
+    if (next) inputRefs.current[next.id]?.focus()
+  }, CATEGORY_LIST.map(c => categories[c.id].valid))
   const checkWordWithLetters = (word: string, categoryId: string) => {
     const wordUpper = word.toUpperCase()
     
