@@ -63,7 +63,16 @@ const GamePage: React.FC = () => {
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
-
+ useEffect(() => {
+    if (stopped) return
+    const t = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) { clearInterval(t); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [stopped])
   // Weighted randomizer to reduce duplicates
   const generateRandomLetters = (count: number, currentLetters: Letter[] = [], isExtra: boolean = false) => {
     const letters: Letter[] = []
