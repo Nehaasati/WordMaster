@@ -61,3 +61,29 @@
   color: #ffe066;
   font-style: italic;
 }
+/* ── POWER-UPS ── */
+.gp-powerups {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 16px;
+  padding: 0 20px 10px;
+}
+ 
+.gp-btn {
+  padding: 10px 30px;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  transition: transform 0.15s;
+}
+.gp-btn:hover  { transform: translateY(-2px); }
+.gp-btn:active { transform: translateY(0); }
+ 
+.gp-btn--freeze { background: #111; }
+.gp-btn--black  { background: #555; }
+.gp-btn--mix    { background: #3b82f6; }
