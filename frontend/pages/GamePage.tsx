@@ -432,4 +432,25 @@ const handleFreeze = () => {
             </div>
           ))}
         </div>
- 
+  <div className="gp-right">
+          <div className="gp-letters" data-testid="letters">
+            {allLetters.map(letter => (
+              <div
+                key={letter.id}
+                className={`gp-letter ${letter.isExtra ? 'gp-letter--extra' : ''} ${letter.used ? 'gp-letter--used' : ''}`}
+                data-testid="letter-tile"
+              >
+                {letter.char}
+              </div>
+            ))}
+          </div>
+          <button
+            className={`gp-stop-btn ${allDone ? 'gp-stop-btn--ready' : ''}`}
+            onClick={() => setStopped(true)}
+            disabled={stopped}
+            data-testid="btn-stop"
+          >
+            Stopp
+          </button>
+        </div>
+      </div>
