@@ -1,10 +1,12 @@
 using WordMaster.Services;
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
+builder.Services.AddSignalR();
 
 // Load the word dictionary
 var wordDictionary = WordDictionaryLoader.LoadFromFiles
@@ -72,11 +74,21 @@ app.MapGet("/api/game/letters", (GameEngine engine, int count = 15) =>
 app.MapGet("/api/health", () => Results.Ok("OK"));
 
 // New endpoint to join a lobby using either lobby ID or invite code
-app.MapPost("/api/lobby/{lobbyId}/join", (string lobbyId, Player player, GameEngine engine) =>
+// This endpoint allows a player to join a lobby and notifies other players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/join", async (
+    string lobbyId,
+    Player player,
+    GameEngine engine,
+    IHubContext<LobbyHub> hubContext) =>
 {
-    // Try to join the lobby using either the lobby ID or the invite code
+    // Try to join the lobby using the provided lobby ID or invite code
     if (engine.TryJoinLobby(lobbyId, player, out var error))
     {
+        // Notify other players in the lobby that a new player has joined
+        await hubContext.Clients.Group(lobbyId)
+            .SendAsync("PlayerJoined", player);
+
+        // Return a success response with the lobby ID and player info
         return Results.Ok(new
         {
             message = "Player joined successfully",
@@ -84,10 +96,13 @@ app.MapPost("/api/lobby/{lobbyId}/join", (string lobbyId, Player player, GameEng
             player = player
         });
     }
-    
-    // If joining fails, return a bad request with the error message
+
+    // If joining the lobby failed, return a bad request with the error message
     return Results.BadRequest(new { error });
 });
+
+// Map the SignalR hub for real-time lobby updates
+app.MapHub<LobbyHub>("/lobbyHub");
 
 app.Run();
 
