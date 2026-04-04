@@ -7,6 +7,7 @@ public class GameEngine
     private readonly WordValidator _validator;
     private readonly HashSet<string> _dictionary;
     private readonly Dictionary<string, List<string>> _categories;
+    private readonly Dictionary<string, Lobby> _lobbies = new();
     private static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
     // Weighted randomizer weights (trying to mirror frontend randomizeer here)
@@ -22,6 +23,18 @@ public class GameEngine
         _validator = validator;
         _dictionary = dictionary;
         _categories = categories;
+    }
+
+    public string CreateLobby()
+    {
+        var lobbyId = Guid.NewGuid().ToString("N")[..6].ToUpper();
+        _lobbies[lobbyId] = new Lobby { Id = lobbyId, Letters = GenerateLetters() };
+        return lobbyId;
+    }
+
+    public Lobby? GetLobby(string lobbyId)
+    {
+        return _lobbies.TryGetValue(lobbyId.ToUpper(), out var lobby) ? lobby : null;
     }
 
     public List<char> GenerateLetters(int count = 15)
@@ -78,4 +91,10 @@ public class GameEngine
         }
         return true;
     }
+}
+
+public class Lobby
+{
+    public string Id { get; set; } = string.Empty;
+    public List<char> Letters { get; set; } = new();
 }

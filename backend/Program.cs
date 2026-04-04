@@ -51,6 +51,18 @@ app.MapPost("/api/word/validate", (
     return Results.Ok(new { isValid, message });
 });
 
+app.MapPost("/api/lobby", (GameEngine engine) =>
+{
+    var lobbyId = engine.CreateLobby();
+    return Results.Ok(new { lobbyId });
+});
+
+app.MapGet("/api/lobby/{lobbyId}", (string lobbyId, GameEngine engine) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    return lobby is not null ? Results.Ok(lobby) : Results.NotFound();
+});
+
 app.MapGet("/api/game/letters", (GameEngine engine, int count = 15) =>
 {
     var letters = engine.GenerateLetters(count);

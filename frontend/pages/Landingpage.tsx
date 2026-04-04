@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import '../css/Landingpage.css'
 import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
 /////
-const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
+const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId }) => {
+  const navigate = useNavigate();
   const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose()
     }
@@ -12,10 +13,15 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
       <div className="wm-modal">
         <h2 className="wm-modal-title">Lobby Created</h2>
         <p className="wm-modal-label">Your lobby is ready</p>
+        {lobbyId && (
+          <div style={{ marginBottom: '1rem', color: '#666' }}>
+            Lobby ID: <strong>{lobbyId}</strong>
+          </div>
+        )}
         <div className="wm-modal-btns">
           <button
             className="wm-modal-btn wm-modal-btn--confirm"
-            onClick={onClose}
+            onClick={() => navigate(`/lobby/${lobbyId}`)}
           >
             Enter Lobby
           </button>
@@ -32,9 +38,11 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
 }
 const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
   const [value, setValue] = useState<string>('')
+  const navigate = useNavigate();
  
   const handleJoin = () => {
     if (value.trim().length >= 4) {
+      navigate(`/lobby/${value.trim().toUpperCase()}`)
       onClose()
     }
   }
@@ -78,7 +86,24 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
 //Landing page
 const LandingPage: React.FC = () => {
   const [modal, setModal] = useState<ModalType>(null)
+  const [lobbyId, setLobbyId] = useState<string>('')
   const navigate = useNavigate();
+
+  const handleCreateClick = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5024/api/lobby', { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        setLobbyId(data.lobbyId);
+        setModal('create');
+      }
+    } catch (error) {
+      console.error("Failed to create lobby", error);
+      // Fallback
+      setLobbyId('ERROR');
+      setModal('create');
+    }
+  }
 
   return (
     <div className="wm-scene" data-testid="landing-page">
@@ -91,7 +116,7 @@ const LandingPage: React.FC = () => {
         <div className="wm-btn-group">
           <button
             className="wm-btn"
-            onClick={() => setModal('create')}
+            onClick={handleCreateClick}
             data-testid="btn-create"
           >
             Skapa en lobby
@@ -113,7 +138,7 @@ const LandingPage: React.FC = () => {
         </div>
       </div>
  
-      {modal === 'create' && <CreateModal onClose={() => setModal(null)} />}
+      {modal === 'create' && <CreateModal onClose={() => setModal(null)} lobbyId={lobbyId} />}
       {modal === 'join'   && <JoinModal   onClose={() => setModal(null)} />}
     </div>
   )

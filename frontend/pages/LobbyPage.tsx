@@ -1,4 +1,5 @@
 import {useState} from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import type {Character} from "../src/interfaces/interface.tsx";
 import "../css/lobby.css";
 
@@ -11,6 +12,8 @@ const Characters: Character[] = [
 ]
 
 export default function LobbyPage(){
+    const { lobbyId } = useParams<{ lobbyId: string }>();
+    const navigate = useNavigate();
 
     const [index, setIndex] = useState(0);          // för att ha koll på vilken karaktär visas
     const character = Characters[index];            //aktuella karaktären baserat på index
@@ -19,12 +22,26 @@ export default function LobbyPage(){
 
     const [ready, setReady] = useState(false);
 
+    const shareUrl = window.location.href;
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(shareUrl);
+        alert("Länk kopierad!");
+    };
 
     return(
         <div className="page">
             <div className="container">
                 <div className="col">
                     <h1 className="title">VÄLJ EN KARAKTÄR</h1>
+                    {lobbyId && (
+                        <div className="lobby-info" style={{ marginBottom: '20px', textAlign: 'center' }}>
+                            <p>Lobby: <strong>{lobbyId}</strong></p>
+                            <button onClick={copyToClipboard} className="wm-modal-btn" style={{ padding: '5px 10px', fontSize: '0.8rem' }}>
+                                Kopiera inbjudningslänk
+                            </button>
+                        </div>
+                    )}
 
                     <div className="character-carousel">
                         <button className="ch-arrow" onClick={prev}>
@@ -40,8 +57,17 @@ export default function LobbyPage(){
                         </button>
                     </div>
 
-                    <button className='ready-btn ${ready? "isReady-btn" : ""}'>
-                        {ready? "Ok" : "Redo"}
+                    <button 
+                        className={`ready-btn ${ready? "isReady-btn" : ""}`}
+                        onClick={() => {
+                            if (ready) {
+                                navigate(`/game/${lobbyId || ''}`);
+                            } else {
+                                setReady(true);
+                            }
+                        }}
+                    >
+                        {ready? "Starta spelet" : "Redo"}
                     </button>
 
                 </div>
