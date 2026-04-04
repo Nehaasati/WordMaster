@@ -153,3 +153,12 @@
   font-size: 0.75rem;
   color: #ff6b6b;
   padding-left: 14px;
+  /* ── RIGHT ── */
+.gp-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 8px;
+}
