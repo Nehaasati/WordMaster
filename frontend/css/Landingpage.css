@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&display=swap');
-
 /* ── SCENE ── */
 .wm-scene {
   position: relative;
@@ -73,42 +71,6 @@
   width: 280px;
 }
 
-.wm-btn {
-  width: 100%;
-  padding: 16px 0;
-  border: none;
-  border-radius: 50px;
-  font-family: 'Cinzel', serif;
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: #1a0a2e;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-
-  /* Cream/parchment gradient from Figma */
-  background: linear-gradient(
-    160deg,
-    #f0ebe0 0%,
-    #faf6ee 40%,
-    #ede6d6 100%
-  );
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.5),
-    0 1px 0 rgba(255, 255, 255, 0.7) inset;
-}
-.wm-btn:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(255, 255, 255, 0.7) inset;
-}
-.wm-btn:active {
-  transform: translateY(0) scale(0.98);
-}
-
 /* ── MODAL OVERLAY ── */
 .wm-modal-overlay {
   position: fixed;
@@ -141,66 +103,4 @@
   color: #eedeff;
   text-align: center;
   margin: 0;
-}
-
-.wm-modal-label {
-  color: rgba(210, 175, 255, 0.6);
-  font-family: 'Cinzel', serif;
-  font-size: 0.82rem;
-  text-align: center;
-  margin: 0;
-}
-.wm-modal-input {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(160, 80, 255, 0.3);
-  border-radius: 10px;
-  padding: 13px 18px;
-  color: #eedeff;
-  font-family: 'Cinzel', serif;
-  font-size: 1rem;
-  letter-spacing: 0.1em;
-  outline: none;
-  transition: border-color 0.2s;
-  width: 100%;
-}
-
-.wm-modal-input:focus {
-  border-color: rgba(180, 100, 255, 0.7);
-}
-
-.wm-modal-input::placeholder {
-  color: rgba(200, 170, 255, 0.35);
-  letter-spacing: 0.05em;
-}
-
-.wm-modal-btns {
-  display: flex;
-  gap: 10px;
-}
-
-.wm-modal-btn {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  font-family: 'Cinzel', serif;
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.wm-modal-btn:hover  { transform: translateY(-1px); opacity: 0.9; }
-.wm-modal-btn:active { transform: translateY(0);    opacity: 1; }
-
-.wm-modal-btn--confirm {
-  background: linear-gradient(135deg, #7b2fff 0%, #5a1ecc 100%);
-  color: #fff;
-}
-
-.wm-modal-btn--cancel {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(160, 80, 255, 0.25);
-  color: #c8b0f0;
 }

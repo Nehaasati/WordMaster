@@ -12,12 +12,11 @@ function App() {
         <Route path="/" element={<LandingPage />} />
 
         <Route path="/lobby" element={<LobbyPage />} />
+        <Route path="/lobby/:lobbyId" element={<LobbyPage />} />
         
         {/* Game page with its own URL */}
         <Route path="/game" element={<GamePage />} />
-
-        {/* Future: Unique game links (e.g., /game/ABC-123) */}
-        <Route path="/game/:gameId" element={<GamePage />} />
+        <Route path="/game/:lobbyId" element={<GamePage />} />
       </Routes>
     </Router>
   )
