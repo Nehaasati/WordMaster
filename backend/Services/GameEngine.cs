@@ -115,6 +115,41 @@ public class GameEngine
         }
         return true;
     }
+
+    // Try to join a lobby by ID or invite code. Returns true if successful, false if lobby not found, full, or player already in lobby.
+    public bool TryJoinLobby(string lobbyId, Player player, out string error)
+    {
+        // Reset error message
+        error = string.Empty;
+
+        // First, try to find the lobby by ID or invite code
+        var lobby = GetLobby(lobbyId);
+
+        // If lobby is null, it means it wasn't found by either ID or invite code
+        if (lobby is null)
+        {
+            error = "Lobby not found";
+            return false;
+        }
+
+        // Check if lobby is full (2 players max for now)
+        if (lobby.Players.Count >= 2)
+        {
+            error = "Lobby is full";
+            return false;
+        }
+
+        // Check if player is already in the lobby (by ID)
+        if (lobby.Players.Any(p => p.Id == player.Id))
+        {
+            error = "Player already in lobby";
+            return false;
+        }
+
+        // If we made it here, we can safely add the player to the lobby
+        lobby.Players.Add(player);
+        return true;
+    }
 }
 
 public class Lobby
