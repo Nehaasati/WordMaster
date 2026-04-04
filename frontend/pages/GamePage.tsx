@@ -395,4 +395,11 @@ const handleFreeze = () => {
  
   const allDone = CATEGORY_LIST.every(c => categories[c.id].valid)
   return (
+ <div className="gp-scene" data-testid="game-page">
+      <div className="gp-bg" />
+      <Stars />
  
+      <div className="gp-top-bar">
+        <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
+        <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
+      </div>
