@@ -71,6 +71,24 @@ app.MapGet("/api/game/letters", (GameEngine engine, int count = 15) =>
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
 
+// New endpoint to join a lobby using either lobby ID or invite code
+app.MapPost("/api/lobby/{lobbyId}/join", (string lobbyId, Player player, GameEngine engine) =>
+{
+    // Try to join the lobby using either the lobby ID or the invite code
+    if (engine.TryJoinLobby(lobbyId, player, out var error))
+    {
+        return Results.Ok(new
+        {
+            message = "Player joined successfully",
+            lobbyId = lobbyId,
+            player = player
+        });
+    }
+    
+    // If joining fails, return a bad request with the error message
+    return Results.BadRequest(new { error });
+});
+
 app.Run();
 
 public record ValidateRequest(string Word, string Category, List<char> Letters);
