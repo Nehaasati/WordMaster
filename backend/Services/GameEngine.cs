@@ -122,30 +122,34 @@ public class Lobby
     public string Id { get; set; } = string.Empty;
     public string InviteCode { get; set; } = string.Empty;
     public List<char> Letters { get; set; } = new();
+
+    // 2 players max for now, but we can easily expand this to support more players in the future if we want to make it more of a party game or add an AI player.
+    // We can add more properties here as needed, like current game state, scores, etc.
+    public List<Player> Players { get; set; } = new();
 }
 
-
+// Player class to represent a player in the lobby. This can be expanded with more properties as needed.
 public class Player
 {
-    // For simplicity, we're using a string ID here. In a real application, you might want to use a more robust identifier.
+    // For simplicity, we're using a string ID here. In a real application, you might want to use a more robust IDENTIFIER.
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
-    // Player name, can be set by the client when they join the lobby
+    // PLAYER NAME, can be set by the client when they join the lobby
     public string Name { get; set; } = string.Empty;
 
-    // Indicates if this player is the host of the lobby (the one who created it)
+    // Indicates if this player is the HOST of the lobby (the one who created it)
     public bool IsHost { get; set; }
 
-    // ConnectionId can be used to track the player's connection for real-time updates (e.g., via SignalR)
+    // ConnectionId can be used to track the player's connection for REAL-TIME updates (e.g., via SignalR)
     public string? ConnectionId { get; set; }
 
-    // Player's current score in the game, can be updated as they submit valid words
+    // Player's CURRENT score in the game, can be updated as they submit valid words
     public int Score { get; set; }
 
-    // Indicates if the player is ready to start the game. This can be used to ensure all players are ready before starting.
+    // Indicates if the player is READY to start the game. This can be used to ensure all players are ready before starting.
     public bool IsReady { get; set; }
 
-    // Timestamp for when the player joined the lobby, can be useful for sorting players or handling timeouts
+    // TIMESTAMP for when the player joined the lobby, can be useful for sorting players or handling timeouts
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
     // we can add more player-specific properties here later, like avatar, language preference, etc.
