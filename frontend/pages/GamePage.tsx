@@ -360,7 +360,7 @@ const GamePage: React.FC = () => {
     if (val.length > categories[categoryId].word.length) {
       const addedChar = val[val.length - 1]
       
-      // Check if we have this letter available (not used by other NON-VALID categories)
+      // Check if we have this letter available (not used by other NON-VALID categories).
       let otherUsedWord = ''
       for (const catId in categories) {
         if (catId !== categoryId && !categories[catId].valid) {
