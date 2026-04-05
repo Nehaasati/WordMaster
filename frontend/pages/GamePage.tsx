@@ -400,6 +400,7 @@ const handleFreeze = () => {
     })
   }
  
+  const score = Object.values(categories).reduce((sum, category) => sum + (category.valid ? 10 : 0), 0)
   const allDone = CATEGORY_LIST.every(c => categories[c.id].valid)
   return (
  <div className="gp-scene" data-testid="game-page">
@@ -408,6 +409,7 @@ const handleFreeze = () => {
  
       <div className="gp-top-bar">
         <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
+        <div className="gp-score" data-testid="score">POÄNG: {score}</div>
         <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
       </div>
     <div className="gp-powerups">
@@ -466,6 +468,7 @@ const handleFreeze = () => {
           <div className="gp-stopped-card">
             <h2>Stopp!</h2>
             <p>Din tid: {60 - timeLeft} sekunder</p>
+            <p>Din poäng: {score}</p>
           </div>
         </div>
       )}
