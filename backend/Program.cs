@@ -101,6 +101,22 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
     return Results.BadRequest(new { error });
 });
 
+// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/start", async (
+    string lobbyId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    if (!engine.CanStartGame(lobbyId))
+        return Results.BadRequest("Players not ready");
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("GameStarted", lobbyId);
+
+    return Results.Ok();
+});
+
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 
