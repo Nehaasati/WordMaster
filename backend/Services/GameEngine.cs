@@ -61,6 +61,30 @@ public class GameEngine
         return null;
     }
 
+    // Check if the game can be started (e.g., all players are ready and there are enough players)
+    public bool CanStartGame(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return false;
+
+        if (lobby.Players.Count != 2)
+            return false;
+
+        return lobby.Players.All(p => p.IsReady);
+    }
+
+    // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
+    public void SetPlayerReady(string lobbyId, string playerId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return;
+
+        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+
+        if (player != null)
+            player.IsReady = true;
+    }
+
     public List<char> GenerateLetters(int count = 15)
     {
         var random = new Random();
