@@ -126,6 +126,22 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
     return Results.BadRequest(new { error });
 });
 
+// New endpoint to set a player as ready in the lobby. This can be called from the client when a player clicks a "Ready" button, and it notifies other players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
+    string lobbyId,
+    string playerId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    engine.SetPlayerReady(lobbyId, playerId);
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("PlayerReady", playerId);
+
+    return Results.Ok();
+});
+
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 
