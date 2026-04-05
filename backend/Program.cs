@@ -1,10 +1,12 @@
 using WordMaster.Services;
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
+builder.Services.AddSignalR();
 
 // Load the word dictionary
 var wordDictionary = WordDictionaryLoader.LoadFromFiles
@@ -70,6 +72,78 @@ app.MapGet("/api/game/letters", (GameEngine engine, int count = 15) =>
 });
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
+
+// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/start", async (
+    string lobbyId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    // Check if the lobby exists and if the game can be started
+    var lobby = engine.GetLobby(lobbyId);
+
+    if (lobby == null)
+        return Results.NotFound();
+
+    if (!engine.CanStartGame(lobbyId))
+        return Results.BadRequest("Players not ready");
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("GameStarted", lobbyId);
+
+    return Results.Ok();
+});
+// New endpoint to join a lobby using either lobby ID or invite code
+// This endpoint allows a player to join a lobby and notifies other players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/join", async (
+    string lobbyId,
+    Player player,
+    GameEngine engine,
+    IHubContext<LobbyHub> hubContext) =>
+{
+    // assign connection id
+    player.ConnectionId = Guid.NewGuid().ToString();
+
+    if (engine.TryJoinLobby(lobbyId, player, out var error))
+    {
+        await hubContext.Clients.Group(lobbyId)
+            .SendAsync("PlayerJoined", player);
+
+        // Log the player joining for debugging purposes
+        Console.WriteLine($"Player {player.Name} joined lobby {lobbyId}");
+
+        // Return a success response with the lobby ID and player info
+        return Results.Ok(new
+        {
+            message = "Player joined successfully",
+            lobbyId = lobbyId,
+            player = player
+        });
+    }
+
+    // If joining the lobby failed, return a bad request with the error message
+    return Results.BadRequest(new { error });
+});
+
+// Endpoint to set a player as ready in the lobby. This can be called from the client when a player clicks a "Ready" button, and it notifies other players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
+    string lobbyId,
+    string playerId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    engine.SetPlayerReady(lobbyId, playerId);
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("PlayerReady", playerId);
+
+    return Results.Ok();
+});
+
+// Map the SignalR hub for real-time lobby updates
+app.MapHub<LobbyHub>("/lobbyHub");
 
 app.Run();
 

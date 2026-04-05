@@ -83,3 +83,46 @@
     background-color: blueviolet;
 
 }
+
+
+.lobby-message {
+    position: absolute;
+    bottom: 140px;
+    /* فوق زر Ready */
+    left: 50%;
+    transform: translateX(-50%);
+
+    background: rgba(0, 0, 0, 0.75);
+    padding: 14px 26px;
+    border-radius: 12px;
+
+    font-family: "Inter", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    font-style: italic;
+    color: white;
+
+    text-shadow:
+        -2px -2px 0 black,
+        2px -2px 0 black,
+        -2px 2px 0 black,
+        2px 2px 0 black;
+
+    border: 2px solid rgb(200, 0, 255);
+    box-shadow: 0 0 12px white;
+
+    animation: fadeInUp 0.25s ease-out;
+    z-index: 20;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}

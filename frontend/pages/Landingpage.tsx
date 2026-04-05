@@ -21,7 +21,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId, inviteCode 
         <div className="wm-modal-btns">
           <button
             className="wm-modal-btn wm-modal-btn--confirm"
-            onClick={() => navigate(`/lobby/${inviteCode || lobbyId}`)}
+            onClick={() => navigate(`/lobby/${inviteCode || lobbyId}`, { state: { isHost: true } })}
           >
             Enter Lobby
           </button>
