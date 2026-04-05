@@ -16,4 +16,11 @@ public class LobbyHub : Hub
   {
     await Clients.Group(lobbyId).SendAsync("PlayerJoined", player);
   }
+
+// method to notify players in the lobby when a player is ready. This can be called from the client when a player clicks a "Ready" button.
+  public async Task PlayerReady(string lobbyId, string playerId)
+  {
+    await Clients.Group(lobbyId)
+        .SendAsync("PlayerReady", playerId);
+  }
 }
