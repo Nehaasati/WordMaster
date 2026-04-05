@@ -1,31 +1,53 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
-import './GamePage.css'
-
+import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
+import '../css/GamePage.css'
+///Star annimation
+const Stars: React.FC = () => {
+  const stars = useRef<StarData[]>([])
+  if (!stars.current.length) {
+    for (let i = 0; i < 60; i++) {
+      const size = Math.random() * 2 + 0.5
+      stars.current.push({
+        id: i,
+        left: Math.random() * 100,
+        top:  Math.random() * 100,
+        size,
+        d:   (2 + Math.random() * 4).toFixed(1) + 's',
+        del: (Math.random() * 5).toFixed(1) + 's',
+        min: (0.2 + Math.random() * 0.3).toFixed(2),
+      })
+    }
+  }
+  return (
+    <div className="gp-stars">
+      {stars.current.map(s => (
+        <div
+          key={s.id}
+          className="gp-star"
+          style={{
+            left:   s.left + '%',
+            top:    s.top  + '%',
+            width:  s.size + 'px',
+            height: s.size + 'px',
+            ['--d'   as string]: s.d,
+            ['--del' as string]: s.del,
+            ['--min' as string]: s.min,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  )
+}
+const CATEGORY_LIST: Category[] = [
+  { id: 'Name',   label: 'Namn'      },
+  { id: 'Food',   label: 'Mat/Frukt' },
+  { id: 'Job',    label: 'Jobb'      },
+  { id: 'Land',   label: 'Stad/Land' },
+  { id: 'Colour', label: 'Färg'      },
+  { id: 'Animal', label: 'Djur'      },
+  { id: 'Object', label: 'Sak'       },
+]
 const GamePage: React.FC = () => {
-  const { lobbyId } = useParams<{ lobbyId: string }>();
-  interface Letter {
-    id: string;
-    char: string;
-    used: boolean;
-    isExtra: boolean;
-  }
-
-  interface CategoryData {
-    word: string;
-    valid: boolean;
-    feedback: string;
-  }
-
-  const CATEGORY_LIST = [
-    { id: 'Colour', label: 'Färg' },
-    { id: 'Food', label: 'Mat' },
-    { id: 'Animal', label: 'Djur' },
-    { id: 'Land', label: 'Land' },
-    { id: 'Job', label: 'Jobb' },
-    { id: 'Object', label: 'Objekt' }
-  ]
-
   const [allLetters, setAllLetters] = useState<Letter[]>([])
   const [categories, setCategories] = useState<Record<string, CategoryData>>(() => {
     const initial: Record<string, CategoryData> = {}
@@ -34,12 +56,24 @@ const GamePage: React.FC = () => {
     })
     return initial
   })
-  const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
-
+    const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
+  const [timeLeft,  setTimeLeft]  = useState(60)
+  const [frozen,    setFrozen]    = useState(false)
+  const [freezeMsg, setFreezeMsg] = useState('')
+  const [stopped,   setStopped]   = useState(false)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
-
+ useEffect(() => {
+    if (stopped) return
+    const t = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) { clearInterval(t); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [stopped])
   // Weighted randomizer to reduce duplicates
   const generateRandomLetters = (count: number, currentLetters: Letter[] = [], isExtra: boolean = false) => {
     const letters: Letter[] = []
@@ -69,7 +103,6 @@ const GamePage: React.FC = () => {
     }
     return letters
   }
-
   useEffect(() => {
     const checkBackend = async () => {
       try {
@@ -129,7 +162,6 @@ const GamePage: React.FC = () => {
       setAllLetters(prev => [...prev, ...generateRandomLetters(5, prev, true)])
     }
   }
-
   const updateUsedLetters = () => {
     let combinedWord = ''
     for (const catId in categories) {
@@ -150,7 +182,6 @@ const GamePage: React.FC = () => {
       return nextLetters
     })
   }
-
   const checkWordWithLetters = (word: string, categoryId: string) => {
     const wordUpper = word.toUpperCase()
     
@@ -252,21 +283,6 @@ const GamePage: React.FC = () => {
           if (resp.ok) newLetterChars = await resp.json()
         } catch { /* fallback to local generation below */ }
 
-        setAllLetters(prev => {
-          let replaceIdx = 0
-          const currentUnused = prev.filter(l => !l.used)
-          
-          return prev.map(l => {
-            if (l.used && word.toUpperCase().includes(l.char)) {
-              // We need to be careful here to only replace the letters actually used for THIS word
-              // But since we marked them 'used' in updateUsedLetters, we can find them.
-              // Actually, a simpler way: if l.used is true now, and it matches a char in word, 
-              // but we need to match exactly the number of chars.
-            }
-            return l
-          })
-        })
-
         // Re-implementing letter replacement more robustly
         setAllLetters(prev => {
           const nextLetters = [...prev]
@@ -327,6 +343,7 @@ const GamePage: React.FC = () => {
   }, [categories])
 
   const handleInputChange = (categoryId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+      if (frozen || stopped) return
     const val = e.target.value.toUpperCase()
     
     // If it was valid, typing in it again (if allowed) should reset valid
@@ -364,55 +381,94 @@ const GamePage: React.FC = () => {
     
     validateWord(val, categoryId)
   }
-
+const handleFreeze = () => {
+    setFrozen(true)
+    setFreezeMsg('Freeze: Du kan inte skriva i 5 sekunder')
+    setTimeout(() => { setFrozen(false); setFreezeMsg('') }, 5000)
+  }
+ 
+  const handleMix = () => {
+    setAllLetters(prev => {
+      const shuffled = [...prev]
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      }
+      return shuffled
+    })
+  }
+ 
+  const allDone = CATEGORY_LIST.every(c => categories[c.id].valid)
   return (
-      <div className="wm-scene game-page" data-testid="game-page">
-      <div className="wm-bg" />
-      <div className="wm-overlay" />
-      <div className="wm-vignette" />
-
-      <div className="disclaimer-text">
-        Detta är bara för testning, vi saknar front end m.m / Oskar
-        <div className="backend-status">
-          Connected to backend: {backendConnected === null ? 'Checking...' : backendConnected ? 'Yes' : 'No'}
-        </div>
+ <div className="gp-scene" data-testid="game-page">
+      <div className="gp-bg" />
+      <Stars />
+ 
+      <div className="gp-top-bar">
+        <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
+        <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
       </div>
-
-      <div className="inputs-container">
-        {CATEGORY_LIST.map((cat) => (
-          <div className="input-group" key={cat.id}>
-            <label>{cat.label}</label>
-            <input
-              type="text"
-              ref={(el) => inputRefs.current[cat.id] = el}
-              className={`category-input ${categories[cat.id].valid ? 'valid' : ''}`}
-              value={categories[cat.id].word}
-              onChange={(e) => handleInputChange(cat.id, e)}
-              placeholder=""
-              disabled={categories[cat.id].valid}
-            />
-            <div className="feedback-message">{categories[cat.id].feedback}</div>
-          </div>
-        ))}
+    <div className="gp-powerups">
+        <button className="gp-btn gp-btn--freeze" onClick={handleFreeze} data-testid="btn-freeze">Freeze</button>
+        <button className="gp-btn gp-btn--black" onClick={addExtraLetters} data-testid="btn-black">Bläck</button>
+        <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
       </div>
-
-      <div className="game-right-side">
-        <button className="extra-letters-btn" onClick={addExtraLetters}>
-          Fler bokstäver för testning
-        </button>
-        <div className="letters-container">
-          {allLetters.map((letter) => (
-            <div 
-              key={letter.id} 
-              className={`letter-box ${letter.isExtra ? 'extra' : ''} ${letter.used ? 'used' : ''}`}
-            >
-              {letter.char}
+     <div className="gp-content">
+        <div className="gp-categories" data-testid="categories">
+          {CATEGORY_LIST.map(cat => (
+            <div className="gp-cat-row" key={cat.id}>
+              <label className="gp-cat-label">{cat.label}:</label>
+              <div className="gp-cat-input-wrap">
+                <input
+                  type="text"
+                  ref={(el: HTMLInputElement | null) => { inputRefs.current[cat.id] = el }}
+                  className={`gp-cat-input ${categories[cat.id].valid ? 'gp-cat-input--valid' : ''}`}
+                  value={categories[cat.id].word}
+                  onChange={e => handleInputChange(cat.id, e)}
+                  disabled={categories[cat.id].valid || frozen || stopped}
+                  data-testid={`input-${cat.id}`}
+                />
+                {categories[cat.id].feedback && (
+                  <span className="gp-feedback" data-testid={`feedback-${cat.id}`}>
+                    {categories[cat.id].feedback}
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
+  <div className="gp-right">
+          <div className="gp-letters" data-testid="letters">
+            {allLetters.map(letter => (
+              <div
+                key={letter.id}
+                className={`gp-letter ${letter.isExtra ? 'gp-letter--extra' : ''} ${letter.used ? 'gp-letter--used' : ''}`}
+                data-testid="letter-tile"
+              >
+                {letter.char}
+              </div>
+            ))}
+          </div>
+          <button
+            className={`gp-stop-btn ${allDone ? 'gp-stop-btn--ready' : ''}`}
+            onClick={() => setStopped(true)}
+            disabled={stopped}
+            data-testid="btn-stop"
+          >
+            Stopp
+          </button>
+        </div>
       </div>
+    {stopped && (
+        <div className="gp-stopped-overlay" data-testid="stopped-overlay">
+          <div className="gp-stopped-card">
+            <h2>Stopp!</h2>
+            <p>Din tid: {60 - timeLeft} sekunder</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
+ 
 export default GamePage
