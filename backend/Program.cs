@@ -126,7 +126,7 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
     return Results.BadRequest(new { error });
 });
 
-// New endpoint to set a player as ready in the lobby. This can be called from the client when a player clicks a "Ready" button, and it notifies other players in the lobby via SignalR.
+// Endpoint to set a player as ready in the lobby. This can be called from the client when a player clicks a "Ready" button, and it notifies other players in the lobby via SignalR.
 app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     string lobbyId,
     string playerId,
