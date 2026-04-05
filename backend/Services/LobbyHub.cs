@@ -6,6 +6,8 @@ public class LobbyHub : Hub
 {
   public override async Task OnConnectedAsync()
   {
+    // Log the new connection for debugging purposes
+    Console.WriteLine($"SignalR connected: {Context.ConnectionId}");
     await base.OnConnectedAsync();
   }
   // Method to allow a player to join a lobby group. This is called from the client when they join a lobby, and it adds their connection to the SignalR group for that lobby so they can receive real-time updates.
