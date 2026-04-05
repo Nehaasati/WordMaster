@@ -132,6 +132,17 @@ export default function LobbyPage() {
     };
   }, [realLobbyId, navigate]);
 
+  // state to hold any error or status message from the backend 
+  const [message, setMessage] = useState<string | null>(null);
+
+  // Clear the message after 3 seconds
+  useEffect(() => {
+    if (!message) return;
+
+    const timer = setTimeout(() => setMessage(null), 3000);
+    return () => clearTimeout(timer);
+  }, [message]);
+
   return (
     <div className="page">
       <div className="container">
@@ -219,6 +230,13 @@ export default function LobbyPage() {
             </button>
           </div>
 
+          {/* Show message from backend if exists */}
+          {message && (
+            <div className="lobby-message">
+              {message}
+            </div>
+          )}
+
           {/* Ready/ Start button */}
           <button
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
@@ -240,7 +258,7 @@ export default function LobbyPage() {
                 // 1- try to join the lobby. If it fails (e.g. lobby is full), show an alert and return early
                 if (!response.ok) {
                   const data = await response.json();
-                  alert(data.error || "Lobbyn är full");
+                  setMessage(data.error || "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.");
                   return;
                 }
 
@@ -257,7 +275,7 @@ export default function LobbyPage() {
               } else {
                 if (isHost) {
                   if (players.length < 2) {
-                    alert("Väntar på att den andra spelaren ska gå med...");
+                    setMessage("Väntar på att den andra spelaren ska gå med...");
                     return;
                   }
 
@@ -270,7 +288,7 @@ export default function LobbyPage() {
                   // If starting the game fails, show an alert with the error message from the backend (e.g. "Players not ready")
                   if (!startResponse.ok) {
                     const errorMsg = await startResponse.text();
-                    alert("Kunde inte starta: " + errorMsg); // Här ser du om backenden säger "Players not ready"
+                    setMessage("Kunde inte starta: " + errorMsg); // Här ser du om backenden säger "Players not ready"
                   }
                 }
               }

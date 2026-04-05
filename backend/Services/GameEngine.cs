@@ -159,7 +159,7 @@ public class GameEngine
         // Check if lobby is full (2 players max for now)
         if (lobby.Players.Count >= 2)
         {
-            error = "Lobby is full";
+            error = "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.";
             return false;
         }
 
