@@ -20,9 +20,9 @@ export default function LobbyPage() {
   // Om isHost inte skickas via navigation, defaulta till false
   const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
   const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
-  
+
   const [realLobbyId, setRealLobbyId] = useState<string>("");
-  
+
   // State för att hålla koll på spelare i lobbyn
   const [players, setPlayers] = useState<Player[]>([]);
 
@@ -36,13 +36,12 @@ export default function LobbyPage() {
         );
         if (response.ok) {
           const data = await response.json();
-            setRealLobbyId(data.id);
-            
-            // Om lobbydata innehåller spelare, uppdatera spelarläget
-            if (data.players)
-            {
-              setPlayers(data.players as Player[]);
-            }
+          setRealLobbyId(data.id);
+
+          // Om lobbydata innehåller spelare, uppdatera spelarläget
+          if (data.players) {
+            setPlayers(data.players as Player[]);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch lobby", error);
@@ -66,7 +65,7 @@ export default function LobbyPage() {
     alert("Länk kopierad!");
   };
 
-  // SignalR-anslutning
+  // SignalR-anslutning och eventhantering
   useEffect(() => {
     if (!realLobbyId) return;
 
@@ -77,32 +76,61 @@ export default function LobbyPage() {
 
     connection
       .start()
-      .then(() => {
+      .then(async () => {
         console.log("Connected to SignalR");
 
-        // Gå med i lobbygruppen
-        connection.invoke("JoinLobbyGroup", realLobbyId);
+        // Join the lobby group
+        await connection.invoke("JoinLobbyGroup", realLobbyId);
 
-        // Lyssna på händelsen när en spelare går med i lobbyn
-        connection.on("PlayerJoined", (player: Player) => {
-            console.log("Player joined:", player);
-            
-            // Uppdatera spelarläget när en ny spelare går med
-            setPlayers((prevPlayers) => [...prevPlayers, player]);
+        // Handle reconnection to rejoin the lobby group
+        connection.onreconnected(async () => {
+          console.log("Reconnected to SignalR");
+
+          await connection.invoke("JoinLobbyGroup", realLobbyId);
         });
 
-        // listen for when a player is ready
+        // When a player joins the lobby
+        connection.on("PlayerJoined", (player: Player) => {
+          console.log("Player joined:", player);
+
+          setPlayers((prevPlayers) => {
+            // prevent duplicate players
+            if (prevPlayers.some((p) => p.id === player.id)) {
+              return prevPlayers;
+            }
+            // prevent adding more than 2 players
+            if (prevPlayers.length >= 2) {
+              return prevPlayers;
+            }
+
+            return [...prevPlayers, player];
+          });
+        });
+
+        // When a player becomes ready
+        connection.on("PlayerReady", (playerId: string) => {
+          setPlayers((prevPlayers) =>
+            prevPlayers.map((p) =>
+              p.id === playerId ? { ...p, isReady: true } : p,
+            ),
+          );
+        });
+
+        // When the host starts the game
         connection.on("GameStarted", (lobbyId: string) => {
           navigate(`/game/${lobbyId}`);
         });
       })
       .catch((err) => console.error("SignalR error:", err));
 
-    // Rensa upp anslutningen när komponenten avmonteras
+    // Cleanup when component unmounts
     return () => {
+      connection.off("PlayerJoined");
+      connection.off("PlayerReady");
+      connection.off("GameStarted");
       connection.stop();
     };
-  }, [realLobbyId]);
+  }, [realLobbyId, navigate]);
 
   return (
     <div className="page">
@@ -115,7 +143,8 @@ export default function LobbyPage() {
             {players.map((p, index) => (
               <div key={p.id} className="player-box">
                 <p>
-                  Spelare {index + 1}: {p.name}
+                  Spelare {index + 1}: {p.name}{" "}
+                  {p.isReady ? "JA" : ""}
                 </p>
               </div>
             ))}
@@ -219,9 +248,20 @@ export default function LobbyPage() {
                 // Om det lyckades att gå med i lobbyn, markera spelaren som redo
                 setReady(true);
               } else {
-                // Spelaren är redo och vill starta spelet
+                // if the player is already ready and is the host, try to start the game
                 if (isHost) {
-                  navigate(`/game/${lobbyId || ""}`);
+                  // confirm that there are at least 2 players in the lobby before starting the game
+                  if (players.length < 2) {
+                    alert("Waiting for second player");
+                    return;
+                  }
+
+                  await fetch(
+                    `http://127.0.0.1:5024/api/lobby/${realLobbyId}/start`,
+                    {
+                      method: "POST",
+                    },
+                  );
                 }
               }
             }}
