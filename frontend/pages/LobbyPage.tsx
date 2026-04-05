@@ -90,6 +90,11 @@ export default function LobbyPage() {
             // Uppdatera spelarläget när en ny spelare går med
             setPlayers((prevPlayers) => [...prevPlayers, player]);
         });
+
+        // listen for when a player is ready
+        connection.on("GameStarted", (lobbyId: string) => {
+          navigate(`/game/${lobbyId}`);
+        });
       })
       .catch((err) => console.error("SignalR error:", err));
 
