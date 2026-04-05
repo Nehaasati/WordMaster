@@ -143,8 +143,7 @@ export default function LobbyPage() {
             {players.map((p, index) => (
               <div key={p.id} className="player-box">
                 <p>
-                  Spelare {index + 1}: {p.name}{" "}
-                  {p.isReady ? "JA" : ""}
+                  Spelare {index + 1}: {p.name} {p.isReady ? "JA" : ""}
                 </p>
               </div>
             ))}
@@ -225,7 +224,7 @@ export default function LobbyPage() {
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
             onClick={async () => {
               if (!ready) {
-                // Första gången: spelaren är inte redo, så vi försöker gå med i lobbyn
+                // join lobby and mark as ready
                 const response = await fetch(
                   `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
                   {
@@ -238,30 +237,41 @@ export default function LobbyPage() {
                   },
                 );
 
-                // Om det inte gick att gå med i lobbyn (t.ex. lobby full)
+                // 1- try to join the lobby. If it fails (e.g. lobby is full), show an alert and return early
                 if (!response.ok) {
                   const data = await response.json();
-                  alert(data.error || "Lobbyen är full");
-                  return; // Avbryt om det inte gick att gå med
+                  alert(data.error || "Lobbyn är full");
+                  return;
                 }
 
-                // Om det lyckades att gå med i lobbyn, markera spelaren som redo
+                const data = await response.json();
+                const joinedPlayer = data.player; // we need the player info to mark them as ready in the next step
+
+                // 2- mark the player as ready. This will trigger the PlayerReady event in SignalR, which will update the UI for all players in the lobby to show that this player is ready.
+                await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${joinedPlayer.id}`,
+                  { method: "POST" },
+                );
+
                 setReady(true);
               } else {
-                // if the player is already ready and is the host, try to start the game
                 if (isHost) {
-                  // confirm that there are at least 2 players in the lobby before starting the game
                   if (players.length < 2) {
-                    alert("Waiting for second player");
+                    alert("Väntar på att den andra spelaren ska gå med...");
                     return;
                   }
 
-                  await fetch(
+                  // 3- if the player is the host and clicks the button when they are already ready, we try to start the game. If starting the game fails (e.g. because not all players are ready), we show an alert with the error message from the backend.
+                  const startResponse = await fetch(
                     `http://127.0.0.1:5024/api/lobby/${realLobbyId}/start`,
-                    {
-                      method: "POST",
-                    },
+                    { method: "POST" },
                   );
+
+                  // If starting the game fails, show an alert with the error message from the backend (e.g. "Players not ready")
+                  if (!startResponse.ok) {
+                    const errorMsg = await startResponse.text();
+                    alert("Kunde inte starta: " + errorMsg); // Här ser du om backenden säger "Players not ready"
+                  }
                 }
               }
             }}
