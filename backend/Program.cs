@@ -73,6 +73,27 @@ app.MapGet("/api/game/letters", (GameEngine engine, int count = 15) =>
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
 
+// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/start", async (
+    string lobbyId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    // Check if the lobby exists and if the game can be started
+    var lobby = engine.GetLobby(lobbyId);
+
+    if (lobby == null)
+        return Results.NotFound();
+
+    if (!engine.CanStartGame(lobbyId))
+        return Results.BadRequest("Players not ready");
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("GameStarted", lobbyId);
+
+    return Results.Ok();
+});
 // New endpoint to join a lobby using either lobby ID or invite code
 // This endpoint allows a player to join a lobby and notifies other players in the lobby via SignalR.
 app.MapPost("/api/lobby/{lobbyId}/join", async (
@@ -81,10 +102,11 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
     GameEngine engine,
     IHubContext<LobbyHub> hubContext) =>
 {
-    // Try to join the lobby using the provided lobby ID or invite code
+    // assign connection id
+    player.ConnectionId = Guid.NewGuid().ToString();
+
     if (engine.TryJoinLobby(lobbyId, player, out var error))
     {
-        // Notify other players in the lobby that a new player has joined
         await hubContext.Clients.Group(lobbyId)
             .SendAsync("PlayerJoined", player);
 
@@ -102,22 +124,6 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
 
     // If joining the lobby failed, return a bad request with the error message
     return Results.BadRequest(new { error });
-});
-
-// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
-app.MapPost("/api/lobby/{lobbyId}/start", async (
-    string lobbyId,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub
-) =>
-{
-    if (!engine.CanStartGame(lobbyId))
-        return Results.BadRequest("Players not ready");
-
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("GameStarted", lobbyId);
-
-    return Results.Ok();
 });
 
 // Map the SignalR hub for real-time lobby updates
