@@ -88,6 +88,9 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
         await hubContext.Clients.Group(lobbyId)
             .SendAsync("PlayerJoined", player);
 
+        // Log the player joining for debugging purposes
+        Console.WriteLine($"Player {player.Name} joined lobby {lobbyId}");
+
         // Return a success response with the lobby ID and player info
         return Results.Ok(new
         {
