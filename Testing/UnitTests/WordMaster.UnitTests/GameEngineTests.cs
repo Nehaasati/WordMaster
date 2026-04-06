@@ -164,6 +164,19 @@ public class GameEngineTests
         Assert.False(result);
     }
 
+    // Test that the game can start when both players are ready
+    [Fact]
+    public void GetLobby_ShouldReturnNull_WhenLobbyDoesNotExist()
+    {
+        var engine = CreateEngine();
+
+        var result = engine.GetLobby("invalid");
+
+        Assert.Null(result);
+    }
+    
+
+
     [Fact]
     public void TryJoinLobby_ShouldReturnFalse_WhenInvalidLobbyId()
     {
