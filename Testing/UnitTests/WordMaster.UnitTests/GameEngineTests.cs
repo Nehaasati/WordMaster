@@ -91,6 +91,26 @@ public class GameEngineTests
         Assert.Single(lobby.Players);
     }
 
+    // Test that a player cannot join a lobby that is already full (2 players)
+    [Fact]
+    public void TryJoinLobby_ShouldFail_WhenLobbyIsFull()
+    {
+        var engine = CreateEngine();
+        var lobby = engine.CreateLobby();
+
+        var p1 = new Player { Name = "A" };
+        var p2 = new Player { Name = "B" };
+        var p3 = new Player { Name = "C" };
+
+        engine.TryJoinLobby(lobby.Id, p1, out _);
+        engine.TryJoinLobby(lobby.Id, p2, out _);
+
+        var result = engine.TryJoinLobby(lobby.Id, p3, out var error);
+
+        Assert.False(result);
+        Assert.Equal("Tyvärr är Lobbyn full och kan inte ta emot fler spelare.", error);
+    }
+
 
     [Fact]
     public void TryJoinLobby_ShouldReturnFalse_WhenInvalidLobbyId()
@@ -124,6 +144,8 @@ public class GameEngineTests
 
     Assert.True(result);
   }
+
+
     
     /*
     Next tests :
