@@ -144,6 +144,25 @@ public class GameEngineTests
         Assert.True(player.IsReady);
     }
 
+    // Test that the game cannot start if only one player is ready
+    [Fact]
+    public void CanStartGame_ShouldReturnFalse_WhenOnlyOnePlayerReady()
+    {
+        var engine = CreateEngine();
+        var lobby = engine.CreateLobby();
+
+        var p1 = new Player { Name = "A" };
+        var p2 = new Player { Name = "B" };
+
+        engine.TryJoinLobby(lobby.Id, p1, out _);
+        engine.TryJoinLobby(lobby.Id, p2, out _);
+
+        engine.SetPlayerReady(lobby.Id, p1.Id);
+
+        var result = engine.CanStartGame(lobby.Id);
+
+        Assert.False(result);
+    }
 
     [Fact]
     public void TryJoinLobby_ShouldReturnFalse_WhenInvalidLobbyId()
