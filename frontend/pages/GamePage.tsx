@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
 import '../css/GamePage.css'
 ///Star annimation
@@ -48,6 +49,7 @@ const CATEGORY_LIST: Category[] = [
   { id: 'Object', label: 'Sak'       },
 ]
 const GamePage: React.FC = () => {
+  const { lobbyId } = useParams<{ lobbyId: string }>()
   const [allLetters, setAllLetters] = useState<Letter[]>([])
   const [categories, setCategories] = useState<Record<string, CategoryData>>(() => {
     const initial: Record<string, CategoryData> = {}
@@ -358,7 +360,7 @@ const GamePage: React.FC = () => {
     if (val.length > categories[categoryId].word.length) {
       const addedChar = val[val.length - 1]
       
-      // Check if we have this letter available (not used by other NON-VALID categories)
+      // Check if we have this letter available (not used by other NON-VALID categories).
       let otherUsedWord = ''
       for (const catId in categories) {
         if (catId !== categoryId && !categories[catId].valid) {
