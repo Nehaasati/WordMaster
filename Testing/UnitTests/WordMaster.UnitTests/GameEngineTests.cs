@@ -127,6 +127,23 @@ public class GameEngineTests
         Assert.Equal("Player already in lobby", error);
     }
 
+    // Test that a player can set themselves as ready
+    [Fact]
+    public void SetPlayerReady_ShouldMarkPlayerAsReady()
+    {
+        var engine = CreateEngine();
+        var lobby = engine.CreateLobby();
+
+        var player = new Player { Name = "Anna" };
+        engine.TryJoinLobby(lobby.Id, player, out _);
+
+        Assert.False(player.IsReady);
+
+        engine.SetPlayerReady(lobby.Id, player.Id);
+
+        Assert.True(player.IsReady);
+    }
+
 
     [Fact]
     public void TryJoinLobby_ShouldReturnFalse_WhenInvalidLobbyId()
