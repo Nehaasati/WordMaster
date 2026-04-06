@@ -8,6 +8,8 @@ public class GameEngine
     private readonly WordValidator _validator;
     private readonly HashSet<string> _dictionary;
     private readonly Dictionary<string, List<string>> _categories;
+    private readonly Dictionary<string, Lobby> _lobbies = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _inviteCodesToId = new(StringComparer.OrdinalIgnoreCase);
     private static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
     // Weighted randomizer weights (trying to mirror frontend randomizeer here)
@@ -23,6 +25,65 @@ public class GameEngine
         _validator = validator;
         _dictionary = dictionary;
         _categories = categories;
+    }
+
+    public Lobby CreateLobby()
+    {
+        var lobbyId = Guid.NewGuid().ToString("N")[..6].ToUpper();
+        var inviteCode = Guid.NewGuid().ToString("N")[..12]; // 12-char longer string
+        
+        var lobby = new Lobby { 
+            Id = lobbyId, 
+            InviteCode = inviteCode, 
+            Letters = GenerateLetters() 
+        };
+        
+        _lobbies[lobbyId] = lobby;
+        _inviteCodesToId[inviteCode] = lobbyId;
+        
+        return lobby;
+    }
+
+    public Lobby? GetLobby(string idOrCode)
+    {
+        if (string.IsNullOrEmpty(idOrCode)) return null;
+
+        // Check by short ID
+        if (_lobbies.TryGetValue(idOrCode, out var lobby))
+            return lobby;
+
+        // Check by long invite code
+        if (_inviteCodesToId.TryGetValue(idOrCode, out var lobbyId))
+        {
+            if (_lobbies.TryGetValue(lobbyId, out var inviteLobby))
+                return inviteLobby;
+        }
+
+        return null;
+    }
+
+    // Check if the game can be started (e.g., all players are ready and there are enough players)
+    public bool CanStartGame(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return false;
+
+        if (lobby.Players.Count != 2)
+            return false;
+
+        return lobby.Players.All(p => p.IsReady);
+    }
+
+    // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
+    public void SetPlayerReady(string lobbyId, string playerId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return;
+
+        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+
+        if (player != null)
+            player.IsReady = true;
     }
 
     public List<char> GenerateLetters(int count = 15)
@@ -79,4 +140,80 @@ public class GameEngine
         }
         return true;
     }
+
+    // Try to join a lobby by ID or invite code. Returns true if successful, false if lobby not found, full, or player already in lobby.
+    public bool TryJoinLobby(string lobbyId, Player player, out string error)
+    {
+        // Reset error message
+        error = string.Empty;
+
+        // First, try to find the lobby by ID or invite code
+        var lobby = GetLobby(lobbyId);
+
+        // If lobby is null, it means it wasn't found by either ID or invite code
+        if (lobby is null)
+        {
+            error = "Lobby not found";
+            return false;
+        }
+
+        // Check if lobby is full (2 players max for now)
+        if (lobby.Players.Count >= 2)
+        {
+            error = "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.";
+            return false;
+        }
+
+        // Check if player is already in the lobby (by ID)
+        if (lobby.Players.Any(p => p.Id == player.Id))
+        {
+            error = "Player already in lobby";
+            return false;
+        }
+
+        // If we made it here, we can safely add the player to the lobby
+        lobby.Players.Add(player);
+        return true;
+    }
+}
+
+public class Lobby
+{
+    public string Id { get; set; } = string.Empty;
+    public string InviteCode { get; set; } = string.Empty;
+    public List<char> Letters { get; set; } = new();
+
+    // 2 players max for now, but we can easily expand this to support more players in the future if we want to make it more of a party game or add an AI player.
+    // We can add more properties here as needed, like current game state, scores, etc.
+    public List<Player> Players { get; set; } = new();
+}
+
+// Player class to represent a player in the lobby. This can be expanded with more properties as needed.
+public class Player
+{
+    // For simplicity, we're using a string ID here. In a real application, you might want to use a more robust IDENTIFIER.
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    // PLAYER NAME, can be set by the client when they join the lobby
+    public string Name { get; set; } = string.Empty;
+
+    // Indicates if this player is the HOST of the lobby (the one who created it)
+    public bool IsHost { get; set; }
+
+    // ConnectionId can be used to track the player's connection for REAL-TIME updates (e.g., via SignalR)
+    public string? ConnectionId { get; set; }
+
+    // Player's CURRENT score in the game, can be updated as they submit valid words
+    public int Score { get; set; }
+
+    // Indicates if the player is READY to start the game. This can be used to ensure all players are ready before starting.
+    public bool IsReady { get; set; }
+
+    // TIMESTAMP for when the player joined the lobby, can be useful for sorting players or handling timeouts
+    public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+
+    // we can add more player-specific properties here later, like avatar, language preference, etc.
+    // public string PreferredLanguage { get; set; } = "sv, en, etc.";
+    // public string Language { get; set; } = "sv";
+    // public string AvatarColor { get; set; } = "#c300ff";
 }
