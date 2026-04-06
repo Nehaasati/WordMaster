@@ -174,8 +174,17 @@ public class GameEngineTests
 
         Assert.Null(result);
     }
-    
 
+    // Test that a new player has the correct default values
+    [Fact]
+    public void Player_ShouldInitializeWithDefaults()
+    {
+        var player = new Player { Name = "Anna" };
+
+        Assert.False(player.IsReady);
+        Assert.NotNull(player.Id);
+        Assert.True(player.JoinedAt <= DateTime.UtcNow);
+    }
 
     [Fact]
     public void TryJoinLobby_ShouldReturnFalse_WhenInvalidLobbyId()
