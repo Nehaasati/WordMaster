@@ -111,6 +111,22 @@ public class GameEngineTests
         Assert.Equal("Tyvärr är Lobbyn full och kan inte ta emot fler spelare.", error);
     }
 
+    // Test that a player cannot join a lobby they are already in
+    [Fact]
+    public void TryJoinLobby_ShouldFail_WhenPlayerAlreadyInLobby()
+    {
+        var engine = CreateEngine();
+        var lobby = engine.CreateLobby();
+
+        var player = new Player { Name = "Anna" };
+
+        engine.TryJoinLobby(lobby.Id, player, out _);
+        var result = engine.TryJoinLobby(lobby.Id, player, out var error);
+
+        Assert.False(result);
+        Assert.Equal("Player already in lobby", error);
+    }
+
 
     [Fact]
     public void TryJoinLobby_ShouldReturnFalse_WhenInvalidLobbyId()
