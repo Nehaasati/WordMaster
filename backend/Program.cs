@@ -7,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
+builder.Services.AddControllers();                 // ← ADD servicess 
+builder.Services.AddSingleton<CharacterService>();
 
 // Load the word dictionary
 var wordDictionary = WordDictionaryLoader.LoadFromFiles
@@ -45,6 +47,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.MapControllers(); 
 app.MapPost("/api/word/validate", (
     ValidateRequest request, 
     GameEngine engine) =>
@@ -146,5 +149,5 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
 app.MapHub<LobbyHub>("/lobbyHub");
 
 app.Run();
-
+public partial class Program { }
 public record ValidateRequest(string Word, string Category, List<char> Letters);
