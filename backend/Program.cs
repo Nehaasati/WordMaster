@@ -145,9 +145,29 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     return Results.Ok();
 });
 
+app.MapPost("/api/game/calculate-score", (
+    CalculateScoreRequest request) =>
+{
+    var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>();
+    submissions["player"] = new Dictionary<string, ScoreCalculator.CategorySubmission>();
+    foreach (var category in request.Categories)
+    {
+        submissions["player"][category.Id] = new ScoreCalculator.CategorySubmission(category.Word, category.IsValid);
+    }
+    var scores = ScoreCalculator.CalculateScores(submissions);
+    return Results.Ok(new { score = scores["player"] });
+});
+
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 
 app.Run();
+<<<<<<< HEAD
 public partial class Program { }
 public record ValidateRequest(string Word, string Category, List<char> Letters);
+=======
+
+public record ValidateRequest(string Word, string Category, List<char> Letters);
+public record CategorySubmission(string Id, string Word, bool IsValid);
+public record CalculateScoreRequest(List<CategorySubmission> Categories);
+>>>>>>> cbbc72a7d413b10e35cd048f95339b6e880d2f54

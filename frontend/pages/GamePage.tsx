@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
 import '../css/GamePage.css'
 ///Star annimation
@@ -48,6 +49,7 @@ const CATEGORY_LIST: Category[] = [
   { id: 'Object', label: 'Sak'       },
 ]
 const GamePage: React.FC = () => {
+  const { lobbyId } = useParams<{ lobbyId: string }>()
   const [allLetters, setAllLetters] = useState<Letter[]>([])
   const [categories, setCategories] = useState<Record<string, CategoryData>>(() => {
     const initial: Record<string, CategoryData> = {}
@@ -61,6 +63,7 @@ const GamePage: React.FC = () => {
   const [frozen,    setFrozen]    = useState(false)
   const [freezeMsg, setFreezeMsg] = useState('')
   const [stopped,   setStopped]   = useState(false)
+  const [score,     setScore]     = useState(0)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
@@ -342,6 +345,30 @@ const GamePage: React.FC = () => {
     updateUsedLetters()
   }, [categories])
 
+  useEffect(() => {
+    const calculateScore = async () => {
+      const categorySubmissions = CATEGORY_LIST.map(cat => ({
+        id: cat.id,
+        word: categories[cat.id].word,
+        isValid: categories[cat.id].valid
+      }))
+      try {
+        const response = await fetch('http://127.0.0.1:5024/api/game/calculate-score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ categories: categorySubmissions })
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setScore(data.score)
+        }
+      } catch (error) {
+        console.error('Failed to calculate score:', error)
+      }
+    }
+    calculateScore()
+  }, [categories])
+
   const handleInputChange = (categoryId: string, e: React.ChangeEvent<HTMLInputElement>) => {
       if (frozen || stopped) return
     const val = e.target.value.toUpperCase()
@@ -358,7 +385,7 @@ const GamePage: React.FC = () => {
     if (val.length > categories[categoryId].word.length) {
       const addedChar = val[val.length - 1]
       
-      // Check if we have this letter available (not used by other NON-VALID categories)
+      // Check if we have this letter available (not used by other NON-VALID categories).
       let otherUsedWord = ''
       for (const catId in categories) {
         if (catId !== categoryId && !categories[catId].valid) {
@@ -406,6 +433,7 @@ const handleFreeze = () => {
  
       <div className="gp-top-bar">
         <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
+        <div className="gp-score" data-testid="score">POÄNG: {score}</div>
         <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
       </div>
     <div className="gp-powerups">
@@ -464,6 +492,7 @@ const handleFreeze = () => {
           <div className="gp-stopped-card">
             <h2>Stopp!</h2>
             <p>Din tid: {60 - timeLeft} sekunder</p>
+            <p>Din poäng: {score}</p>
           </div>
         </div>
       )}
