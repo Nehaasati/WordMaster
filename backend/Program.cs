@@ -162,12 +162,7 @@ app.MapPost("/api/game/calculate-score", (
 app.MapHub<LobbyHub>("/lobbyHub");
 
 app.Run();
-<<<<<<< HEAD
-public partial class Program { }
-public record ValidateRequest(string Word, string Category, List<char> Letters);
-=======
 
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
 public record CalculateScoreRequest(List<CategorySubmission> Categories);
->>>>>>> cbbc72a7d413b10e35cd048f95339b6e880d2f54
