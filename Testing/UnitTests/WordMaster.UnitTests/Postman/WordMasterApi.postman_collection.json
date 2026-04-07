@@ -1,0 +1,50 @@
+{
+  "info": {
+    "_postman_id": "077e79af-3929-4382-8fd0-23239211daae",
+    "name": "WordMasterApi",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33592154"
+  },
+  "item": [
+    {
+      "name": "Characters_Api",
+      "item": [
+        {
+          "name": "New Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "{}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/character/ugglan",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "ugglan"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "LobbyApi",
+      "item": []
+    }
+  ]
+}
