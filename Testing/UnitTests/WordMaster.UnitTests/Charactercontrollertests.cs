@@ -180,8 +180,7 @@ public class CharacterControllerTests : IClassFixture<WebApplicationFactory<Prog
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    // ── GET /api/character/{id}/freeze-immune ─────────────────────────────────
-
+    // GET /api/character/{id}/freeze-immune 
     [Fact]
     public async Task FreezeImmune_ReturnsTrue_ForBjörnen()
     {
