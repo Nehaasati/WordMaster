@@ -1,9 +1,9 @@
 {
   "info": {
-    "_postman_id": "077e79af-3929-4382-8fd0-23239211daae",
+    "_postman_id": "dabb9c4f-7d9c-4bf7-8b75-a06121045776",
     "name": "WordMasterApi",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "33592154"
+    "_exporter_id": "50588661"
   },
   "item": [
     {
@@ -44,7 +44,304 @@
     },
     {
       "name": "LobbyApi",
-      "item": []
+      "item": [
+        {
+          "name": "Create Lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"lobbyId\", json.lobbyId);\r",
+                  "pm.collectionVariables.set(\"inviteCode\", json.inviteCode);\r",
+                  "\r",
+                  "pm.test(\"Lobby ID and Invite Code exist\", () => {\r",
+                  "    pm.expect(json.lobbyId).to.be.a(\"string\");\r",
+                  "    pm.expect(json.inviteCode).to.be.a(\"string\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Lobby contains letters\", () => {\r",
+                  "    pm.expect(json.letters.length).to.be.above(0);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "JoinPlayer1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"player1Id\", json.player.id);\r",
+                  "\r",
+                  "pm.test(\"Player 1 joined\", () => {\r",
+                  "    pm.expect(json.player.name).to.eql(\"Fatima\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Fatima\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "JoinPlayer2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "pm.collectionVariables.set(\"player2Id\", json.player.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Oskar\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ready Player1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Player 1 ready\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{player1Id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "ready",
+                "{{player1Id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ready Player2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Player 2 ready\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{player2Id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "ready",
+                "{{player2Id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Play",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Game started\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "start"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "lobbyId",
+      "value": ""
+    },
+    {
+      "key": "inviteCode",
+      "value": ""
+    },
+    {
+      "key": "player1Id",
+      "value": ""
+    },
+    {
+      "key": "player2Id",
+      "value": ""
     }
   ]
 }
