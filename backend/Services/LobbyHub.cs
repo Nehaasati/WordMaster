@@ -28,4 +28,9 @@ public class LobbyHub : Hub
     await Clients.Group(lobbyId)
         .SendAsync("PlayerReady", playerId);
   }
+
+  public async Task UseInk(string lobbyId)
+  {
+    await Clients.OthersInGroup(lobbyId).SendAsync("InkReceived");
+  }
 }

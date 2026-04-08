@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
+import * as signalR from '@microsoft/signalr'
 import '../css/GamePage.css'
 ///Star annimation
 const Stars: React.FC = () => {
@@ -64,10 +65,27 @@ const GamePage: React.FC = () => {
   const [freezeMsg, setFreezeMsg] = useState('')
   const [stopped,   setStopped]   = useState(false)
   const [score,     setScore]     = useState(0)
+  const [showInk,   setShowInk]   = useState(false)
+  const connectionRef = useRef<signalR.HubConnection | null>(null)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
- useEffect(() => {
+
+  useEffect(() => {
+    if (!lobbyId) return
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl('http://127.0.0.1:5024/lobbyHub')
+      .withAutomaticReconnect()
+      .build()
+    connection.start().then(async () => {
+      await connection.invoke('JoinLobbyGroup', lobbyId)
+      connection.on('InkReceived', () => setShowInk(true))
+    })
+    connectionRef.current = connection
+    return () => { connection.stop() }
+  }, [lobbyId])
+
+  useEffect(() => {
     if (stopped) return
     const t = setInterval(() => {
       setTimeLeft(prev => {
@@ -438,7 +456,7 @@ const handleFreeze = () => {
       </div>
     <div className="gp-powerups">
         <button className="gp-btn gp-btn--freeze" onClick={handleFreeze} data-testid="btn-freeze">Freeze</button>
-        <button className="gp-btn gp-btn--black" onClick={addExtraLetters} data-testid="btn-black">Bläck</button>
+        <button className="gp-btn gp-btn--black" onClick={() => connectionRef.current?.invoke('UseInk', lobbyId)} data-testid="btn-black">Bläck</button>
         <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
       </div>
      <div className="gp-content">
@@ -453,7 +471,7 @@ const handleFreeze = () => {
                   className={`gp-cat-input ${categories[cat.id].valid ? 'gp-cat-input--valid' : ''}`}
                   value={categories[cat.id].word}
                   onChange={e => handleInputChange(cat.id, e)}
-                  disabled={categories[cat.id].valid || frozen || stopped}
+                  disabled={categories[cat.id].valid || frozen || stopped || showInk}
                   data-testid={`input-${cat.id}`}
                 />
                 {categories[cat.id].feedback && (
@@ -487,6 +505,16 @@ const handleFreeze = () => {
           </button>
         </div>
       </div>
+    {showInk && (
+        <video
+          src="/videos/Bläck.webm"
+          autoPlay
+          muted
+          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 9999, pointerEvents: 'none' }}
+          onEnded={() => setShowInk(false)}
+        />
+      )}
+
     {stopped && (
         <div className="gp-stopped-overlay" data-testid="stopped-overlay">
           <div className="gp-stopped-card">
