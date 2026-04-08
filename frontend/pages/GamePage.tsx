@@ -1,6 +1,8 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
+import type { Letter, CategoryData, StarData, Category, ValidateResponse } from '../interfaces/GamePage'
+import * as signalR from '@microsoft/signalr';
+import { useNavigate } from 'react-router-dom';
 import '../css/GamePage.css'
 ///Star annimation
 const Stars: React.FC = () => {
@@ -345,6 +347,46 @@ const GamePage: React.FC = () => {
     updateUsedLetters()
   }, [categories])
 
+  // SignalR connection for real-time updates
+  useEffect(() => {
+    if (!lobbyId) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("http://127.0.0.1:5024/lobbyHub")
+      .withAutomaticReconnect()
+      .build();
+
+    // Start the connection and join the lobby group
+    connection.start().then(async () => {
+      console.log("Connected to SignalR (GamePage)");
+
+      await connection.invoke("JoinLobbyGroup", lobbyId);
+
+      // When one player has all valid answers, navigate to lobby page (or show results)
+      connection.on("AllAnswersValid", (playerId: string) => {
+        console.log("All answers valid for player:", playerId);
+        // Go to lobby page to show results or next round
+        navigate(`/lobby/${lobbyId}`);
+      });
+
+      // When score is updated (if we implement real-time scoring), update local state
+      connection.on("ScoreUpdated", (playerId: string, score: number) => {
+        console.log(`Score updated for ${playerId}: ${score}`);
+        setScore(score);
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      connection.off("AllAnswersValid");
+      connection.off("ScoreUpdated");
+      connection.stop();
+    };
+  }, [lobbyId]);
+
+
+
+  // Score calculation whenever categories change
   useEffect(() => {
     const calculateScore = async () => {
       const categorySubmissions = CATEGORY_LIST.map(cat => ({
