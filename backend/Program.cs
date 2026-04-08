@@ -165,4 +165,4 @@ app.Run();
 
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
-public record CalculateScoreRequest(List<CategorySubmission> Categories);
+public record CalculateScoreRequest(List<CategorySubmission> Categories, string PlayerId, string LobbyId);
