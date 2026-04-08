@@ -65,7 +65,8 @@ const GamePage: React.FC = () => {
   const [freezeMsg, setFreezeMsg] = useState('')
   const [stopped,   setStopped]   = useState(false)
   const [score,     setScore]     = useState(0)
-  const [showInk,   setShowInk]   = useState(false)
+  const [showInk, setShowInk] = useState(false)
+  const [inkActive, setInkActive] = useState(false)
   const [showFreeze, setShowFreeze] = useState(false)
   const [freezeActive, setFreezeActive] = useState(false)
   const connectionRef = useRef<signalR.HubConnection | null>(null)
@@ -81,7 +82,10 @@ const GamePage: React.FC = () => {
       .build()
     connection.start().then(async () => {
       await connection.invoke('JoinLobbyGroup', lobbyId)
-      connection.on('InkReceived', () => setShowInk(true))
+    connection.on('InkReceived', () => {
+      setShowInk(true)
+      setTimeout(() => setInkActive(true), 50)
+    })
       connection.on('FreezeReceived', () => handleFreeze())
     })
     connectionRef.current = connection
@@ -499,7 +503,7 @@ const handleFreeze = () => {
                   className={`gp-cat-input ${categories[cat.id].valid ? 'gp-cat-input--valid' : ''}`}
                   value={categories[cat.id].word}
                   onChange={e => handleInputChange(cat.id, e)}
-                  disabled={categories[cat.id].valid || frozen || stopped || showInk}
+                  disabled={categories[cat.id].valid || frozen || stopped}
                   data-testid={`input-${cat.id}`}
                 />
                 {categories[cat.id].feedback && (
@@ -538,8 +542,11 @@ const handleFreeze = () => {
           src="/videos/Bläck.webm"
           autoPlay
           muted
-          className="gp-overlay-video gp-overlay-video--visible"
-          onEnded={() => setShowInk(false)}
+          className={`gp-overlay-video ${inkActive ? 'gp-overlay-video--visible' : ''}`}
+          onEnded={() => {
+            setInkActive(false)
+            setTimeout(() => setShowInk(false), 400)
+          }}
         />
       )}
 
