@@ -17,4 +17,12 @@ export default class GamePage {
  
   async clickFreeze() {
     await this.page.getByTestId('btn-freeze').click();
+    }
+ async clickMix() {
+    await this.page.getByTestId('btn-mix').click();
   }
+ 
+  async clickStop() {
+    await this.page.getByTestId('btn-stop').click();
+  }
+}
