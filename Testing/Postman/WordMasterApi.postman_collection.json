@@ -476,6 +476,150 @@
           "response": []
         },
         {
+          "name": "Can't start the game with one player or when not both player are ready",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cannot start with only one player\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Correct error returned\", function () {\r",
+                  "    const json = pm.response.json();\r",
+                  "    pm.expect(json.error).to.include(\"players\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "start"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Join a full lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Lobby should be full\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Correct error returned\", function () {\r",
+                  "    const json = pm.response.json();\r",
+                  "    pm.expect(json).to.have.property(\"error\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Ali\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Join a non existence lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {\r",
+                  "    pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message returned\", function () {\r",
+                  "    const json = pm.response.json();\r",
+                  "    pm.expect(json).to.have.property(\"error\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Arbaz\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/BB1BC3/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "BB1BC3",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Ready Player1",
           "event": [
             {
@@ -511,6 +655,54 @@
           "response": []
         },
         {
+          "name": "Can't start the game with one player or when not both player are ready Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cannot start with only one player\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Correct error returned\", function () {\r",
+                  "    const json = pm.response.json();\r",
+                  "    pm.expect(json.error).to.include(\"players\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "start"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Ready Player2",
           "event": [
             {
@@ -540,6 +732,54 @@
                 "{{lobbyId}}",
                 "ready",
                 "{{player2Id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Can't start the game with one player or when not both player are ready Copy 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cannot start with only one player\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Correct error returned\", function () {\r",
+                  "    const json = pm.response.json();\r",
+                  "    pm.expect(json.error).to.include(\"players\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "start"
               ]
             }
           },
