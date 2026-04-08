@@ -217,3 +217,13 @@ public class Player
     // public string Language { get; set; } = "sv";
     // public string AvatarColor { get; set; } = "#c300ff";
 }
+
+// Enum to represent the different states of the game. 
+public enum GameState
+{
+    WaitingForPlayers,
+    WaitingForReady,
+    PlayingRound,
+    RoundFinished,
+    GameFinished
+}
