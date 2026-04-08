@@ -369,6 +369,12 @@ const GamePage: React.FC = () => {
       connection.on("AllAnswersValid", (playerId: string) => {
         console.log("All answers valid for player:", playerId);
         // Go to lobby page to show results or next round
+        const playerId = localStorage.getItem('playerId');
+        await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}/ready/${playerId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify( {ready:false}) // We set ready to false here because we want the player to see the results page first, then click "Ready" to confirm they are ready for next round.
+        })
         navigate(`/lobby/${lobbyId}`);
       });
 
