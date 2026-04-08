@@ -1,22 +1,38 @@
 {
   "info": {
-    "_postman_id": "077e79af-3929-4382-8fd0-23239211daae",
+    "_postman_id": "dabb9c4f-7d9c-4bf7-8b75-a06121045776",
     "name": "WordMasterApi",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "33592154"
+    "_exporter_id": "50588661"
   },
   "item": [
     {
       "name": "Characters_Api",
       "item": [
-        {
-          "name": "New Request",
+         {
+          "name": "ugglanTest",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "{}"
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Correct character returned\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData.id).to.eql(\"ugglan\");\r",
+                  "    pm.expect(jsonData.name).to.eql(\"Ugglan\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Check required fields exist\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData).to.have.all.keys(\"id\",\"name\",\"description\",\"ability\");\r",
+                  "    pm.expect(jsonData.ability).to.have.property(\"type\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -39,12 +55,549 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "ApiCharacter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response is an array\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Array is not empty\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.length).to.be.above(0);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Each character has required fields\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    jsonData.forEach(character => {\r",
+                  "        pm.expect(character).to.have.all.keys(\"id\", \"name\", \"description\", \"ability\");\r",
+                  "        pm.expect(character.ability).to.have.property(\"type\");\r",
+                  "    });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/character/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalidcharacter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {\r",
+                  "    pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message exists\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData).to.have.property(\"error\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/character/abc",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "abc"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CharacterAbility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response structure is correct\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData).to.have.all.keys(\r",
+                  "        \"characterId\",\r",
+                  "        \"word\",\r",
+                  "        \"bonusPoints\",\r",
+                  "        \"abilityTriggered\"\r",
+                  "    );\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Ability triggered for long word (Ugglan)\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData.characterId).to.eql(\"ugglan\");\r",
+                  "    pm.expect(jsonData.bonusPoints).to.eql(3);\r",
+                  "    pm.expect(jsonData.abilityTriggered).to.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"characterId\": \"ugglan\",\r\n  \"word\": \"katastrofal\",\r\n  \"secondsTaken\": 7\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/character/ability",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "ability"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "InvalidCharacterAbility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {\r",
+                  "    pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message returned\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData).to.have.property(\"error\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"characterId\": \"wrongid\",\r\n  \"word\": \"test\",\r\n  \"secondsTaken\": 5\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/character/ability",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "ability"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "freeze-immune",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Freeze immunity is true for Björnen\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData.characterId).to.eql(\"björnen\");\r",
+                  "    pm.expect(jsonData.isFreezeImmune).to.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/character/björnen/freeze-immune",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "björnen",
+                "freeze-immune"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
     {
       "name": "LobbyApi",
-      "item": []
+      "item": [
+        {
+          "name": "Create Lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"lobbyId\", json.lobbyId);\r",
+                  "pm.collectionVariables.set(\"inviteCode\", json.inviteCode);\r",
+                  "\r",
+                  "pm.test(\"Lobby ID and Invite Code exist\", () => {\r",
+                  "    pm.expect(json.lobbyId).to.be.a(\"string\");\r",
+                  "    pm.expect(json.inviteCode).to.be.a(\"string\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Lobby contains letters\", () => {\r",
+                  "    pm.expect(json.letters.length).to.be.above(0);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "JoinPlayer1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"player1Id\", json.player.id);\r",
+                  "\r",
+                  "pm.test(\"Player 1 joined\", () => {\r",
+                  "    pm.expect(json.player.name).to.eql(\"Fatima\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Fatima\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "JoinPlayer2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "pm.collectionVariables.set(\"player2Id\", json.player.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Oskar\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ready Player1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Player 1 ready\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{player1Id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "ready",
+                "{{player1Id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ready Player2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Player 2 ready\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{player2Id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "ready",
+                "{{player2Id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Play",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Game started\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "start"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "lobbyId",
+      "value": ""
+    },
+    {
+      "key": "inviteCode",
+      "value": ""
+    },
+    {
+      "key": "player1Id",
+      "value": ""
+    },
+    {
+      "key": "player2Id",
+      "value": ""
     }
   ]
 }
