@@ -198,10 +198,9 @@ public class Lobby
 
     // Timestamp for when the current round started, can be used to implement round timers and show countdowns on the client side.
     public DateTime RoundStartTime { get; set; }
-/*
+
     // Duration of each round in seconds, can be used to determine when a round should end and transition to RoundFinished state.
     public int RoundDurationSeconds { get; set; } = 60;
-    */
 }
 
 // Player class to represent a player in the lobby. This can be expanded with more properties as needed.
