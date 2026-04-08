@@ -186,6 +186,23 @@ public class Lobby
     // 2 players max for now, but we can easily expand this to support more players in the future if we want to make it more of a party game or add an AI player.
     // We can add more properties here as needed, like current game state, scores, etc.
     public List<Player> Players { get; set; } = new();
+
+    // Game state can be used to track the current phase of the game 
+    public GameState State { get; set; } = GameState.WaitingForPlayers;
+
+/*
+    // Current round number, can be used to track how many rounds have been played and when to end the game based on MaxRounds
+    public int CurrentRound { get; set; } = 0;
+
+    // Max rounds can be used to determine when the game should end. Once CurrentRound reaches MaxRounds, we can transition to GameFinished state and show final scores.
+    public int MaxRounds { get; set; } = 5;
+
+    // Timestamp for when the current round started, can be used to implement round timers and show countdowns on the client side.
+    public DateTime RoundStartTime { get; set; }
+
+    // Duration of each round in seconds, can be used to determine when a round should end and transition to RoundFinished state.
+    public int RoundDurationSeconds { get; set; } = 60;
+    */
 }
 
 // Player class to represent a player in the lobby. This can be expanded with more properties as needed.
