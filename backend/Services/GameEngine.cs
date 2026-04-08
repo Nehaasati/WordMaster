@@ -195,10 +195,10 @@ public class Lobby
 
     // Max rounds can be used to determine when the game should end. Once CurrentRound reaches MaxRounds, we can transition to GameFinished state and show final scores.
     public int MaxRounds { get; set; } = 5;
-/*
+
     // Timestamp for when the current round started, can be used to implement round timers and show countdowns on the client side.
     public DateTime RoundStartTime { get; set; }
-
+/*
     // Duration of each round in seconds, can be used to determine when a round should end and transition to RoundFinished state.
     public int RoundDurationSeconds { get; set; } = 60;
     */
