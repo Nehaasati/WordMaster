@@ -264,7 +264,7 @@ export default function LobbyPage() {
 
                 const data = await response.json();
                 const joinedPlayer = data.player; // we need the player info to mark them as ready in the next step
-
+                localStorage.setItem("playerId", joinedPlayer.id); // store playerId in localStorage for later use in GamePage  
                 // 2- mark the player as ready. This will trigger the PlayerReady event in SignalR, which will update the UI for all players in the lobby to show that this player is ready.
                 await fetch(
                   `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${joinedPlayer.id}`,
