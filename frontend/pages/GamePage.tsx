@@ -366,11 +366,12 @@ const GamePage: React.FC = () => {
       await connection.invoke("JoinLobbyGroup", lobbyId);
 
       // When one player has all valid answers, navigate to lobby page (or show results)
-      connection.on("AllAnswersValid", (playerId: string) => {
-        console.log("All answers valid for player:", playerId);
+      connection.on("AllAnswersValid", async () => {
+        console.log("All answers valid! Navigating to lobby...");
         // Go to lobby page to show results or next round
-        const playerId = localStorage.getItem('playerId');
-        await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}/ready/${playerId}`, {
+        const pid = localStorage.getItem('playerId');
+        // Mark player as not ready for next round until they click "Ready" in lobby
+        await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}/ready/${pid}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify( {ready:false}) // We set ready to false here because we want the player to see the results page first, then click "Ready" to confirm they are ready for next round.
