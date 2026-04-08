@@ -7,4 +7,7 @@ export default class GamePage {
  
   async goto() {
     await this.page.goto('/');
+    }
+    async gotoGame() {
+    await this.page.goto('/game');
   }
