@@ -22,10 +22,18 @@ public class LobbyHub : Hub
     await Clients.Group(lobbyId).SendAsync("PlayerJoined", player);
   }
 
-// method to notify players in the lobby when a player is ready. This can be called from the client when a player clicks a "Ready" button.
+  // method to notify players in the lobby when a player is ready. This can be called from the client when a player clicks a "Ready" button.
   public async Task PlayerReady(string lobbyId, string playerId)
   {
     await Clients.Group(lobbyId)
         .SendAsync("PlayerReady", playerId);
+  }
+  
+  // Method to notify players in the lobby when a player is done with all categories and the game is ending. This can be called from the client when a player finishes the game.
+  public async Task EndGameAndReturnToLobby(string lobbyId)
+  {
+    // Notify all players in the lobby to navigate back to the lobby screen.
+    await Clients.Group(lobbyId)
+        .SendAsync("NavigateToLobby", lobbyId);
   }
 }
