@@ -820,6 +820,294 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Words_lettersApi",
+      "item": [
+        {
+          "name": "Word found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Word should be valid\", () => {\r",
+                  "    pm.expect(json.isValid).to.be.true;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Message should indicate success\", () => {\r",
+                  "    pm.expect(json.message).to.include(\"found\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"word\": \"KATT\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"K\",\"A\",\"T\",\"T\"]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/word/validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "word",
+                "validate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "short-word",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Should be invalid\", () => {\r",
+                  "    pm.expect(json.isValid).to.be.false;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Message should describe the error\", () => {\r",
+                  "    pm.expect(json.message.length).to.be.above(0);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"word\": \"H\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"H\",\"A\",\"N\"]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/word/validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "word",
+                "validate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Word uses unavailable letters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Word should be invalid\", function () {\r",
+                  "    const json = pm.response.json();\r",
+                  "    pm.expect(json.isValid).to.eql(false);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"word\": \"tiger\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"L\",\"I\",\"O\",\"N\"]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/word/validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "word",
+                "validate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Word not found",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"word\": \"CAT\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"C\",\"A\",\"T\"]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/word/validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "word",
+                "validate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response body is OK\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.eql(\"OK\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is less than 500ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"word\": \"CAT\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"C\",\"A\",\"T\"]\r\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Letters-count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const letters = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response is an array\", function () {\r",
+                  "    pm.expect(Array.isArray(letters)).to.be.true;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Array length is 15\", function () {\r",
+                  "    pm.expect(letters.length).to.eql(15);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"All items are strings\", function () {\r",
+                  "    letters.forEach(letter => {\r",
+                  "        pm.expect(letter).to.be.a(\"string\");\r",
+                  "    });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"word\": \"CAT\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"C\",\"A\",\"T\"]\r\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/game/letters?count=15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "game",
+                "letters"
+              ],
+              "query": [
+                {
+                  "key": "count",
+                  "value": "15"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [
