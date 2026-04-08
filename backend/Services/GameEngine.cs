@@ -190,7 +190,6 @@ public class Lobby
     // Game state can be used to track the current phase of the game 
     public GameState State { get; set; } = GameState.WaitingForPlayers;
 
-/*
     // Current round number, can be used to track how many rounds have been played and when to end the game based on MaxRounds
     public int CurrentRound { get; set; } = 0;
 
