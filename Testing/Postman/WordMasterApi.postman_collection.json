@@ -9,14 +9,30 @@
     {
       "name": "Characters_Api",
       "item": [
-        {
-          "name": "New Request",
+         {
+          "name": "ugglanTest",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "{}"
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Correct character returned\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData.id).to.eql(\"ugglan\");\r",
+                  "    pm.expect(jsonData.name).to.eql(\"Ugglan\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Check required fields exist\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData).to.have.all.keys(\"id\",\"name\",\"description\",\"ability\");\r",
+                  "    pm.expect(jsonData.ability).to.have.property(\"type\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -35,6 +51,246 @@
               "path": [
                 "character",
                 "ugglan"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ApiCharacter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response is an array\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Array is not empty\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData.length).to.be.above(0);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Each character has required fields\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    jsonData.forEach(character => {\r",
+                  "        pm.expect(character).to.have.all.keys(\"id\", \"name\", \"description\", \"ability\");\r",
+                  "        pm.expect(character.ability).to.have.property(\"type\");\r",
+                  "    });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/character/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalidcharacter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {\r",
+                  "    pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message exists\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData).to.have.property(\"error\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/character/abc",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "abc"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CharacterAbility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response structure is correct\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData).to.have.all.keys(\r",
+                  "        \"characterId\",\r",
+                  "        \"word\",\r",
+                  "        \"bonusPoints\",\r",
+                  "        \"abilityTriggered\"\r",
+                  "    );\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Ability triggered for long word (Ugglan)\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData.characterId).to.eql(\"ugglan\");\r",
+                  "    pm.expect(jsonData.bonusPoints).to.eql(3);\r",
+                  "    pm.expect(jsonData.abilityTriggered).to.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"characterId\": \"ugglan\",\r\n  \"word\": \"katastrofal\",\r\n  \"secondsTaken\": 7\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/character/ability",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "ability"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "InvalidCharacterAbility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {\r",
+                  "    pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message returned\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "    pm.expect(jsonData).to.have.property(\"error\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"characterId\": \"wrongid\",\r\n  \"word\": \"test\",\r\n  \"secondsTaken\": 5\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/character/ability",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "ability"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "freeze-immune",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Freeze immunity is true for Björnen\", function () {\r",
+                  "    var jsonData = pm.response.json();\r",
+                  "\r",
+                  "    pm.expect(jsonData.characterId).to.eql(\"björnen\");\r",
+                  "    pm.expect(jsonData.isFreezeImmune).to.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/character/björnen/freeze-immune",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "character",
+                "björnen",
+                "freeze-immune"
               ]
             }
           },
