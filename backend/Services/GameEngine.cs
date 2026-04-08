@@ -85,16 +85,6 @@ public class GameEngine
         if (player != null)
             player.IsReady = true;
     }
-    public void SetPlayerReady(string lobbyId, string playerId, bool ready)
-    {
-        var lobby = GetLobby(lobbyId);
-        if (lobby == null) return;
-
-        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
-
-        if (player != null)
-            player.IsReady = ready;
-    }
 
     public List<char> GenerateLetters(int count = 15)
     {

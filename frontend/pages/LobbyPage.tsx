@@ -1,4 +1,4 @@
-import {useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
@@ -6,11 +6,11 @@ import "../css/lobby.css";
 import * as signalR from "@microsoft/signalr";
 
 const Characters: Character[] = [
-    {id:1 , name:"Owl", image:"../images/owl.png"},
-    {id:2 , name:"Leopard", image:"../images/leo.png"},
-    {id:3 , name:"Mouse", image:"../images/mouse.png"},
-    {id:4 , name:"Bear", image:"../images/bear.png"},
-]
+  { id: 1, name: "Owl", image: "../images/owl.png" },
+  { id: 2, name: "Leopard", image: "../images/leo.png" },
+  { id: 3, name: "Mouse", image: "../images/mouse.png" },
+  { id: 4, name: "Bear", image: "../images/bear.png" },
+];
 
 export default function LobbyPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
@@ -132,7 +132,7 @@ export default function LobbyPage() {
     };
   }, [realLobbyId, navigate]);
 
-  // state to hold any error or status message from the backend 
+  // state to hold any error or status message from the backend
   const [message, setMessage] = useState<string | null>(null);
 
   // Clear the message after 3 seconds
@@ -231,53 +231,52 @@ export default function LobbyPage() {
           </div>
 
           {/* Show message from backend if exists */}
-          {message && (
-            <div className="lobby-message">
-              {message}
-            </div>
-          )}
+          {message && <div className="lobby-message">{message}</div>}
 
           {/* Ready/ Start button */}
           <button
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
             onClick={async () => {
-              const storedPlayerId = localStorage.getItem("playerId");
               if (!ready) {
-                if (!storedPlayerId) {
-                  const response = await fetch(
-                    `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        name: character.name,
-                        isHost: isHost,
-                      }),
-                    },
-                  );
-                  if (!response.ok) {
-                    const data = await response.json();
-                    setMessage(
-                      data.error ||
-                        "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
-                    );
-                    return;
-                  }
-                  const data = await response.json();
-                  const joinedPlayer = data.player;
-                  localStorage.setItem("playerId", joinedPlayer.id);
-                  storedPlayerId = joinedPlayer.id; // uppdatera variabeln efter att ha satt localStorage
-                }
-                
-                await fetch(
-                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${storedPlayerId}`,
-                  { method: "POST" }
+                // join lobby and mark as ready
+                const response = await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      name: character.name,
+                      isHost: isHost,
+                    }),
+                  },
                 );
+
+                // 1- try to join the lobby. If it fails (e.g. lobby is full), show an alert and return early
+                if (!response.ok) {
+                  const data = await response.json();
+                  setMessage(
+                    data.error ||
+                      "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
+                  );
+                  return;
+                }
+
+                const data = await response.json();
+                const joinedPlayer = data.player; // we need the player info to mark them as ready in the next step
+
+                // 2- mark the player as ready. This will trigger the PlayerReady event in SignalR, which will update the UI for all players in the lobby to show that this player is ready.
+                await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${joinedPlayer.id}`,
+                  { method: "POST" },
+                );
+
                 setReady(true);
-                return;
-              } if (isHost) {
+              } else {
+                if (isHost) {
                   if (players.length < 2) {
-                    setMessage("Väntar på att den andra spelaren ska gå med...");
+                    setMessage(
+                      "Väntar på att den andra spelaren ska gå med...",
+                    );
                     return;
                   }
 
@@ -294,7 +293,7 @@ export default function LobbyPage() {
                   }
                 }
               }
-            }
+            }}
           >
             {ready
               ? isHost

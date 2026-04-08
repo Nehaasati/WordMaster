@@ -133,21 +133,20 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
 app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     string lobbyId,
     string playerId,
-    ReadyRequest request,
     GameEngine engine,
     IHubContext<LobbyHub> hub
 ) =>
 {
-    engine.SetPlayerReady(lobbyId, playerId, request.Ready);
+    engine.SetPlayerReady(lobbyId, playerId);
 
     await hub.Clients.Group(lobbyId)
-        .SendAsync("PlayerReady", playerId, request.Ready);
+        .SendAsync("PlayerReady", playerId);
 
     return Results.Ok();
 });
 
-app.MapPost("/api/game/calculate-score", async(
-    CalculateScoreRequest request, IHubContext<LobbyHub> hub) =>
+app.MapPost("/api/game/calculate-score", (
+    CalculateScoreRequest request) =>
 {
     var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>();
     submissions["player"] = new Dictionary<string, ScoreCalculator.CategorySubmission>();
@@ -156,29 +155,7 @@ app.MapPost("/api/game/calculate-score", async(
         submissions["player"][category.Id] = new ScoreCalculator.CategorySubmission(category.Word, category.IsValid);
     }
     var scores = ScoreCalculator.CalculateScores(submissions);
-    // Check if all answers are valid
-    bool allValid = request.Categories.All(c => c.IsValid);
-
-    // Notify the client about the score and whether the match has ended (all answers valid)
-    if (allValid)
-    {
-        await hub.Clients.Group(request.LobbyId)
-            .SendAsync("AllAnswersValid", request.PlayerId);
-
-        return Results.Ok(new
-        {
-            matchEnded = true,
-            score = scores["player"]
-        });
-    }
-    // If not all answers are valid, just return the score without ending the match
-    await hub.Clients.Group(request.LobbyId)
-           .SendAsync("ScoreUpdated", request.PlayerId, scores["player"]);
-    // Log the score update for debugging purposes
-    Console.WriteLine($"Player {request.PlayerId} scored {scores["player"]} points in lobby {request.LobbyId}");
-
-    // Return the score update response to the client
-    return Results.Ok(new { matchEnded = false, score = scores["player"] });
+    return Results.Ok(new { score = scores["player"] });
 });
 
 // Map the SignalR hub for real-time lobby updates
@@ -188,5 +165,4 @@ app.Run();
 
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
-public record CalculateScoreRequest(List<CategorySubmission> Categories, string PlayerId, string LobbyId);
-public record ReadyRequest(bool Ready);
+public record CalculateScoreRequest(List<CategorySubmission> Categories);
