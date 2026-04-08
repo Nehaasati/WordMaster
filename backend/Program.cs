@@ -133,14 +133,15 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
 app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     string lobbyId,
     string playerId,
+    ReadyRequest request,
     GameEngine engine,
     IHubContext<LobbyHub> hub
 ) =>
 {
-    engine.SetPlayerReady(lobbyId, playerId);
+    engine.SetPlayerReady(lobbyId, playerId, request.Ready);
 
     await hub.Clients.Group(lobbyId)
-        .SendAsync("PlayerReady", playerId);
+        .SendAsync("PlayerReady", playerId, request.Ready);
 
     return Results.Ok();
 });
@@ -188,3 +189,4 @@ app.Run();
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
 public record CalculateScoreRequest(List<CategorySubmission> Categories, string PlayerId, string LobbyId);
+public record ReadyRequest(bool Ready);
