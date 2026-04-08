@@ -60,7 +60,7 @@ const GamePage: React.FC = () => {
     return initial
   })
     const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
-  const [timeLeft,  setTimeLeft]  = useState(60)
+  const [timeLeft,  setTimeLeft]  = useState(0)
   const [frozen,    setFrozen]    = useState(false)
   const [freezeMsg, setFreezeMsg] = useState('')
   const [stopped,   setStopped]   = useState(false)
@@ -95,10 +95,7 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     if (stopped) return
     const t = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(t); return 0 }
-        return prev - 1
-      })
+      setTimeLeft(prev => prev + 1)
     }, 1000)
     return () => clearInterval(t)
   }, [stopped])
@@ -563,7 +560,7 @@ const handleFreeze = () => {
         <div className="gp-stopped-overlay" data-testid="stopped-overlay">
           <div className="gp-stopped-card">
             <h2>Stopp!</h2>
-            <p>Din tid: {60 - timeLeft} sekunder</p>
+            <p>Din tid: {timeLeft} sekunder</p>
             <p>Din poäng: {score}</p>
           </div>
         </div>
