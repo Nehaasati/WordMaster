@@ -241,39 +241,41 @@ export default function LobbyPage() {
           <button
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
             onClick={async () => {
+              const storedPlayerId = localStorage.getItem("playerId");
               if (!ready) {
-                // join lobby and mark as ready
-                const response = await fetch(
-                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      name: character.name,
-                      isHost: isHost,
-                    }),
-                  },
-                );
-
-                // 1- try to join the lobby. If it fails (e.g. lobby is full), show an alert and return early
-                if (!response.ok) {
+                if (!storedPlayerId) {
+                  const response = await fetch(
+                    `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        name: character.name,
+                        isHost: isHost,
+                      }),
+                    },
+                  );
+                  if (!response.ok) {
+                    const data = await response.json();
+                    setMessage(
+                      data.error ||
+                        "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
+                    );
+                    return;
+                  }
                   const data = await response.json();
-                  setMessage(data.error || "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.");
-                  return;
+                  const joinedPlayer = data.player;
+                  localStorage.setItem("playerId", joinedPlayer.id);
+                  storedPlayerId = joinedPlayer.id; // uppdatera variabeln efter att ha satt localStorage
                 }
-
-                const data = await response.json();
-                const joinedPlayer = data.player; // we need the player info to mark them as ready in the next step
-                localStorage.setItem("playerId", joinedPlayer.id); // store playerId in localStorage for later use in GamePage  
-                // 2- mark the player as ready. This will trigger the PlayerReady event in SignalR, which will update the UI for all players in the lobby to show that this player is ready.
+                
                 await fetch(
-                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${joinedPlayer.id}`,
-                  { method: "POST" },
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${storedPlayerId}`,
+                  { method: "POST" }
                 );
-
                 setReady(true);
-              } else {
-                if (isHost) {
+                return;
+              } if (isHost) {
                   if (players.length < 2) {
                     setMessage("Väntar på att den andra spelaren ska gå med...");
                     return;
@@ -292,7 +294,7 @@ export default function LobbyPage() {
                   }
                 }
               }
-            }}
+            }
           >
             {ready
               ? isHost
