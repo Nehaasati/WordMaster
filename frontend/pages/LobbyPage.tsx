@@ -20,7 +20,10 @@ export default function LobbyPage() {
   // Om isHost inte skickas via navigation, defaulta till false
   const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
   const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
-
+  const selectedPlayerName =
+  location.state?.playerName?.trim() ||
+  localStorage.getItem("wordmaster-player-name")?.trim() ||
+  '';
   const [realLobbyId, setRealLobbyId] = useState<string>("");
 
   // State för att hålla koll på spelare i lobbyn
@@ -149,6 +152,11 @@ export default function LobbyPage() {
         <div className="col">
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
+          {selectedPlayerName && (
+            <div className="player-box" style={{marginBottom: "20px"}}>
+              <p>Ditt namn: {selectedPlayerName}</p>
+            </div>
+          )}
           {/* Players list */}
           <div className="players-list">
             {players.map((p, index) => (
@@ -249,7 +257,7 @@ export default function LobbyPage() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      name: character.name,
+                      name: selectedPlayerName || character.name,
                       isHost: isHost,
                     }),
                   },
