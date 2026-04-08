@@ -141,7 +141,7 @@ vite.config.ts.timestamp-*
 # .NET
 bin/
 obj/
-
+*.lscache
 # xUnit
 TestResults/
 
