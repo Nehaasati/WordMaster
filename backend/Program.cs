@@ -145,8 +145,8 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     return Results.Ok();
 });
 
-app.MapPost("/api/game/calculate-score", (
-    CalculateScoreRequest request) =>
+app.MapPost("/api/game/calculate-score", async(
+    CalculateScoreRequest request, IHubContext<LobbyHub> hub) =>
 {
     var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>();
     submissions["player"] = new Dictionary<string, ScoreCalculator.CategorySubmission>();
@@ -155,7 +155,29 @@ app.MapPost("/api/game/calculate-score", (
         submissions["player"][category.Id] = new ScoreCalculator.CategorySubmission(category.Word, category.IsValid);
     }
     var scores = ScoreCalculator.CalculateScores(submissions);
-    return Results.Ok(new { score = scores["player"] });
+    // Check if all answers are valid
+    bool allValid = request.Categories.All(c => c.IsValid);
+
+    // Notify the client about the score and whether the match has ended (all answers valid)
+    if (allValid)
+    {
+        await hub.Clients.Group(request.LobbyId)
+            .SendAsync("AllAnswersValid", request.PlayerId);
+
+        return Results.Ok(new
+        {
+            matchEnded = true,
+            score = scores["player"]
+        });
+    }
+    // If not all answers are valid, just return the score without ending the match
+    await hub.Clients.Group(request.LobbyId)
+           .SendAsync("ScoreUpdated", request.PlayerId, scores["player"]);
+    // Log the score update for debugging purposes
+    Console.WriteLine($"Player {request.PlayerId} scored {scores["player"]} points in lobby {request.LobbyId}");
+
+    // Return the score update response to the client
+    return Results.Ok(new { matchEnded = false, score = scores["player"] });
 });
 
 // Map the SignalR hub for real-time lobby updates
