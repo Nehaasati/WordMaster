@@ -1,12 +1,6 @@
 Feature: Landing Page
-
-  Scenario: Spelare ser landningssidan med alla element
-    Given att jag öppnar startsidan
-    Then ska jag se Word Master titeln
-    And ska jag se Create a lobby knappen
-    And ska jag se Join a lobby knappen
-
-  Scenario: Spelare navigerar till lobby
-    Given att jag öppnar startsidan
-    When jag klickar på Create a lobby
-    Then ska jag se lobby sidan
+  Scenario: Player sees landing page with all elements
+    Given I open the landing page
+    Then I should see the Word Master title
+    And I should see the Create a lobby button
+    And I should see the Join a lobby button
