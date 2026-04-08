@@ -33,4 +33,9 @@ public class LobbyHub : Hub
   {
     await Clients.OthersInGroup(lobbyId).SendAsync("InkReceived");
   }
+
+  public async Task UseFreeze(string lobbyId)
+  {
+    await Clients.OthersInGroup(lobbyId).SendAsync("FreezeReceived");
+  }
 }

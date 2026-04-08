@@ -66,6 +66,8 @@ const GamePage: React.FC = () => {
   const [stopped,   setStopped]   = useState(false)
   const [score,     setScore]     = useState(0)
   const [showInk,   setShowInk]   = useState(false)
+  const [showFreeze, setShowFreeze] = useState(false)
+  const [freezeActive, setFreezeActive] = useState(false)
   const connectionRef = useRef<signalR.HubConnection | null>(null)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
@@ -80,6 +82,7 @@ const GamePage: React.FC = () => {
     connection.start().then(async () => {
       await connection.invoke('JoinLobbyGroup', lobbyId)
       connection.on('InkReceived', () => setShowInk(true))
+      connection.on('FreezeReceived', () => handleFreeze())
     })
     connectionRef.current = connection
     return () => { connection.stop() }
@@ -428,8 +431,33 @@ const GamePage: React.FC = () => {
   }
 const handleFreeze = () => {
     setFrozen(true)
+    setShowFreeze(true)
     setFreezeMsg('Freeze: Du kan inte skriva i 5 sekunder')
-    setTimeout(() => { setFrozen(false); setFreezeMsg('') }, 5000)
+    
+    // Fade in
+    setTimeout(() => {
+      setFreezeActive(true)
+    }, 50)
+
+    // Start fade out at 4.6s
+    setTimeout(() => {
+      setFreezeActive(false)
+    }, 4600)
+
+    // Remove from DOM at 5s
+    setTimeout(() => { 
+      setFrozen(false)
+      setFreezeMsg('')
+      setShowFreeze(false)
+    }, 5000)
+  }
+ 
+  const handleFreezePowerup = () => {
+    if (lobbyId && connectionRef.current) {
+      connectionRef.current.invoke('UseFreeze', lobbyId)
+    } else {
+      handleFreeze()
+    }
   }
  
   const handleMix = () => {
@@ -455,7 +483,7 @@ const handleFreeze = () => {
         <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
       </div>
     <div className="gp-powerups">
-        <button className="gp-btn gp-btn--freeze" onClick={handleFreeze} data-testid="btn-freeze">Freeze</button>
+        <button className="gp-btn gp-btn--freeze" onClick={handleFreezePowerup} data-testid="btn-freeze">Freeze</button>
         <button className="gp-btn gp-btn--black" onClick={() => connectionRef.current?.invoke('UseInk', lobbyId)} data-testid="btn-black">Bläck</button>
         <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
       </div>
@@ -510,8 +538,17 @@ const handleFreeze = () => {
           src="/videos/Bläck.webm"
           autoPlay
           muted
-          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 9999, pointerEvents: 'none' }}
+          className="gp-overlay-video gp-overlay-video--visible"
           onEnded={() => setShowInk(false)}
+        />
+      )}
+
+    {showFreeze && (
+        <video
+          src="/videos/Freeze5Sec.webm"
+          autoPlay
+          muted
+          className={`gp-overlay-video ${freezeActive ? 'gp-overlay-video--visible' : ''}`}
         />
       )}
 
