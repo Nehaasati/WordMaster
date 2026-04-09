@@ -254,10 +254,12 @@ Marks player as ready.
 
 ### 📤 Response
 
+```json
 {
-    "isValid": true,
-    "message": "Word found"
+  "isValid": true,
+  "message": "Word found"
 }
+```
 
 ---
 
@@ -267,11 +269,6 @@ Marks player as ready.
 
 ### 📥 Request
 
-```json
-{
-  "submissions": {}
-}
-```
 
 ### 📤 Response
 
