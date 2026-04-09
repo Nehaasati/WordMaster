@@ -152,3 +152,5 @@ playwright/.cache/
 
 # XML files
 *.xml
+
+Testing/.features-gen/
