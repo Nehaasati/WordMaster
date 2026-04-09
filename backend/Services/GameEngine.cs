@@ -285,6 +285,8 @@ public class GameEngine
 
         return true;
     }
+
+    
 }
 
 public class Lobby
@@ -339,6 +341,9 @@ public class Player
 
     // Indicates if the player has submitted a word for the current round.
     public bool HasSubmitted { get; set; }
+
+    // Indicates if the player finished the round (submitted a word or not).
+    public bool FinishedRound { get; set; }
 
     // we can add more player-specific properties here later, like avatar, language preference, etc.
     // public string PreferredLanguage { get; set; } = "sv, en, etc.";
