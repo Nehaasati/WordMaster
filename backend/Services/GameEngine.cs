@@ -154,7 +154,7 @@ public class GameEngine
             player.IsReady = true;
     }
 
-    public List<char> GenerateLetters(int count = 15)
+    public List<char> GenerateLetters(int count = 25)
     {
         var random = new Random();
         var letters = new List<char>();

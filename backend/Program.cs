@@ -68,7 +68,7 @@ app.MapGet("/api/lobby/{lobbyId}", (string lobbyId, GameEngine engine) =>
     return lobby is not null ? Results.Ok(lobby) : Results.NotFound();
 });
 
-app.MapGet("/api/game/letters", (GameEngine engine, int count = 15) =>
+app.MapGet("/api/game/letters", (GameEngine engine, int count = 25) =>
 {
     var letters = engine.GenerateLetters(count);
     return Results.Ok(letters);
