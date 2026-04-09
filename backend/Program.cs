@@ -236,6 +236,8 @@ app.MapPost("/api/game/next-round/{lobbyId}", (
     });
 });
 
+*/
+
 //Finish the game for a player. This is called when a player finishes submitting their words for the final round, and it checks if the match has ended (all players finished). If the match has ended, it notifies all players in the lobby via SignalR.
 app.MapPost("/api/game/finish/{lobbyId}/{playerId}", async (
     string lobbyId,
@@ -258,8 +260,6 @@ app.MapPost("/api/game/finish/{lobbyId}/{playerId}", async (
 
     return Results.Ok(new { finished = true, matchEnded = false });
 });
-*/
-
 
 app.MapPost("/api/game/calculate-score", (
     CalculateScoreRequest request) =>
