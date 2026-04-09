@@ -148,6 +148,30 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     return Results.Ok();
 });
 
+// Endpoint for players to submit their words for the current round. This marks the player as having submitted, and if all players have submitted, it triggers the end of the round in the game engine.
+app.MapPost("/api/game/submit/{lobbyId}/{playerId}", (
+    string lobbyId,
+    string playerId,
+    GameEngine engine) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    if (lobby == null)
+        return Results.NotFound();
+
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.NotFound();
+
+    player.HasSubmitted = true;
+
+    if (lobby.Players.All(p => p.HasSubmitted))
+    {
+        engine.EndRound(lobbyId);
+    }
+
+    return Results.Ok();
+});
+
 app.MapPost("/api/game/calculate-score", (
     CalculateScoreRequest request) =>
 {
