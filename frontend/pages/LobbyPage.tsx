@@ -5,12 +5,13 @@ import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
 import * as signalR from "@microsoft/signalr";
 
-const Characters: Character[] = [
-    {id:1 , name:"Owl", image:"../images/owl.png"},
-    {id:2 , name:"Leopard", image:"../images/leo.png"},
-    {id:3 , name:"Mouse", image:"../images/mouse.png"},
-    {id:4 , name:"Bear", image:"../images/bear.png"},
-]
+// Map backend character ID → local image path
+const CHARACTER_IMAGES: Record<string, string> = {
+  ugglan:   "/images/owl.png",
+  leopard:  "/images/leo.png",
+  musen:    "/images/mouse.png",
+  björnen:  "/images/bear.png",
+};
 
 export default function LobbyPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
