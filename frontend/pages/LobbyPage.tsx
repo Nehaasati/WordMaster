@@ -1,4 +1,5 @@
 import {useState, useEffect, useRef} from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
@@ -6,11 +7,11 @@ import "../css/lobby.css";
 import * as signalR from "@microsoft/signalr";
 
 const Characters: Character[] = [
-    {id:1 , name:"Owl", image:"../images/owl.png"},
-    {id:2 , name:"Leopard", image:"../images/leo.png"},
-    {id:3 , name:"Mouse", image:"../images/mouse.png"},
-    {id:4 , name:"Bear", image:"../images/bear.png"},
-]
+  { id: 1, name: "Owl", image: "../images/owl.png" },
+  { id: 2, name: "Leopard", image: "../images/leo.png" },
+  { id: 3, name: "Mouse", image: "../images/mouse.png" },
+  { id: 4, name: "Bear", image: "../images/bear.png" },
+];
 
 export default function LobbyPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
@@ -20,7 +21,10 @@ export default function LobbyPage() {
   // Om isHost inte skickas via navigation, defaulta till false
   const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
   const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
-
+  const selectedPlayerName =
+  location.state?.playerName?.trim() ||
+  localStorage.getItem("wordmaster-player-name")?.trim() ||
+  '';
   const [realLobbyId, setRealLobbyId] = useState<string>("");
 
   // State för att hålla koll på spelare i lobbyn
@@ -155,7 +159,7 @@ export default function LobbyPage() {
     };
   }, [realLobbyId, navigate]);
 
-  // state to hold any error or status message from the backend 
+  // state to hold any error or status message from the backend
   const [message, setMessage] = useState<string | null>(null);
 
   // Clear the message after 3 seconds
@@ -172,6 +176,11 @@ export default function LobbyPage() {
         <div className="col">
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
+          {selectedPlayerName && (
+            <div className="player-box" style={{marginBottom: "20px"}}>
+              <p>Ditt namn: {selectedPlayerName}</p>
+            </div>
+          )}
           {/* Players list */}
           <div className="players-list">
             {players.map((p, index) => (
@@ -225,11 +234,7 @@ export default function LobbyPage() {
           </div>
 
           {/* Show message from backend if exists */}
-          {message && (
-            <div className="lobby-message">
-              {message}
-            </div>
-          )}
+          {message && <div className="lobby-message">{message}</div>}
 
           {/* Ready/ Start button */}
           <button
@@ -243,7 +248,7 @@ export default function LobbyPage() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      name: character.name,
+                      name: selectedPlayerName || character.name,
                       isHost: isHost,
                     }),
                   },
@@ -252,7 +257,10 @@ export default function LobbyPage() {
                 // 1- try to join the lobby. If it fails (e.g. lobby is full), show an alert and return early
                 if (!response.ok) {
                   const data = await response.json();
-                  setMessage(data.error || "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.");
+                  setMessage(
+                    data.error ||
+                      "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
+                  );
                   return;
                 }
 
@@ -269,7 +277,9 @@ export default function LobbyPage() {
               } else {
                 if (isHost) {
                   if (players.length < 2) {
-                    setMessage("Väntar på att den andra spelaren ska gå med...");
+                    setMessage(
+                      "Väntar på att den andra spelaren ska gå med...",
+                    );
                     return;
                   }
 
