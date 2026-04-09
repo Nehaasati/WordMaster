@@ -214,3 +214,35 @@
   width: fit-content;
   font-size: 12px;
 }
+
+.character-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  text-align: center;
+}
+.character-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-style: italic;
+  color: #eedeff;
+  text-shadow: 0 0 10px rgba(160, 80, 255, 0.6);
+  margin: 0;
+}
+.character-description {
+  font-size: 0.9rem;
+  color: rgba(225, 200, 255, 0.8);
+  margin: 0;
+}
+.ability-badge {
+  display: inline-block;
+  background: rgba(160, 80, 255, 0.2);
+  border: 1px solid rgba(160, 80, 255, 0.5);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.82rem;
+  color: #d4b3ff;
+  font-style: italic;
+}
