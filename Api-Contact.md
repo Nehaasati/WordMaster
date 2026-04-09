@@ -15,14 +15,13 @@ Includes REST endpoints, SignalR real-time communication, and data models.
 
 | Property            | Value                       |
 | ------------------- | --------------------------- |
-| **Base URL (dev)**  | `http://127.0.0.1:5024`     |
-|   **API Version**   | `1.0.0`                     |
+| Base URLBAckend | `http://localhost:5024`     |
+|  API Version**   | `1.0.0`                     |
 | **Format**          | JSON (UTF-8)                |
 | **Real-time**       | SignalR `/lobbyHub`         |
+| frontend         | http://localhost:5173/
 
-
-
-## 📡 Common Headers
+# 📡 Common Headers
 
 | Header         | Value              | Description       |
 | -------------- | ------------------ | ----------------- |
@@ -49,56 +48,17 @@ Includes REST endpoints, SignalR real-time communication, and data models.
 | 404  | Not Found   |
 | 409  | Conflict    |
 
----
-
-# 🧩 Data Models
-
-## Character
-
-```json
-{
-  "id": "ugglan",
-  "name": "Ugglan",
-  "description": "The wise owl rewards long words.",
-  "ability": {
-    "type": "LongWordBonus",
-    "bonusPoints": 3,
-    "thresholdLength": 8
-  }
-}
-```
-
----
-
-## Player
-
-```json
-{
-  "id": "guid",
-  "name": "Leopard",
-  "isHost": true,
-  "score": 0,
-  "isReady": false
-}
-```
 
 
-## Lobby
 
-```json
-{
-  "id": "A3F9C1",
-  "inviteCode": "b3f9c1a2d4e6",
-  "letters": ["K","A","T"],
-  "players": []
-}
-```
+
+
 
 ------------------------------------------------------------------------
 
 # 🎭 Character Endpoints
 
-## GET `/api/character`
+## GET `http://localhost:5024/api/character/`
 
 Returns all characters.
 
@@ -106,23 +66,72 @@ Returns all characters.
 
 ```json
 [
-  { "id": "ugglan", "name": "Ugglan" }
+    [
+    {
+        "id": "ugglan",
+        "name": "Ugglan",
+        "description": "The wise owl rewards long words.",
+        "ability": {
+            "type": 0,
+            "bonusPoints": 3,
+            "thresholdLength": 8,
+            "thresholdSeconds": null,
+            "effectDescription": "+3 bonus points for words longer than 8 letters"
+        }
+    },
+    {
+        "id": "leopard",
+        "name": "Leopard",
+        "description": "Lightning fast — rewards quick answers.",
+        "ability": {
+            "type": 1,
+            "bonusPoints": 3,
+            "thresholdLength": null,
+            "thresholdSeconds": 10,
+            "effectDescription": "+3 bonus points for words submitted within 10 seconds"
+        }
+    },
+    {
+        "id": "musen",
+        "name": "Musen",
+        "description": "Small but mighty — loves short words.",
+        "ability": {
+            "type": 2,
+            "bonusPoints": 1,
+            "thresholdLength": 4,
+            "thresholdSeconds": null,
+            "effectDescription": "+1 bonus point for words shorter than 4 letters"
+        }
+    },
+    {
+        "id": "björnen",
+        "name": "Björnen",
+        "description": "The bear shrugs off freeze attacks.",
+        "ability": {
+            "type": 3,
+            "bonusPoints": 0,
+            "thresholdLength": null,
+            "thresholdSeconds": null,
+            "effectDescription": "Immune to the Freeze chaos event"
+        }
+    }
 ]
-```
-
+]
 ---
 
-## GET `/api/character/ugglan
+## GET `http://localhost:5024/api/character/ugglan`
 
 {
-  "id": "ugglan",
-  "name": "Ugglan",
-  "description": "The wise owl rewards long words.",
-  "ability": {
-    "type": "LongWordBonus",
-    "bonusPoints": 3,
-    "thresholdLength": 8
-  }
+    "id": "ugglan",
+    "name": "Ugglan",
+    "description": "The wise owl rewards long words.",
+    "ability": {
+        "type": 0,
+        "bonusPoints": 3,
+        "thresholdLength": 8,
+        "thresholdSeconds": null,
+        "effectDescription": "+3 bonus points for words longer than 8 letters"
+    }
 }
 
 | Param | Type   | Description  |
@@ -131,7 +140,7 @@ Returns all characters.
 
 ---
 
-## POST `/api/character/ability`
+## POST `http://localhost:5024/api/character/ability`
 
 Calculate bonus points.
 
@@ -158,71 +167,103 @@ Calculate bonus points.
 
 # 🏠 Lobby Endpoints
 
-## POST `/api/lobby`
+## POST `http://localhost:5024/api/lobby/`
 
 Create a lobby.
 
-### 📤 Response
 
-```json
+
 {
-  "lobbyId": "A3F9C1",
-  "inviteCode": "abc123"
+    "lobbyId": "85E689",
+    "inviteCode": "fe6ffc4c1dff"
 }
-```
 
----
 
-## POST `/api/lobby/{id}/join`
+-----------------------------------------------------------
+
+## GET `http://localhost:5024/api/lobby/{{lobbyId}}/`
+{
+    "id": "85E689",
+    "inviteCode": "fe6ffc4c1dff",
+    "letters": [
+        "N",
+        "H",
+        "Ö",
+        "Z",
+        "N",
+        "N",
+        "R",
+        "X",
+        "A",
+        "K",
+        "U",
+        "Å",
+        "A",
+        "L",
+        "H"
+    ],
+    "players": [
+        {
+            "id": "a4099d0c-bc36-4828-af5f-b617c619765f",
+            "name": "Fatima",
+            "isHost": false,
+            "connectionId": "666cf63d-900f-4cdd-af14-463bb717924f",
+            "score": 0,
+            "isReady": true,
+            "joinedAt": "2026-04-09T09:04:15.4831992Z"
+        },
+        {
+            "id": "b9bb01ad-7db4-42fd-8db8-6e5f50486529",
+            "name": "Oskar",
+            "isHost": false,
+            "connectionId": "cc99c74c-b4ba-4253-8adc-475afbe88196",
+            "score": 0,
+            "isReady": true,
+            "joinedAt": "2026-04-09T09:04:15.5710071Z"
+        }
+    ]
+}
+
+## POST `http://localhost:5024/api/lobby/{id}/join`
 
 Join a lobby.
 
-| Field  | Type   | Required |
-| ------ | ------ | -------- |
-| name   | string | ✅        |
-| isHost | bool   | ✅        |
+{
+  "name": "Fatima"
+}
 
----
-
-## POST `/api/lobby/{id}/ready/{playerId}`
+## POST `http://localhost:5024/api/lobby/{id}/ready/{playerId}`
 
 Marks player as ready.
-
+{
+  "name": "Fatima"
+}
 ---
 
-## POST `/api/lobby/{id}/start`
 
-Starts the game.
-
----
 
 # 🎮 Game Endpoint
 
-## POST `/api/game/{lobbyId}/validate`
+## POST `http://localhost:5024/api/game/{lobbyId}/validate`
 
-### 📥 Request
-
-```json
 {
-  "word": "katter",
-  "category": "djur"
-}
-```
+  "word": "KATT",
+  "category": "Animal",
+  "letters": ["K","A","T","T"]
+}`
 
 ### 📤 Response
 
-```json
 {
-  "isValid": true,
-  "message": "Word found"
+    "isValid": true,
+    "message": "Word found"
 }
-```
 
 ---
 
 # 🧮 Score Calculation
 
-## POST `/api/score/calculate`
+## POST `http://localhost:5024/api/score/calculate`
 
 ### 📥 Request
 
