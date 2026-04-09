@@ -114,9 +114,11 @@
   z-index: 2;
   display: flex;
   flex: 1;
-  padding: 0 20px 16px;
-  gap: 20px;
+ padding: 0 40px 16px;
+  gap: 40px;
   overflow: hidden;
+  align-items: center;
+  justify-content: center;
 }
  
 /* ── LEFT — CATEGORIES ── */
