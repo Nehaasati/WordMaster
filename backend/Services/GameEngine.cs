@@ -227,6 +227,9 @@ public class Player
     // TIMESTAMP for when the player joined the lobby, can be useful for sorting players or handling timeouts
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
+    // Indicates if the player has submitted a word for the current round.
+    public bool HasSubmitted { get; set; }
+
     // we can add more player-specific properties here later, like avatar, language preference, etc.
     // public string PreferredLanguage { get; set; } = "sv, en, etc.";
     // public string Language { get; set; } = "sv";
