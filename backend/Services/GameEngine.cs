@@ -127,6 +127,17 @@ public class GameEngine
         lobby.State = GameState.PlayingRound;
     }
 
+    // Check if the round time is over by comparing the current time with the round start time and the round duration. This can be called by the client to check if they should show a "Round Over" message or trigger the end of the round in case the timer runs out.
+    public bool IsRoundTimeOver(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return false;
+
+        return (DateTime.UtcNow - lobby.RoundStartTime)
+            .TotalSeconds >= lobby.RoundDurationSeconds;
+    }
+
+
     // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
     public void SetPlayerReady(string lobbyId, string playerId)
     {
