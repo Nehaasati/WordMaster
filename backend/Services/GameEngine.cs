@@ -89,18 +89,20 @@ public class GameEngine
             return false;
 
         lobby.State = GameState.PlayingRound;
-        lobby.CurrentRound = 1;
-        lobby.RoundStartTime = DateTime.UtcNow;
+        // lobby.CurrentRound = 1;
+       // lobby.RoundStartTime = DateTime.UtcNow;
 
         foreach (var player in lobby.Players)
         {
             player.HasSubmitted = false;
+            player.FinishedRound = false;
             player.Score = 0;
         }
 
         return true;
     }
 
+    /*
     // End the current round by setting the lobby state to RoundFinished.
     public void EndRound(string lobbyId)
     {
@@ -145,7 +147,7 @@ public class GameEngine
         return (DateTime.UtcNow - lobby.RoundStartTime)
             .TotalSeconds >= lobby.RoundDurationSeconds;
     }
-
+*/
 
     // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
     public void SetPlayerReady(string lobbyId, string playerId)
@@ -260,6 +262,7 @@ public class GameEngine
         return true;
     }
 
+/*
     // Method to handle player submitting their word for the round. This checks if the submission is valid and if both players have submitted, it ends the round.
     public bool SubmitRound(string lobbyId, string playerId)
     {
@@ -285,7 +288,7 @@ public class GameEngine
 
         return true;
     }
-
+*/
 
     // Method to check if a player has finished the round (either by submitting a word or by timing out). If only one player has finished, we can end the game immediately since the other player either submitted a word or timed out, resulting in a win for the player who finished.
     public bool PlayerFinished(string lobbyId, string playerId)
@@ -333,16 +336,16 @@ public class Lobby
     public GameState State { get; set; } = GameState.WaitingForPlayers;
 
     // Current round number, can be used to track how many rounds have been played and when to end the game based on MaxRounds
-    public int CurrentRound { get; set; } = 0;
+    //public int CurrentRound { get; set; } = 0;
 
     // Max rounds can be used to determine when the game should end. Once CurrentRound reaches MaxRounds, we can transition to GameFinished state and show final scores.
-    public int MaxRounds { get; set; } = 5;
+    //public int MaxRounds { get; set; } = 5;
 
     // Timestamp for when the current round started, can be used to implement round timers and show countdowns on the client side.
-    public DateTime RoundStartTime { get; set; }
+    // public DateTime RoundStartTime { get; set; }
 
     // Duration of each round in seconds, can be used to determine when a round should end and transition to RoundFinished state.
-    public int RoundDurationSeconds { get; set; } = 60;
+    // public int RoundDurationSeconds { get; set; } = 60;
 }
 
 // Player class to represent a player in the lobby. This can be expanded with more properties as needed.

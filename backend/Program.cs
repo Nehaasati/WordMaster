@@ -164,6 +164,7 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     return Results.Ok();
 });
 
+/*
 // Endpoint for players to submit their words for the current round. This marks the player as having submitted, and if all players have submitted, it triggers the end of the round in the game engine.
 app.MapPost("/api/game/submit/{lobbyId}/{playerId}", (
     string lobbyId,
@@ -257,6 +258,8 @@ app.MapPost("/api/game/finish/{lobbyId}/{playerId}", async (
 
     return Results.Ok(new { finished = true, matchEnded = false });
 });
+*/
+
 
 app.MapPost("/api/game/calculate-score", (
     CalculateScoreRequest request) =>
@@ -280,6 +283,7 @@ public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
 public record CalculateScoreRequest(List<CategorySubmission> Categories);
 
+/*
 // Response model for round status, indicating the current round, game state, remaining time, and player submission status.
 public record RoundStatusResponse(
     int CurrentRound,
@@ -288,3 +292,4 @@ public record RoundStatusResponse(
     int PlayersSubmitted,
     int TotalPlayers
 );
+*/
