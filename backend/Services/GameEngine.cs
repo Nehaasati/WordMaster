@@ -92,6 +92,15 @@ public class GameEngine
         }
     }
 
+    // End the current round by setting the lobby state to RoundFinished.
+    public void EndRound(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return;
+
+        lobby.State = GameState.RoundFinished;
+    }
+
     // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
     public void SetPlayerReady(string lobbyId, string playerId)
     {
