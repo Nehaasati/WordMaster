@@ -197,6 +197,29 @@ app.MapGet("/api/game/round-status/{lobbyId}", (
     ));
 });
 
+// Endpoint to start the next round in the lobby.
+app.MapPost("/api/game/next-round/{lobbyId}", (
+    string lobbyId,
+    GameEngine engine) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+
+    if (lobby == null)
+        return Results.NotFound();
+
+    if (lobby.State != GameState.RoundFinished)
+        return Results.BadRequest("Round not finished yet");
+
+    engine.StartNextRound(lobbyId);
+
+    return Results.Ok(new
+    {
+        round = lobby.CurrentRound,
+        state = lobby.State.ToString(),
+        letters = lobby.Letters
+    });
+});
+
 app.MapPost("/api/game/calculate-score", (
     CalculateScoreRequest request) =>
 {
