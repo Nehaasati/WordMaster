@@ -75,14 +75,16 @@ public class GameEngine
     }
 
     // Start the game by setting the lobby state to PlayingRound, initializing round number, and resetting player states as needed.
-    public void StartGame(string lobbyId)
+    public bool StartGame(string lobbyId)
     {
         var lobby = GetLobby(lobbyId);
-        if (lobby == null) return;
+        if (lobby == null) return false;
+
+        if (!CanStartGame(lobbyId))
+            return false;
 
         lobby.State = GameState.PlayingRound;
         lobby.CurrentRound = 1;
-
         lobby.RoundStartTime = DateTime.UtcNow;
 
         foreach (var player in lobby.Players)
@@ -90,6 +92,8 @@ public class GameEngine
             player.HasSubmitted = false;
             player.Score = 0;
         }
+
+        return true;
     }
 
     // End the current round by setting the lobby state to RoundFinished.
@@ -208,35 +212,72 @@ public class GameEngine
     // Try to join a lobby by ID or invite code. Returns true if successful, false if lobby not found, full, or player already in lobby.
     public bool TryJoinLobby(string lobbyId, Player player, out string error)
     {
-        // Reset error message
         error = string.Empty;
 
-        // First, try to find the lobby by ID or invite code
         var lobby = GetLobby(lobbyId);
 
-        // If lobby is null, it means it wasn't found by either ID or invite code
         if (lobby is null)
         {
             error = "Lobby not found";
             return false;
         }
 
-        // Check if lobby is full (2 players max for now)
+        // Prevent joining if game already started
+        if (lobby.State != GameState.WaitingForPlayers &&
+            lobby.State != GameState.WaitingForReady)
+        {
+            error = "Game already started";
+            return false;
+        }
+
+        // Max 2 players
         if (lobby.Players.Count >= 2)
         {
             error = "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.";
             return false;
         }
 
-        // Check if player is already in the lobby (by ID)
+        // Player already in lobby
         if (lobby.Players.Any(p => p.Id == player.Id))
         {
             error = "Player already in lobby";
             return false;
         }
 
-        // If we made it here, we can safely add the player to the lobby
         lobby.Players.Add(player);
+
+        // When the second player joins => move to ready phase
+        if (lobby.Players.Count == 2)
+        {
+            lobby.State = GameState.WaitingForReady;
+        }
+
+        return true;
+    }
+
+    // Method to handle player submitting their word for the round. This checks if the submission is valid and if both players have submitted, it ends the round.
+    public bool SubmitRound(string lobbyId, string playerId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return false;
+
+        if (lobby.State != GameState.PlayingRound)
+            return false;
+
+        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+        if (player == null) return false;
+
+        if (player.HasSubmitted)
+            return false;
+
+        player.HasSubmitted = true;
+
+        // If both players submitted → end round
+        if (lobby.Players.All(p => p.HasSubmitted))
+        {
+            EndRound(lobbyId);
+        }
+
         return true;
     }
 }

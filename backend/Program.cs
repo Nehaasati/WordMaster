@@ -93,7 +93,8 @@ app.MapPost("/api/lobby/{lobbyId}/start", async (
         return Results.BadRequest("Players not ready");
 
     // Start the game in the engine in order to set the lobby state, initialize rounds, etc.
-    engine.StartGame(lobbyId);
+    if (!engine.StartGame(lobbyId))
+        return Results.BadRequest("Failed to start game");
 
     await hub.Clients.Group(lobbyId)
         .SendAsync("GameStarted", lobbyId);
@@ -207,3 +208,12 @@ app.Run();
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
 public record CalculateScoreRequest(List<CategorySubmission> Categories);
+
+// Response model for round status, indicating the current round, game state, remaining time, and player submission status.
+public record RoundStatusResponse(
+    int CurrentRound,
+    string GameState,
+    int RemainingTime,
+    int PlayersSubmitted,
+    int TotalPlayers
+);
