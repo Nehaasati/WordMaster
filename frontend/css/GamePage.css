@@ -225,9 +225,8 @@ flex: 0 0 auto;
   cursor: default;
   display: inline-block;
 }
- 
-.gp-letter--used  { opacity: 0.2; text-decoration: line-through; }
-.gp-letter--extra { color: #ffdd00; text-shadow: 2px 2px 0 #886600; }
+ .gp-letter:nth-child(odd)  { animation-delay: 0s; }
+.gp-letter:nth-child(even) { animation-delay: 0.5s; }
 /* ── STOPP BUTTON ── */
 .gp-stop-btn {
   background: #e53e3e;
