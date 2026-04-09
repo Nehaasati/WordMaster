@@ -74,6 +74,24 @@ public class GameEngine
         return lobby.Players.All(p => p.IsReady);
     }
 
+    // Start the game by setting the lobby state to PlayingRound, initializing round number, and resetting player states as needed.
+    public void StartGame(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return;
+
+        lobby.State = GameState.PlayingRound;
+        lobby.CurrentRound = 1;
+
+        lobby.RoundStartTime = DateTime.UtcNow;
+
+        foreach (var player in lobby.Players)
+        {
+            player.HasSubmitted = false;
+            player.Score = 0;
+        }
+    }
+
     // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
     public void SetPlayerReady(string lobbyId, string playerId)
     {
