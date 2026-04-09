@@ -155,22 +155,14 @@ app.MapPost("/api/game/submit/{lobbyId}/{playerId}", (
     string playerId,
     GameEngine engine) =>
 {
-    var lobby = engine.GetLobby(lobbyId);
-    if (lobby == null)
-        return Results.NotFound();
+    var success = engine.SubmitRound(lobbyId, playerId);
 
-    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
-    if (player == null)
-        return Results.NotFound();
-
-    player.HasSubmitted = true;
-
-    if (lobby.Players.All(p => p.HasSubmitted))
+    if (!success)
     {
-        engine.EndRound(lobbyId);
+        return Results.BadRequest(new { message = "Submission failed" });
     }
 
-    return Results.Ok();
+    return Results.Ok(new { submitted = true });
 });
 
 // Endpoint to check if the round time is over. If it is, it ends the round in the game engine and returns a response indicating that the round has ended.
