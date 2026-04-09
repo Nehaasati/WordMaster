@@ -192,12 +192,14 @@
 }
   /* ── RIGHT ── */
 .gp-right {
-  flex: 1;
+flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding-bottom: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  padding-bottom: 20px;
+  padding-top: 60px;
 }
 /* ── BIG GREEN LETTERS ── */
 .gp-letters {
