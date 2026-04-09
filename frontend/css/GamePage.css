@@ -245,6 +245,13 @@ flex: 0 0 auto;
   50%  { opacity: 0.3;  transform: scale(0.8); }
   100% { opacity: 0.15; transform: scale(1); }
 }
+.gp-letter--extra {
+  color: #ffdd00;
+  text-shadow:
+    0 0 10px rgba(255, 221, 0, 0.8),
+    2px 2px 0 #886600;
+}
+ 
 /* ── STOPP BUTTON ── */
 .gp-stop-btn {
   background: #e53e3e;
