@@ -92,6 +92,9 @@ app.MapPost("/api/lobby/{lobbyId}/start", async (
     if (!engine.CanStartGame(lobbyId))
         return Results.BadRequest("Players not ready");
 
+    // Start the game in the engine in order to set the lobby state, initialize rounds, etc.
+    engine.StartGame(lobbyId);
+
     await hub.Clients.Group(lobbyId)
         .SendAsync("GameStarted", lobbyId);
 
