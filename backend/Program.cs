@@ -170,13 +170,31 @@ app.MapGet("/api/game/round-status/{lobbyId}", (
     string lobbyId,
     GameEngine engine) =>
 {
+    var lobby = engine.GetLobby(lobbyId);
+
+    if (lobby == null)
+        return Results.NotFound();
+
     if (engine.IsRoundTimeOver(lobbyId))
     {
         engine.EndRound(lobbyId);
-        return Results.Ok(new { roundEnded = true });
     }
 
-    return Results.Ok(new { roundEnded = false });
+    // Calculate remaining time for the round
+    var remainingTime =
+        lobby.RoundDurationSeconds -
+        (int)(DateTime.UtcNow - lobby.RoundStartTime).TotalSeconds;
+
+    if (remainingTime < 0)
+        remainingTime = 0;
+
+    return Results.Ok(new RoundStatusResponse(
+        lobby.CurrentRound,
+        lobby.State.ToString(),
+        remainingTime,
+        lobby.Players.Count(p => p.HasSubmitted),
+        lobby.Players.Count
+    ));
 });
 
 app.MapPost("/api/game/calculate-score", (
