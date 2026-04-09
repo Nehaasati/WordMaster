@@ -92,6 +92,10 @@ app.MapPost("/api/lobby/{lobbyId}/start", async (
     if (!engine.CanStartGame(lobbyId))
         return Results.BadRequest("Players not ready");
 
+    // Start the game in the engine in order to set the lobby state, initialize rounds, etc.
+    if (!engine.StartGame(lobbyId))
+        return Results.BadRequest("Failed to start game");
+
     await hub.Clients.Group(lobbyId)
         .SendAsync("GameStarted", lobbyId);
 
@@ -145,6 +149,36 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     return Results.Ok();
 });
 
+// Endpoint for players to submit their words for the current round. This marks the player as having submitted, and if all players have submitted, it triggers the end of the round in the game engine.
+app.MapPost("/api/game/submit/{lobbyId}/{playerId}", (
+    string lobbyId,
+    string playerId,
+    GameEngine engine) =>
+{
+    var success = engine.SubmitRound(lobbyId, playerId);
+
+    if (!success)
+    {
+        return Results.BadRequest(new { message = "Submission failed" });
+    }
+
+    return Results.Ok(new { submitted = true });
+});
+
+// Endpoint to check if the round time is over. If it is, it ends the round in the game engine and returns a response indicating that the round has ended.
+app.MapGet("/api/game/round-status/{lobbyId}", (
+    string lobbyId,
+    GameEngine engine) =>
+{
+    if (engine.IsRoundTimeOver(lobbyId))
+    {
+        engine.EndRound(lobbyId);
+        return Results.Ok(new { roundEnded = true });
+    }
+
+    return Results.Ok(new { roundEnded = false });
+});
+
 app.MapPost("/api/game/calculate-score", (
     CalculateScoreRequest request) =>
 {
@@ -166,3 +200,12 @@ app.Run();
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
 public record CalculateScoreRequest(List<CategorySubmission> Categories);
+
+// Response model for round status, indicating the current round, game state, remaining time, and player submission status.
+public record RoundStatusResponse(
+    int CurrentRound,
+    string GameState,
+    int RemainingTime,
+    int PlayersSubmitted,
+    int TotalPlayers
+);
