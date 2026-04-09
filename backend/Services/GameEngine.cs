@@ -101,6 +101,32 @@ public class GameEngine
         lobby.State = GameState.RoundFinished;
     }
 
+    // Start the next round by incrementing the round number, generating new letters, resetting player states, and setting the lobby state to PlayingRound again. If the max number of rounds has been reached, transition to GameFinished state instead.
+    public void StartNextRound(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return;
+
+        if (lobby.CurrentRound >= lobby.MaxRounds)
+        {
+            lobby.State = GameState.GameFinished;
+            return;
+        }
+
+        lobby.CurrentRound++;
+
+        lobby.Letters = GenerateLetters();
+
+        lobby.RoundStartTime = DateTime.UtcNow;
+
+        foreach (var player in lobby.Players)
+        {
+            player.HasSubmitted = false;
+        }
+
+        lobby.State = GameState.PlayingRound;
+    }
+
     // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
     public void SetPlayerReady(string lobbyId, string playerId)
     {
