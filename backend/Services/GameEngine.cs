@@ -27,20 +27,25 @@ public class GameEngine
         _categories = categories;
     }
 
-    public Lobby CreateLobby()
+    public Lobby CreateLobby(Player host)
     {
         var lobbyId = Guid.NewGuid().ToString("N")[..6].ToUpper();
-        var inviteCode = Guid.NewGuid().ToString("N")[..12]; // 12-char longer string
-        
-        var lobby = new Lobby { 
-            Id = lobbyId, 
-            InviteCode = inviteCode, 
-            Letters = GenerateLetters() 
+        var inviteCode = Guid.NewGuid().ToString("N")[..12];
+
+        // The player who creates the lobby is automatically the host.
+        host.IsHost = true;
+
+        var lobby = new Lobby
+        {
+            Id = lobbyId,
+            InviteCode = inviteCode,
+            Letters = GenerateLetters(),
+            Players = new List<Player> { host }
         };
-        
+
         _lobbies[lobbyId] = lobby;
         _inviteCodesToId[inviteCode] = lobbyId;
-        
+
         return lobby;
     }
 
