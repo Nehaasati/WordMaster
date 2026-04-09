@@ -56,10 +56,25 @@ app.MapPost("/api/word/validate", (
     return Results.Ok(new { isValid, message });
 });
 
-app.MapPost("/api/lobby", (GameEngine engine) =>
+// Create the lobby with the player as the host and return the lobby ID, invite code, and player ID. This endpoint is called when a player creates a new game lobby.
+app.MapPost("/api/lobby", (
+    string playerName,
+    GameEngine engine) =>
 {
-    var lobby = engine.CreateLobby();
-    return Results.Ok(new { lobbyId = lobby.Id, inviteCode = lobby.InviteCode });
+    var host = new Player
+    {
+        Name = playerName,
+        IsHost = true
+    };
+
+    var lobby = engine.CreateLobby(host);
+
+    return Results.Ok(new
+    {
+        lobbyId = lobby.Id,
+        inviteCode = lobby.InviteCode,
+        playerId = host.Id
+    });
 });
 
 app.MapGet("/api/lobby/{lobbyId}", (string lobbyId, GameEngine engine) =>
