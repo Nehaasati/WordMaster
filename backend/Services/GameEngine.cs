@@ -163,7 +163,7 @@ public class GameEngine
     {
         var random = new Random();
         var letters = new List<char>();
-        
+
         var weightedPool = new List<char>();
         foreach (var c in Alphabet)
         {
@@ -286,7 +286,37 @@ public class GameEngine
         return true;
     }
 
-    
+
+    // Method to check if a player has finished the round (either by submitting a word or by timing out). If only one player has finished, we can end the game immediately since the other player either submitted a word or timed out, resulting in a win for the player who finished.
+    public bool PlayerFinished(string lobbyId, string playerId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null)
+            return false;
+
+        // If the game is already finished, we don't need to do anything here.
+        if (lobby.State == GameState.GameFinished)
+            return false;
+
+        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+        if (player == null)
+            return false;
+
+        // Mark the player as having finished the round (either by submitting a word or by timing out)
+        player.FinishedRound = true;
+
+        // Count how many players have finished the round. If only one player has finished, that means the other player either submitted a word or timed out, and we can end the game.
+        int finishedCount = lobby.Players.Count(p => p.FinishedRound);
+
+        // If only one player have finished, we can end the round but not necessarily the game, since they might have tied by both submitting valid words or both timing out. In that case, we would just end the round and start the next one if there are rounds left.
+        if (finishedCount == 1)
+        {
+            lobby.State = GameState.GameFinished;
+            return true; // The round ended because one player finished and the other didn't, so we can end the game immediately.
+        }
+
+        return false;
+    }
 }
 
 public class Lobby
