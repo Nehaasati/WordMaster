@@ -227,6 +227,24 @@ flex: 0 0 auto;
 }
  .gp-letter:nth-child(odd)  { animation-delay: 0s; }
 .gp-letter:nth-child(even) { animation-delay: 0.5s; }
+@keyframes letterFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
+}
+/* When letter is used — blink animation */
+.gp-letter--used {
+  opacity: 0.15;
+  text-decoration: line-through;
+  animation: letterBlink 0.4s ease;
+  color: #888;
+  text-shadow: none;
+}
+ 
+@keyframes letterBlink {
+  0%   { opacity: 1;    transform: scale(1.3); color: #ff0000; }
+  50%  { opacity: 0.3;  transform: scale(0.8); }
+  100% { opacity: 0.15; transform: scale(1); }
+}
 /* ── STOPP BUTTON ── */
 .gp-stop-btn {
   background: #e53e3e;
