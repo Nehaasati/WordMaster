@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(grep -r \"lobby\\\\|multiplayer\\\\|room\\\\|join\\\\|invite\" /c/Users/learn/RiderProjects/WordMaster --include=*.ts --include=*.tsx --include=*.cs --include=*.js)"
-    ]
-  }
-}
