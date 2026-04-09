@@ -172,6 +172,20 @@ app.MapPost("/api/game/submit/{lobbyId}/{playerId}", (
     return Results.Ok();
 });
 
+// Endpoint to check if the round time is over. If it is, it ends the round in the game engine and returns a response indicating that the round has ended.
+app.MapGet("/api/game/round-status/{lobbyId}", (
+    string lobbyId,
+    GameEngine engine) =>
+{
+    if (engine.IsRoundTimeOver(lobbyId))
+    {
+        engine.EndRound(lobbyId);
+        return Results.Ok(new { roundEnded = true });
+    }
+
+    return Results.Ok(new { roundEnded = false });
+});
+
 app.MapPost("/api/game/calculate-score", (
     CalculateScoreRequest request) =>
 {
