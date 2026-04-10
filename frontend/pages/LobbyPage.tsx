@@ -255,7 +255,7 @@ export default function LobbyPage() {
             {players.map((p, index) => (
               <div key={p.id} className="player-box">
                 <p>
-                  Spelare {index + 1}: {p.name} {p.isReady ? "" : ""}
+                  Spelare {index + 1}: {p.name} {p.isReady ? "Ja" : ""}
                 </p>
               </div>
             ))}
