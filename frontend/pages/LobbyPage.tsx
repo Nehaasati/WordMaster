@@ -17,6 +17,18 @@ export default function LobbyPage() {
   const navigate = useNavigate();
   // Hämta isHost från navigation state
   const location = useLocation();
+
+  // Player name
+  const selectedPlayerName =
+    location.state?.playerName?.trim() ||
+    localStorage.getItem("wordmaster-player-name")?.trim() ||
+    "";
+
+  // Player ID from backend
+  const [playerId, setPlayerId] = useState<string | null>(
+    localStorage.getItem("playerId"),
+  );
+
   // Om isHost inte skickas via navigation, defaulta till false
   const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
   const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
