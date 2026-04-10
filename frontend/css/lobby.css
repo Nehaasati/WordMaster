@@ -38,17 +38,36 @@
 }
 
 .character-carousel {
-    align-items: center;
     display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 320px;
 }
 
-.ch-arrow {
+..ch-arrow {
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
     transition: transform .15s;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
 
+.ch-arrow:first-child {
+    left: 0px;
+}
+
+.ch-arrow:last-child {
+    right: 0px;
+}
+
+.ch-arrow:active {
+    transform: translateY(-50%) scale(0.98);
 }
 .ch-arrow:active {
     transform: scale(0.98);
@@ -62,9 +81,18 @@
 }
 
 
+.characters {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .characters img {
-  width: auto;   
-  height: 450px;
+  width: auto;
+  height: 280px;
+  display: block;
+  margin: 0 auto;
 }
 
 .ready-btn {
@@ -77,7 +105,7 @@
     font-weight: 800;
     font-family: "Inter", sans-serif;
     font-style: italic;
-    margin-top: -25px;
+    margin-top: 16px;   
 }
 
 .ready-btn:active {
@@ -227,6 +255,7 @@
   margin-top: 10px;
   text-align: center;
 }
+  
 .character-name {
   font-size: 1.3rem;
   font-weight: 800;
