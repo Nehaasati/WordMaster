@@ -67,9 +67,9 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
 
     if (value.trim().length >= 4) {
       navigate(`/lobby/${value.trim().toUpperCase()}`)
-      navigate(`/lobby/${trimmedLobbyCode}`, {
-        state: {isHost: false, playerName: trimmedName},
-      })
+     navigate(`/lobby/${trimmedLobbyCode}`, {
+       state: { isHost: false, playerName: trimmedName },
+     });
       onClose()
     }
   }
