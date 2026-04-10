@@ -102,15 +102,20 @@ app.MapPost("/api/lobby/{lobbyId}/start", async (
     return Results.Ok();
 });
 // New endpoint to join a lobby using either lobby ID or invite code
-// This endpoint allows a player to join a lobby and notifies other players in the lobby via SignalR.
+// This endpoint allows a player to join a lobby and notifies other players in the lobby via SignalR. and choose character
 app.MapPost("/api/lobby/{lobbyId}/join", async (
     string lobbyId,
-    Player player,
+    JoinRequest request,
     GameEngine engine,
     IHubContext<LobbyHub> hubContext) =>
 {
-    // assign connection id
-    player.ConnectionId = Guid.NewGuid().ToString();
+    var player = new Player
+    {
+        Name        = request.Name,
+        IsHost      = request.IsHost,
+        CharacterId = request.CharacterId,   // ← now stored
+        ConnectionId = Guid.NewGuid().ToString()
+    };
 
     if (engine.TryJoinLobby(lobbyId, player, out var error))
     {
@@ -200,6 +205,14 @@ app.Run();
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
 public record CalculateScoreRequest(List<CategorySubmission> Categories);
+
+// join this character with backend with thier ability
+public class JoinRequest
+{
+    public string Name        { get; set; } = "";
+    public bool   IsHost      { get; set; }
+    public string CharacterId { get; set; } = "";
+}
 
 // Response model for round status, indicating the current round, game state, remaining time, and player submission status.
 public record RoundStatusResponse(

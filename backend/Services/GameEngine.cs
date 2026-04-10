@@ -316,6 +316,8 @@ public class Player
 
     // PLAYER NAME, can be set by the client when they join the lobby
     public string Name { get; set; } = string.Empty;
+    //indicate character
+     public string CharacterId { get; set; } = "";
 
     // Indicates if this player is the HOST of the lobby (the one who created it)
     public bool IsHost { get; set; }

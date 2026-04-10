@@ -21,8 +21,8 @@ public class CharacterService
             {
                 Type             = AbilityType.LongWordBonus,
                 BonusPoints      = 3,
-                ThresholdLength  = 8,        // word must be LONGER than 8 letters
-                EffectDescription = "+3 bonus points for words longer than 8 letters"
+                ThresholdLength  = 5,        // word must be LONGER than 5 letters
+                EffectDescription = "+3 bonus points for words longer than 5 letters"
             }
         },
         new Character

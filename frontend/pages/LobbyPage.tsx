@@ -5,12 +5,14 @@ import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
 import * as signalR from "@microsoft/signalr";
 
-const Characters: Character[] = [
-  { id: 1, name: "Owl", image: "../images/owl.png" },
-  { id: 2, name: "Leopard", image: "../images/leo.png" },
-  { id: 3, name: "Mouse", image: "../images/mouse.png" },
-  { id: 4, name: "Bear", image: "../images/bear.png" },
-];
+// Map backend character ID → local image path
+const CHARACTER_IMAGES: Record<string, string> = {
+  ugglan:   "/images/owl.png",
+  leopard:  "/images/leo.png",
+  musen:    "/images/mouse.png",
+  björnen:  "/images/bear.png",
+};
+
 
 export default function LobbyPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
@@ -24,10 +26,14 @@ export default function LobbyPage() {
   location.state?.playerName?.trim() ||
   localStorage.getItem("wordmaster-player-name")?.trim() ||
   '';
-  const [realLobbyId, setRealLobbyId] = useState<string>("");
+  const [realLobbyId, setRealLobbyId] = useState<string>(""); //// ── Lobby state
 
   // State för att hålla koll på spelare i lobbyn
   const [players, setPlayers] = useState<Player[]>([]);
+  // ── Character state ──────────────────────────────────────────
+  const [characters,        setCharacters]        = useState<Character[]>([]);
+  
+  const [loadingCharacters, setLoadingCharacters] = useState(true);
 
   // fetch lobby data
   useEffect(() => {
@@ -52,13 +58,35 @@ export default function LobbyPage() {
     };
     fetchLobby();
   }, [lobbyId]);
+  useEffect(() => {
+    const fetchCharacters = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5024/api/character");
+        if (res.ok) {
+          const data = await res.json();
+          const withImages: Character[] = data.map(
+            (c: Omit<Character, "image">) => ({
+              ...c,
+              image: CHARACTER_IMAGES[c.id] ?? "/images/owl.png",
+            })
+          );
+          setCharacters(withImages);
+        }
+      } catch (err) {
+        console.error("Error fetching characters:", err);
+      } finally {
+        setLoadingCharacters(false);
+      }
+    };
+    fetchCharacters();
+  }, []);
 
   const [index, setIndex] = useState(0); // för att ha koll på vilken karaktär visas
-  const character = Characters[index]; //aktuella karaktären baserat på index
+  
+  const character = characters[index];
   const prev = () =>
-    setIndex((i) => (i - 1 + Characters.length) % Characters.length); // + Characters.length för att undvika negativ index
-  const next = () => setIndex((i) => (i + 1) % Characters.length); //i är nuvarande index och adderas med 1, % används för att hoppa tillbaka till första index
-
+  setIndex((i) => (i - 1 + characters.length) % characters.length);
+  const next = () => setIndex((i) => (i + 1) % characters.length);
   const [ready, setReady] = useState(false);
 
   const shareUrl = window.location.href;
@@ -214,23 +242,39 @@ export default function LobbyPage() {
           )}
 
           {/* Character carousel */}
-          <div className="character-carousel">
-            <button className="ch-arrow" onClick={prev}>
-              <img src="/images/prev.png" className="ch-arrow-img" />
-            </button>
+          {/* Character carousel */}
+          {loadingCharacters ? (
+            <p style={{ color: "#fff", margin: "40px 0", fontSize: "1.2rem" }}>
+              Laddar karaktärer...
+            </p>
+          ) : character ? (
+            <div className="character-carousel">
+              <button className="ch-arrow" onClick={prev}>
+                <img src="/images/prev.png" className="ch-arrow-img" />
+              </button>
 
-            <div className="characters">
-              <img
-                key={character.id}
-                src={character.image}
-                alt={character.name}
-              />
+              <div className="characters">
+                <img
+                  key={character.id}
+                  src={character.image}
+                  alt={character.name}
+                />
+                <div className="character-info">
+                  <h2 className="character-name">{character.name}</h2>
+                  <p className="character-description">{character.description}</p>
+                  <span className="ability-badge">
+                    ✦ {character.ability.effectDescription}
+                  </span>
+                </div>
+              </div>
+
+              <button className="ch-arrow" onClick={next}>
+                <img src="/images/next.png" className="ch-arrow-img" />
+              </button>
             </div>
-
-            <button className="ch-arrow" onClick={next}>
-              <img src="/images/next.png" className="ch-arrow-img" />
-            </button>
-          </div>
+          ) : (
+            <p style={{ color: "red" }}>Kunde inte ladda karaktärer.</p>
+          )}
 
           {/* Show message from backend if exists */}
           {message && <div className="lobby-message">{message}</div>}
@@ -248,6 +292,7 @@ export default function LobbyPage() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       name: selectedPlayerName || character.name,
+                      characterId: character.id,
                       isHost: isHost,
                     }),
                   },
@@ -265,7 +310,7 @@ export default function LobbyPage() {
 
                 const data = await response.json();
                 const joinedPlayer = data.player; // we need the player info to mark them as ready in the next step
-
+                localStorage.setItem('wordmaster-player-id', joinedPlayer.id)
                 // 2- mark the player as ready. This will trigger the PlayerReady event in SignalR, which will update the UI for all players in the lobby to show that this player is ready.
                 await fetch(
                   `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${joinedPlayer.id}`,
