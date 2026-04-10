@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef} from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
@@ -21,9 +21,9 @@ export default function LobbyPage() {
   const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
   const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
   const selectedPlayerName =
-  location.state?.playerName?.trim() ||
-  localStorage.getItem("wordmaster-player-name")?.trim() ||
-  '';
+    location.state?.playerName?.trim() ||
+    localStorage.getItem("wordmaster-player-name")?.trim() ||
+    "";
   const [realLobbyId, setRealLobbyId] = useState<string>("");
 
   // State för att hålla koll på spelare i lobbyn
@@ -63,7 +63,7 @@ export default function LobbyPage() {
 
   const shareUrl = window.location.href;
 
-  const [open,setOpen] = useState (false);
+  const [open, setOpen] = useState(false);
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -84,7 +84,6 @@ export default function LobbyPage() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
-
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -176,7 +175,7 @@ export default function LobbyPage() {
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
           {selectedPlayerName && (
-            <div className="player-box" style={{marginBottom: "20px"}}>
+            <div className="player-box" style={{ marginBottom: "20px" }}>
               <p>Ditt namn: {selectedPlayerName}</p>
             </div>
           )}
@@ -310,11 +309,14 @@ export default function LobbyPage() {
               className={`info-box ${open ? "active" : ""}`}
             >
               <p>
-                <b>Ugglan:</b> Får +3 poäng för varje giltig ord som är längre än 8 bokstäver.
+                <b>Ugglan:</b> Får +3 poäng för varje giltig ord som är längre
+                än 8 bokstäver.
                 <br />
-                <b>Leopard:</b> Får +3 poäng om ett giltigt ord ckickas in inom 10 sekunder.
+                <b>Leopard:</b> Får +3 poäng om ett giltigt ord ckickas in inom
+                10 sekunder.
                 <br />
-                <b>Musen:</b> Får +1 poäng för varje giltigt ord som är kortare än 4 bokstäver.
+                <b>Musen:</b> Får +1 poäng för varje giltigt ord som är kortare
+                än 4 bokstäver.
                 <br />
                 <b>Björnen:</b> Har immun mot freeze.
               </p>
