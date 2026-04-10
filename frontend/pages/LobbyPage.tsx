@@ -196,6 +196,14 @@ export default function LobbyPage() {
     }
   };
 
+  // 5) AUTO-CLEAR MESSAGE
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(null), 3000);
+    return () => clearTimeout(timer);
+  }, [message]);
+
+
 
 
 
