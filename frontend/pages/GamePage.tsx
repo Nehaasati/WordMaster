@@ -65,6 +65,8 @@ const GamePage: React.FC = () => {
   const [freezeMsg, setFreezeMsg] = useState('')
   const [stopped,   setStopped]   = useState(false)
   const [score,     setScore]     = useState(0)
+  const [characterId, setCharacterId] = useState<string>('')      
+  const [roundStartTime] = useState<number>(Date.now()) 
   const [showInk, setShowInk] = useState(false)
   const [inkActive, setInkActive] = useState(false)
   const [showFreeze, setShowFreeze] = useState(false)
@@ -142,7 +144,27 @@ const GamePage: React.FC = () => {
     const interval = setInterval(checkBackend, 5000)
     return () => clearInterval(interval)
   }, [])
-
+  useEffect(() => {
+    const fetchPlayerCharacter = async () => {
+      if (!lobbyId) return
+      try {
+        const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`)
+        if (res.ok) {
+          const data = await res.json()
+          const storedPlayerId = localStorage.getItem('wordmaster-player-id')
+          const player = data.players?.find((p: any) => p.id === storedPlayerId)
+            ?? data.players?.[0]
+          if (player?.characterId) {
+            setCharacterId(player.characterId)
+            console.log('Character loaded:', player.characterId)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch character:', err)
+      }
+    }
+    fetchPlayerCharacter()
+  }, [lobbyId])
   useEffect(() => {
     const fetchInitialLetters = async () => {
       try {
@@ -186,6 +208,25 @@ const GamePage: React.FC = () => {
     } catch {
       setAllLetters(prev => [...prev, ...generateRandomLetters(5, prev, true)])
     }
+  }
+  const calculateAbilityBonus = async (word: string): Promise<number> => {
+    if (!characterId) return 0
+    const secondsTaken = (Date.now() - roundStartTime) / 1000
+    try {
+      const res = await fetch('http://127.0.0.1:5024/api/character/ability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId, word, secondsTaken })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        console.log(`Ability: ${characterId} | Word: ${word} | Seconds: ${secondsTaken.toFixed(1)} | Bonus: ${data.bonusPoints}`)
+        return data.bonusPoints
+      }
+    } catch (err) {
+      console.error('Ability check failed:', err)
+    }
+    return 0
   }
   const updateUsedLetters = () => {
     let combinedWord = ''
@@ -301,6 +342,13 @@ const GamePage: React.FC = () => {
 
       const data = await response.json()
       if (data.isValid) {
+        // ── Character ability bonus ──────────────────
+        const bonus = await calculateAbilityBonus(word)
+        if (bonus > 0) {
+          setScore(prev => prev + bonus)
+          console.log(`+${bonus} bonus from ${characterId}!`)
+        }
+        // ────────────────────────────────────────────
         // Fetch replacement letters from backend
         let newLetterChars: string[] = []
         try {

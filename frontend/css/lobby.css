@@ -11,11 +11,15 @@
   background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
+  overflow-y: auto;   
 }
 .col {
     align-items: center;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+    overflow-y: auto;
+    padding-bottom: 40px;
 }
 .title {
     font-family: "Inter", sans-serif;
