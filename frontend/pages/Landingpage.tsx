@@ -22,7 +22,8 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId, inviteCode 
     const trimmedName = playerName.trim()
     if (trimmedName.length < 1) return
 
-    localStorage.setItem("wordmaster-player-name", playerName)
+    localStorage.setItem("wordmaster-player-name", playerName);
+    localStorage.setItem("isHost", "true");
     navigate(`/lobby/${lobbyId}`, {
       state: { isHost: true, playerName: trimmedName },
     });
