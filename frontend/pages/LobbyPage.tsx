@@ -58,6 +58,40 @@ export default function LobbyPage() {
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
 
+  // 1) FETCH LOBBY
+
+  useEffect(() => {
+    const fetchLobby = async () => {
+      if (!lobbyId) return;
+
+      try {
+        const response = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        setRealLobbyId(data.id);
+
+        if (data.players) {
+          setPlayers(data.players);
+          const me = data.players.find(
+            (p: Player) => p.name.trim().toLowerCase() === selectedPlayerName.toLowerCase()
+          );
+
+          if (me) {
+            setPlayerId(me.id);
+            localStorage.setItem("playerId", me.id);
+
+            setIsHost(me.isHost);
+            localStorage.setItem("isHost", me.isHost ? "true" : "false");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch lobby", err);
+      }
+    };
+
+    fetchLobby();
+  }, [lobbyId, selectedPlayerName]);
 
 
 
