@@ -267,17 +267,14 @@ Marks player as ready.
 
 ## POST `http://localhost:5024/api/score/calculate`
 
-### 📥 Request
-
-
-### 📤 Response
-
-```json
 {
-  "player1": 50,
-  "player2": 30
+  "categories": [
+    { "id": "Animal", "word": "katt", "isValid": true }
+  ]
 }
-```
+
+
+
 ------------------------------------------------------------------------
 
 ## 🧾 Rules
