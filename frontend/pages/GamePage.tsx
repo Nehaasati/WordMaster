@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+﻿import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
 import * as signalR from '@microsoft/signalr'
@@ -524,14 +524,6 @@ const handleFreeze = () => {
               </div>
             ))}
           </div>
-          <button
-            className={`gp-stop-btn ${allDone ? 'gp-stop-btn--ready' : ''}`}
-            onClick={() => setStopped(true)}
-            disabled={stopped}
-            data-testid="btn-stop"
-          >
-            Stopp
-          </button>
         </div>
       </div>
     {showInk && (
