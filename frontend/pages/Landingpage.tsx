@@ -120,20 +120,37 @@ const LandingPage: React.FC = () => {
   const [inviteCode, setInviteCode] = useState<string>('')
   const navigate = useNavigate();
 
-  // Set-up backend data to create a lobby
+  // Set-up backend data to create a lobby with players' names
   const handleCreateClick = async () => {
     try {
+      const playerName =
+        localStorage.getItem("wordmaster-player-name") || "Host";
+
       const response = await fetch("http://127.0.0.1:5024/api/lobby", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: playerName, // the player name should be provied
+        }),
       });
 
       if (!response.ok) {
-        console.error("Failed to create lobby");
+        const errorText = await response.text();
+        console.error("Error:", errorText);
         return;
       }
+
       const data = await response.json();
-      setLobbyId(data.id);
-      setInviteCode(data.id);
+
+      // store lobby
+      setLobbyId(data.lobbyId);
+      setInviteCode(data.inviteCode);
+
+      // store players
+      localStorage.setItem("playerId", data.playerId);
+      localStorage.setItem("isHost", "true");
 
       setModal("create");
     } catch (error) {
