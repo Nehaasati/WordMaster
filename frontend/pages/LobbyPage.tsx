@@ -126,7 +126,7 @@ export default function LobbyPage() {
         });
 
         connection.on("GameStarted", (lobbyId: string) => {
-          navigate(/game/${lobbyId});
+          navigate(`/game/${lobbyId}`);
         });
       })
       .catch((err) => console.error("SignalR error:", err));
@@ -139,7 +139,48 @@ export default function LobbyPage() {
     };
   }, [realLobbyId, navigate]);
 
+  // 3) READY FUNCTION
 
+  const handleReady = async () => {
+    if (!playerId || !realLobbyId) return;
+
+    // Only guest join - the host is already inside the lobby
+    if (!isHost) {
+      const joinResponse = await fetch(
+        http://127.0.0.1:5024/api/lobby/${realLobbyId}/join,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: selectedPlayerName }),
+        }
+      );
+
+      if (!joinResponse.ok) {
+        const data = await joinResponse.json();
+        setMessage(data.error || "Lobbyn är full.");
+        return;
+      }
+
+      const data = await joinResponse.json();
+      setPlayerId(data.player.id);
+      localStorage.setItem("playerId", data.player.id);
+    }
+
+    await fetch(
+      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${playerId}`,
+      { method: "POST" }
+    );
+
+    setReady(true);
+  };
+
+
+
+
+
+
+
+  
   // Om isHost inte skickas via navigation, defaulta till false
   const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
   const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
