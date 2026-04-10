@@ -13,7 +13,7 @@ const Characters: Character[] = [
 ];
 
 export default function LobbyPage() {
-  const { lobbyId } = useParams<{ lobbyId: string; }>();
+  const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
   // Hämta isHost från navigation state
   const location = useLocation();
@@ -58,6 +58,10 @@ export default function LobbyPage() {
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Handling names on the game
+  const [needsName, setNeedsName] = useState(false);
+  const [tempName, setTempName] = useState("");
+
   // 1) FETCH LOBBY
 
   useEffect(() => {
@@ -65,7 +69,9 @@ export default function LobbyPage() {
       if (!lobbyId) return;
 
       try {
-        const response = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
+        const response = await fetch(
+          `http://127.0.0.1:5024/api/lobby/${lobbyId}`,
+        );
         if (!response.ok) return;
 
         const data = await response.json();
@@ -74,7 +80,8 @@ export default function LobbyPage() {
         if (data.players) {
           setPlayers(data.players);
           const me = data.players.find(
-            (p: Player) => p.name.trim().toLowerCase() === selectedPlayerName.toLowerCase()
+            (p: Player) =>
+              p.name.trim().toLowerCase() === selectedPlayerName.toLowerCase(),
           );
 
           if (me) {
@@ -121,7 +128,7 @@ export default function LobbyPage() {
 
         connection.on("PlayerReady", (playerId: string) => {
           setPlayers((prev) =>
-            prev.map((p) => (p.id === playerId ? { ...p, isReady: true } : p))
+            prev.map((p) => (p.id === playerId ? { ...p, isReady: true } : p)),
           );
         });
 
@@ -152,7 +159,7 @@ export default function LobbyPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: selectedPlayerName }),
-        }
+        },
       );
 
       if (!joinResponse.ok) {
@@ -168,7 +175,7 @@ export default function LobbyPage() {
 
     await fetch(
       `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${playerId}`,
-      { method: "POST" }
+      { method: "POST" },
     );
 
     setReady(true);
@@ -187,7 +194,7 @@ export default function LobbyPage() {
 
     const startResponse = await fetch(
       `http://127.0.0.1:5024/api/lobby/${realLobbyId}/start/${playerId}`,
-      { method: "POST" }
+      { method: "POST" },
     );
 
     if (!startResponse.ok) {
