@@ -281,6 +281,26 @@ export default function LobbyPage() {
             <p style={{ color: "red" }}>Kunde inte ladda karaktärer.</p>
           )}
 
+          {/* Add bot button — host only, before ready, when lobby has only 1 player */}
+          {isHost && !ready && players.length < 2 && (
+            <button
+              className="wm-modal-btn wm-modal-btn--cancel"
+              style={{ marginBottom: "12px" }}
+              onClick={async () => {
+                const res = await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/add-bot`,
+                  { method: "POST" }
+                );
+                if (!res.ok) {
+                  const data = await res.json();
+                  setMessage(data.error || "Kunde inte lägga till bot.");
+                }
+              }}
+            >
+              + Lägg till motståndare (Easy Bot)
+            </button>
+          )}
+
           {/* Game mode picker — host only, before ready */}
           {isHost && !ready && (
             <div className="game-mode-picker">

@@ -284,6 +284,31 @@ app.MapPost("/api/game/calculate-score", (
     return Results.Ok(new { score = scores["player"] });
 });
 
+app.MapPost("/api/lobby/{lobbyId}/add-bot", async (
+    string lobbyId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub) =>
+{
+    var bot = engine.AddBot(lobbyId);
+    if (bot == null)
+        return Results.BadRequest(new { error = "Cannot add bot to this lobby" });
+
+    await hub.Clients.Group(lobbyId).SendAsync("PlayerJoined", bot);
+    await hub.Clients.Group(lobbyId).SendAsync("PlayerReady", bot.Id);
+
+    return Results.Ok(new { bot });
+});
+
+app.MapGet("/api/bot/word", (string category, Dictionary<string, List<string>> categories) =>
+{
+    if (!categories.TryGetValue(category, out var words) || words.Count == 0)
+        return Results.NotFound();
+
+    var rng = new Random();
+    var word = words[rng.Next(words.Count)];
+    return Results.Ok(new { word = word.ToUpper() });
+});
+
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 
