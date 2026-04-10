@@ -1,6 +1,8 @@
 using WordMaster.Services;
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
+using System.Linq;
+using System.Collections.Generic;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,12 +60,12 @@ app.MapPost("/api/word/validate", (
 
 // Create the lobby with the player as the host and return the lobby ID, invite code, and player ID. This endpoint is called when a player creates a new game lobby.
 app.MapPost("/api/lobby", (
-    string playerName,
+    CreateLobbyRequest request,
     GameEngine engine) =>
 {
     var host = new Player
     {
-        Name = playerName,
+        Name = request.Name,
         IsHost = true
     };
 
@@ -91,31 +93,6 @@ app.MapGet("/api/game/letters", (GameEngine engine, int count = 25) =>
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
 
-// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
-app.MapPost("/api/lobby/{lobbyId}/start", async (
-    string lobbyId,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub
-) =>
-{
-    // Check if the lobby exists and if the game can be started
-    var lobby = engine.GetLobby(lobbyId);
-
-    if (lobby == null)
-        return Results.NotFound();
-
-    if (!engine.CanStartGame(lobbyId))
-        return Results.BadRequest("Players not ready");
-
-    // Start the game in the engine in order to set the lobby state, initialize rounds, etc.
-    if (!engine.StartGame(lobbyId))
-        return Results.BadRequest("Failed to start game");
-
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("GameStarted", lobbyId);
-
-    return Results.Ok();
-});
 // New endpoint to join a lobby using either lobby ID or invite code
 // This endpoint allows a player to join a lobby and notifies other players in the lobby via SignalR.
 app.MapPost("/api/lobby/{lobbyId}/join", async (
@@ -125,10 +102,15 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
     IHubContext<LobbyHub> hubContext) =>
 {
     // assign connection id
-    player.ConnectionId = Guid.NewGuid().ToString();
+    //player.ConnectionId = Guid.NewGuid().ToString();
+    if (player == null || string.IsNullOrEmpty(player.Name))
+        return Results.BadRequest("Invalid player");
 
     if (engine.TryJoinLobby(lobbyId, player, out var error))
     {
+        // Add the player's connection to the SignalR group for the lobby so they can receive real-time updates about the lobby
+        //await hubContext.Groups.AddToGroupAsync(player.ConnectionId, lobbyId);
+
         await hubContext.Clients.Group(lobbyId)
             .SendAsync("PlayerJoined", player);
 
@@ -164,88 +146,54 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     return Results.Ok();
 });
 
-/*
-// Endpoint for players to submit their words for the current round. This marks the player as having submitted, and if all players have submitted, it triggers the end of the round in the game engine.
-app.MapPost("/api/game/submit/{lobbyId}/{playerId}", (
-    string lobbyId,
-    string playerId,
-    GameEngine engine) =>
-{
-    var success = engine.SubmitRound(lobbyId, playerId);
-
-    if (!success)
-    {
-        return Results.BadRequest(new { message = "Submission failed" });
-    }
-
-    return Results.Ok(new { submitted = true });
-});
-
-// Endpoint to check if the round time is over. If it is, it ends the round in the game engine and returns a response indicating that the round has ended.
-app.MapGet("/api/game/round-status/{lobbyId}", (
-    string lobbyId,
-    GameEngine engine) =>
-{
-    var lobby = engine.GetLobby(lobbyId);
-
-    if (lobby == null)
-        return Results.NotFound();
-
-    if (engine.IsRoundTimeOver(lobbyId))
-    {
-        engine.EndRound(lobbyId);
-    }
-
-    // Calculate remaining time for the round
-    var remainingTime =
-        lobby.RoundDurationSeconds -
-        (int)(DateTime.UtcNow - lobby.RoundStartTime).TotalSeconds;
-
-    if (remainingTime < 0)
-        remainingTime = 0;
-
-    return Results.Ok(new RoundStatusResponse(
-        lobby.CurrentRound,
-        lobby.State.ToString(),
-        remainingTime,
-        lobby.Players.Count(p => p.HasSubmitted),
-        lobby.Players.Count
-    ));
-});
-
-// Endpoint to start the next round in the lobby.
-app.MapPost("/api/game/next-round/{lobbyId}", (
-    string lobbyId,
-    GameEngine engine) =>
-{
-    var lobby = engine.GetLobby(lobbyId);
-
-    if (lobby == null)
-        return Results.NotFound();
-
-    if (lobby.State != GameState.RoundFinished)
-        return Results.BadRequest("Round not finished yet");
-
-    engine.StartNextRound(lobbyId);
-
-    return Results.Ok(new
-    {
-        round = lobby.CurrentRound,
-        state = lobby.State.ToString(),
-        letters = lobby.Letters
-    });
-});
-
-*/
-
-//Finish the game for a player. This is called when a player finishes submitting their words for the final round, and it checks if the match has ended (all players finished). If the match has ended, it notifies all players in the lobby via SignalR.
-app.MapPost("/api/game/finish/{lobbyId}/{playerId}", async (
+// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
     string lobbyId,
     string playerId,
     GameEngine engine,
     IHubContext<LobbyHub> hub
 ) =>
 {
+    var lobby = engine.GetLobby(lobbyId);
+
+    if (lobby == null)
+        return Results.NotFound();
+
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.BadRequest("Invalid player");
+
+    if (!player.IsHost)
+        return Results.BadRequest("Only host can start the game");
+
+    if (!engine.CanStartGame(lobbyId))
+        return Results.BadRequest("Players not ready");
+
+    if (!engine.StartGame(lobbyId, playerId))
+        return Results.BadRequest("Failed to start game");
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("GameStarted", lobbyId);
+
+    return Results.Ok();
+});
+
+//Finish the game for a player. This is called when a player finishes submitting their words for the final round, and it checks if the match has ended (all players finished). If the match has ended, it notifies all players in the lobby via SignalR.
+app.MapPost("/api/game/finish/{lobbyId}/{playerId}", async (
+    string lobbyId,
+    string playerId,
+    FinishRequest request,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    var player = lobby?.Players.FirstOrDefault(p => p.Id == playerId);
+
+    if (player != null)
+    {
+        player.CategoriesCompleted = request.CategoriesCompleted;
+    }
     // Mark the player as finished in the game engine
     bool matchEnded = engine.PlayerFinished(lobbyId, playerId);
 
@@ -282,14 +230,5 @@ app.Run();
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record CategorySubmission(string Id, string Word, bool IsValid);
 public record CalculateScoreRequest(List<CategorySubmission> Categories);
-
-/*
-// Response model for round status, indicating the current round, game state, remaining time, and player submission status.
-public record RoundStatusResponse(
-    int CurrentRound,
-    string GameState,
-    int RemainingTime,
-    int PlayersSubmitted,
-    int TotalPlayers
-);
-*/
+public record CreateLobbyRequest(string Name);
+public record FinishRequest(bool CategoriesCompleted);

@@ -12,11 +12,15 @@ public class LobbyHub : Hub
   }
   // Method to allow a player to join a lobby group. This is called from the client when they join a lobby, and it adds their connection to the SignalR group for that lobby so they can receive real-time updates.
   public async Task JoinLobbyGroup(string lobbyId)
-{
+  {
+    if (string.IsNullOrWhiteSpace(lobbyId))
+      return;
+
     await Groups.AddToGroupAsync(Context.ConnectionId, lobbyId);
 
     Console.WriteLine($"Connection {Context.ConnectionId} joined lobby {lobbyId}");
-}
+  }
+
   public async Task NotifyPlayerJoined(string lobbyId, Player player)
   {
     await Clients.Group(lobbyId).SendAsync("PlayerJoined", player);
@@ -34,6 +38,14 @@ public class LobbyHub : Hub
   {
     await Clients.Group(lobbyId).SendAsync("MatchEnded", lobbyId);
   }
+
+  public override async Task OnDisconnectedAsync(Exception? exception)
+  {
+    Console.WriteLine($"SignalR disconnected: {Context.ConnectionId}");
+
+    await base.OnDisconnectedAsync(exception);
+  }
+
 
   public async Task UseInk(string lobbyId)
   {
