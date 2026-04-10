@@ -44,7 +44,6 @@ export default function LobbyPage() {
   const [ready, setReady] = useState(false);
 
   // Handling names on the game
-  const [needsName, setNeedsName] = useState(false);
   const [tempName, setTempName] = useState("");
 
   // Backend messages
@@ -100,14 +99,9 @@ export default function LobbyPage() {
     fetchLobby();
   }, [lobbyId, selectedPlayerName]);
 
-  useEffect(() => {
-    if (
-      !location.state?.playerName &&
-      !localStorage.getItem("wordmaster-player-name")
-    ) {
-      setNeedsName(true);
-    }
-  }, []);
+  const hasName =
+    !!location.state?.playerName ||
+    !!localStorage.getItem("wordmaster-player-name");
 
   // 2) SIGNALR CONNECTION
   useEffect(() => {
@@ -247,7 +241,7 @@ export default function LobbyPage() {
     alert("Länk kopierad!");
   };
 
-  if (needsName) {
+  if (hasName) {
     return (
       <div className="page">
         <div className="container">
