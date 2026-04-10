@@ -88,6 +88,7 @@ export default function LobbyPage() {
   setIndex((i) => (i - 1 + characters.length) % characters.length);
   const next = () => setIndex((i) => (i + 1) % characters.length);
   const [ready, setReady] = useState(false);
+  const [gameMode, setGameMode] = useState<'standard' | 'blitz'>('standard');
 
   const shareUrl = window.location.href;
 
@@ -171,8 +172,12 @@ export default function LobbyPage() {
         });
 
         // When the host starts the game
-        connection.on("GameStarted", (lobbyId: string) => {
-          navigate(`/game/${lobbyId}`);
+        connection.on("GameStarted", (lobbyId: string, mode: string) => {
+          if (mode === 'blitz') {
+            navigate('/classic-game');
+          } else {
+            navigate(`/game/${lobbyId}`);
+          }
         });
       })
       .catch((err) => console.error("SignalR error:", err));
@@ -276,6 +281,27 @@ export default function LobbyPage() {
             <p style={{ color: "red" }}>Kunde inte ladda karaktärer.</p>
           )}
 
+          {/* Game mode picker — host only, before ready */}
+          {isHost && !ready && (
+            <div className="game-mode-picker">
+              <p className="game-mode-label">Välj spelläge</p>
+              <div className="game-mode-btns">
+                <button
+                  className={`game-mode-btn ${gameMode === 'standard' ? 'active' : ''}`}
+                  onClick={() => setGameMode('standard')}
+                >
+                  Standard WordMaster
+                </button>
+                <button
+                  className={`game-mode-btn ${gameMode === 'blitz' ? 'active' : ''}`}
+                  onClick={() => setGameMode('blitz')}
+                >
+                  Blitz WordMaster
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Show message from backend if exists */}
           {message && <div className="lobby-message">{message}</div>}
 
@@ -330,7 +356,11 @@ export default function LobbyPage() {
                   // 3- if the player is the host and clicks the button when they are already ready, we try to start the game. If starting the game fails (e.g. because not all players are ready), we show an alert with the error message from the backend.
                   const startResponse = await fetch(
                     `http://127.0.0.1:5024/api/lobby/${realLobbyId}/start`,
-                    { method: "POST" },
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ gameMode }),
+                    },
                   );
 
                   // If starting the game fails, show an alert with the error message from the backend (e.g. "Players not ready")
