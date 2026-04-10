@@ -119,23 +119,26 @@ const LandingPage: React.FC = () => {
   const [inviteCode, setInviteCode] = useState<string>('')
   const navigate = useNavigate();
 
+  // Set-up backend data to create a lobby
   const handleCreateClick = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5024/api/lobby', { method: 'POST' });
-      if (response.ok) {
-        const data = await response.json();
-        setLobbyId(data.lobbyId);
-        setInviteCode(data.inviteCode);
-        setModal('create');
+      const response = await fetch("http://127.0.0.1:5024/api/lobby", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        console.error("Failed to create lobby");
+        return;
       }
+      const data = await response.json();
+      setLobbyId(data.id);
+      setInviteCode(data.id);
+
+      setModal("create");
     } catch (error) {
       console.error("Failed to create lobby", error);
-      // Fallback
-      setLobbyId('ERROR');
-      setInviteCode('');
-      setModal('create');
     }
-  }
+  };
 
   return (
     <div className="wm-scene" data-testid="landing-page">
