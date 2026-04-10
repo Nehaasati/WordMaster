@@ -241,37 +241,37 @@ export default function LobbyPage() {
     alert("Länk kopierad!");
   };
 
-  if (hasName) {
-    return (
-      <div className="page">
-        <div className="container">
-          <h1 className="title">SKRIV DITT NAMN</h1>
+if (!hasName) {
+  return (
+    <div className="page">
+      <div className="container">
+        <h1 className="title">SKRIV DITT NAMN</h1>
 
-          <input
-            className="wm-modal-input"
-            placeholder="Ditt namn..."
-            value={tempName}
-            onChange={(e) => setTempName(e.target.value)}
-          />
+        <input
+          className="wm-modal-input"
+          placeholder="Ditt namn..."
+          value={tempName}
+          onChange={(e) => setTempName(e.target.value)}
+        />
 
-          <button
-            className="wm-modal-btn wm-modal-btn--confirm"
-            onClick={() => {
-              if (!tempName.trim()) return;
+        <button
+          className="wm-modal-btn wm-modal-btn--confirm"
+          onClick={() => {
+            if (!tempName.trim()) return;
 
-              localStorage.setItem("wordmaster-player-name", tempName.trim());
+            localStorage.setItem("wordmaster-player-name", tempName.trim());
 
-              navigate(`/lobby/${lobbyId}`, {
-                state: { playerName: tempName.trim(), isHost: false },
-              });
-            }}
-          >
-            FORTSÄTT
-          </button>
-        </div>
+            navigate(`/lobby/${lobbyId}`, {
+              state: { playerName: tempName.trim(), isHost: false },
+            });
+          }}
+        >
+          FORTSÄTT
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="page">
