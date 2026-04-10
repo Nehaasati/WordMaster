@@ -43,6 +43,10 @@ export default function LobbyPage() {
   // Ready status
   const [ready, setReady] = useState(false);
 
+  // Handling names on the game
+  const [needsName, setNeedsName] = useState(false);
+  const [tempName, setTempName] = useState("");
+
   // Backend messages
   const [message, setMessage] = useState<string | null>(null);
 
@@ -57,10 +61,6 @@ export default function LobbyPage() {
   const [open, setOpen] = useState(false);
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
-
-  // Handling names on the game
-  const [needsName, setNeedsName] = useState(false);
-  const [tempName, setTempName] = useState("");
 
   // 1) FETCH LOBBY
 
@@ -99,6 +99,15 @@ export default function LobbyPage() {
 
     fetchLobby();
   }, [lobbyId, selectedPlayerName]);
+
+  useEffect(() => {
+    if (
+      !location.state?.playerName &&
+      !localStorage.getItem("wordmaster-player-name")
+    ) {
+      setNeedsName(true);
+    }
+  }, []);
 
   // 2) SIGNALR CONNECTION
   useEffect(() => {
@@ -149,9 +158,9 @@ export default function LobbyPage() {
   // 3) READY FUNCTION
 
   const handleReady = async () => {
-    if (!playerId || !realLobbyId) return;
+    if (!realLobbyId) return;
 
-    // Only guest join - the host is already inside the lobby
+    // The host
     if (!isHost) {
       const joinResponse = await fetch(
         `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
@@ -169,12 +178,16 @@ export default function LobbyPage() {
       }
 
       const data = await joinResponse.json();
-      setPlayerId(data.player.id);
-      localStorage.setItem("playerId", data.player.id);
+      const joinedPlayer = data.player;
+
+      setPlayerId(joinedPlayer.id);
+      localStorage.setItem("playerId", joinedPlayer.id);
     }
 
+    const idToUse = playerId || localStorage.getItem("playerId");
+
     await fetch(
-      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${playerId}`,
+      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${idToUse}`,
       { method: "POST" },
     );
 
@@ -233,6 +246,38 @@ export default function LobbyPage() {
     navigator.clipboard.writeText(window.location.href);
     alert("Länk kopierad!");
   };
+
+  if (needsName) {
+    return (
+      <div className="page">
+        <div className="container">
+          <h1 className="title">SKRIV DITT NAMN</h1>
+
+          <input
+            className="wm-modal-input"
+            placeholder="Ditt namn..."
+            value={tempName}
+            onChange={(e) => setTempName(e.target.value)}
+          />
+
+          <button
+            className="wm-modal-btn wm-modal-btn--confirm"
+            onClick={() => {
+              if (!tempName.trim()) return;
+
+              localStorage.setItem("wordmaster-player-name", tempName.trim());
+
+              navigate(`/lobby/${lobbyId}`, {
+                state: { playerName: tempName.trim(), isHost: false },
+              });
+            }}
+          >
+            FORTSÄTT
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
