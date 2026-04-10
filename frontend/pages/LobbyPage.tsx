@@ -43,6 +43,21 @@ export default function LobbyPage() {
   // Ready status
   const [ready, setReady] = useState(false);
 
+  // Backend messages
+  const [message, setMessage] = useState<string | null>(null);
+
+  // character carousel
+  const [index, setIndex] = useState(0);
+  const character = Characters[index];
+  const prev = () =>
+    setIndex((i) => (i - 1 + Characters.length) % Characters.length);
+  const next = () => setIndex((i) => (i + 1) % Characters.length);
+
+  // Info box
+  const [open, setOpen] = useState(false);
+  const infoBoxRef = useRef<HTMLDivElement>(null);
+  const infoBtnRef = useRef<HTMLButtonElement>(null);
+
 
 
 
