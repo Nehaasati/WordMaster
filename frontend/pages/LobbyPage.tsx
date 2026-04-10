@@ -203,6 +203,24 @@ export default function LobbyPage() {
     return () => clearTimeout(timer);
   }, [message]);
 
+  // 6) INFO BOX CLICK OUTSIDE
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        infoBoxRef.current &&
+        infoBtnRef.current &&
+        !infoBoxRef.current.contains(target) &&
+        !infoBtnRef.current.contains(target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
 
 
