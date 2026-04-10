@@ -1,199 +1,201 @@
-import React, { useState} from 'react'
-import { useNavigate } from 'react-router-dom'
-import '../css/Landingpage.css'
-import type { ModalType, CreateModalProps, JoinModalProps } from '../interfaces/Landing'
-/////
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "../css/Landingpage.css";
+import type {
+  ModalType,
+  CreateModalProps,
+  JoinModalProps,
+} from "../interfaces/Landing";
 
-const NameStep: React.FC< {
-  playerName: string 
-  onPlayerNameChange: (value: string) => void}> = ({playerName, onPlayerNameChange}) => (
+const NameStep: React.FC<{
+  playerName: string;
+  onPlayerNameChange: (value: string) => void;
+}> = ({ playerName, onPlayerNameChange }) => (
   <>
-  <p className='wm-modal-label'>Välj ett namn</p>
-  <input className='wm-modal-input' placeholder='Skriv ditt namn ...' value={playerName} maxLength={20} onChange={(e) => onPlayerNameChange(e.target.value)} />
+    <p className="wm-modal-label">Välj ett namn</p>
+    <input
+      className="wm-modal-input"
+      placeholder="Skriv ditt namn ..."
+      value={playerName}
+      maxLength={20}
+      onChange={(e) => onPlayerNameChange(e.target.value)}
+    />
   </>
-)
-const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId, inviteCode }) => {
+);
+
+// CREATE MODAL 
+
+const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
   const navigate = useNavigate();
   const [playerName, setPlayerName] = useState("");
+
   const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose()
-    }
-  const handleEnterLobby = () => {
-    const trimmedName = playerName.trim()
-    if (trimmedName.length < 1) return
+    if (e.target === e.currentTarget) onClose();
+  };
 
-    localStorage.setItem("wordmaster-player-name", playerName);
-    localStorage.setItem("isHost", "true");
-    navigate(`/lobby/${lobbyId}`, {
-      state: { isHost: true, playerName: trimmedName },
-    });
-  }
- return (
-    <div className="wm-modal-overlay" onClick={handleBackdrop} data-testid="create-modal">
-      <div className="wm-modal">
-        <h2 className="wm-modal-title">Lobby Created</h2>
-        <NameStep playerName={playerName} onPlayerNameChange={setPlayerName} />
-        {lobbyId && (
-          <div style={{ marginBottom: '1.2rem', color: 'rgba(225, 200, 255, 0.9)', fontSize: '1rem', textAlign: 'center' }}>
-            Lobby ID: <strong style={{ color: '#eedeff', textShadow: '0 0 8px rgba(160, 80, 255, 0.4)' }}>{lobbyId}</strong>
-          </div>
-        )}
-        <div className="wm-modal-btns">
-          <button
-            className="wm-modal-btn wm-modal-btn--confirm"
-            onClick={handleEnterLobby}
-            disabled= {playerName.trim().length < 1}
-          >
-            Enter Lobby
-          </button>
-          <button
-            className="wm-modal-btn wm-modal-btn--cancel"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
-  const [value, setValue] = useState<string>('')
-  const [playerName, setPlayerName] = useState<string>("")
-  const navigate = useNavigate();
- 
-  const handleJoin = () => {
-    const trimmedLobbyCode = value.trim().toUpperCase()
-    const trimmedName = playerName.trim()
+  const handleCreateLobby = async () => {
+    const trimmedName = playerName.trim();
+    if (!trimmedName) return;
 
-    if (value.trim().length >= 4) {
-      navigate(`/lobby/${value.trim().toUpperCase()}`)
-     navigate(`/lobby/${trimmedLobbyCode}`, {
-       state: { isHost: false, playerName: trimmedName },
-     });
-      onClose()
-    }
-  }
-  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose()
-  }
- 
-  return (
-    <div className="wm-modal-overlay" onClick={handleBackdrop} data-testid="join-modal">
-      <div className="wm-modal">
-        <h2 className="wm-modal-title">Join a Lobby</h2>
-        <NameStep playerName={playerName} onPlayerNameChange={setPlayerName} />
-        <input
-          className="wm-modal-input"
-          placeholder="Enter lobby code..."
-          value={value}
-          maxLength={6}
-          onChange={(e) => setValue(e.target.value.toUpperCase())}
-          onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-          autoFocus
-          data-testid="join-input"
-        />
-        <div className="wm-modal-btns">
-          <button
-            className="wm-modal-btn wm-modal-btn--confirm"
-            onClick={handleJoin}
-            data-testid="join-submit"
-            disabled = {value.trim().length < 4 || playerName.trim().length < 1}
-          >
-            Join
-          </button>
-          <button
-            className="wm-modal-btn wm-modal-btn--cancel"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-//Landing page
-const LandingPage: React.FC = () => {
-  const [modal, setModal] = useState<ModalType>(null)
-  const [lobbyId, setLobbyId] = useState<string>('')
-  const [inviteCode, setInviteCode] = useState<string>('')
-  const navigate = useNavigate();
-
-  // Set-up backend data to create a lobby with players' names
-  const handleCreateClick = async () => {
     try {
-      const playerName =
-        localStorage.getItem("wordmaster-player-name") || "Host";
-
       const response = await fetch("http://127.0.0.1:5024/api/lobby", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: playerName, // the player name should be provied
+          name: trimmedName,
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Error:", errorText);
+        console.error("Create lobby failed:", errorText);
         return;
       }
 
       const data = await response.json();
 
-      // store lobby
-      setLobbyId(data.lobbyId);
-      setInviteCode(data.inviteCode);
-
-      // store players
+      // Store data
+      localStorage.setItem("wordmaster-player-name", trimmedName);
       localStorage.setItem("playerId", data.playerId);
       localStorage.setItem("isHost", "true");
 
-      setModal("create");
-    } catch (error) {
-      console.error("Failed to create lobby", error);
+      navigate(`/lobby/${data.lobbyId}`, {
+        state: {
+          isHost: true,
+          playerName: trimmedName,
+        },
+      });
+    } catch (err) {
+      console.error("Error creating lobby:", err);
     }
   };
 
   return (
-    <div className="wm-scene" data-testid="landing-page">
+    <div className="wm-modal-overlay" onClick={handleBackdrop}>
+      <div className="wm-modal">
+        <h2 className="wm-modal-title">Create Lobby</h2>
+
+        <NameStep playerName={playerName} onPlayerNameChange={setPlayerName} />
+
+        <div className="wm-modal-btns">
+          <button
+            className="wm-modal-btn wm-modal-btn--confirm"
+            onClick={handleCreateLobby}
+            disabled={!playerName.trim()}
+          >
+            Skapa Lobby
+          </button>
+
+          <button
+            className="wm-modal-btn wm-modal-btn--cancel"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// JOIN MODAL
+
+const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
+  const [code, setCode] = useState("");
+  const [playerName, setPlayerName] = useState("");
+  const navigate = useNavigate();
+
+  const handleJoin = () => {
+    const trimmedCode = code.trim().toUpperCase();
+    const trimmedName = playerName.trim();
+
+    if (!trimmedCode || !trimmedName) return;
+
+    localStorage.setItem("wordmaster-player-name", trimmedName);
+    localStorage.setItem("isHost", "false");
+
+    navigate(`/lobby/${trimmedCode}`, {
+      state: {
+        isHost: false,
+        playerName: trimmedName,
+      },
+    });
+
+    onClose();
+  };
+
+  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  return (
+    <div className="wm-modal-overlay" onClick={handleBackdrop}>
+      <div className="wm-modal">
+        <h2 className="wm-modal-title">Join Lobby</h2>
+
+        <NameStep playerName={playerName} onPlayerNameChange={setPlayerName} />
+
+        <input
+          className="wm-modal-input"
+          placeholder="Enter lobby code..."
+          value={code}
+          maxLength={6}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+        />
+
+        <div className="wm-modal-btns">
+          <button
+            className="wm-modal-btn wm-modal-btn--confirm"
+            onClick={handleJoin}
+            disabled={!code.trim() || !playerName.trim()}
+          >
+            Join
+          </button>
+
+          <button
+            className="wm-modal-btn wm-modal-btn--cancel"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// LANDING PAGE
+
+const LandingPage: React.FC = () => {
+  const [modal, setModal] = useState<ModalType>(null);
+
+  return (
+    <div className="wm-scene">
       <div className="wm-bg" />
       <div className="wm-overlay" />
       <div className="wm-vignette" />
 
       <div className="wm-ui">
-        <h1 className="wm-title">Word Master</h1>
+        <h1 className="wm-title">WORD MASTER</h1>
+
         <div className="wm-btn-group">
-          <button
-            className="wm-btn"
-            onClick={handleCreateClick}
-            data-testid="btn-create"
-          >
-            Skapa en lobby
+          <button className="wm-btn" onClick={() => setModal("create")}>
+            SKAPA EN LOBBY
           </button>
-          <button
-            className="wm-btn"
-            onClick={() => setModal('join')}
-            data-testid="btn-join"
-          >
-            Gå med i en lobby
+
+          <button className="wm-btn" onClick={() => setModal("join")}>
+            GÅ MED I EN LOBBY
           </button>
         </div>
       </div>
- 
-      {modal === 'create' && (
-        <CreateModal 
-          onClose={() => setModal(null)} 
-          lobbyId={lobbyId} 
-          inviteCode={inviteCode} 
-        />
-      )}
-      {modal === 'join'   && <JoinModal   onClose={() => setModal(null)} />}
+
+      {modal === "create" && <CreateModal onClose={() => setModal(null)} />}
+
+      {modal === "join" && <JoinModal onClose={() => setModal(null)} />}
     </div>
-  )
-}
- 
-export default LandingPage
+  );
+};
+
+export default LandingPage;
