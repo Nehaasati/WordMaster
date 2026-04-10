@@ -1,5 +1,4 @@
 import {useState, useEffect, useRef} from "react";
-import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
