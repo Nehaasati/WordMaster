@@ -174,13 +174,34 @@ export default function LobbyPage() {
     setReady(true);
   };
 
+  // 4) START GAME (HOST ONLY)
+
+  const handleStartGame = async () => {
+    if (!isHost) return;
+    if (!playerId || !realLobbyId) return;
+
+    if (players.length < 2) {
+      setMessage("Väntar på att den andra spelaren ska gå med...");
+      return;
+    }
+
+    const startResponse = await fetch(
+      http://127.0.0.1:5024/api/lobby/${realLobbyId}/start/${playerId},
+      { method: "POST" }
+    );
+
+    if (!startResponse.ok) {
+      const errorMsg = await startResponse.text();
+      setMessage("Kunde inte starta: " + errorMsg);
+    }
+  };
 
 
 
 
 
 
-  
+
   // Om isHost inte skickas via navigation, defaulta till false
   const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
   const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
