@@ -15,41 +15,30 @@ const Characters: Character[] = [
 export default function LobbyPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
-  // Hämta isHost från navigation state
   const location = useLocation();
 
-  // Player name
+  // Player name (from EnterNamePage)
   const selectedPlayerName =
     location.state?.playerName?.trim() ||
     localStorage.getItem("wordmaster-player-name")?.trim() ||
     "";
 
-  // Player ID from backend
+  const hasPlayerName = !!location.state?.playerName;
+
   const [playerId, setPlayerId] = useState<string | null>(
     localStorage.getItem("playerId"),
   );
 
-  // Host flag after fetching the lobby
   const [isHost, setIsHost] = useState<boolean>(
-    location.state?.isHost ?? localStorage.getItem("isHost") === "true",
+    location.state?.isHost ?? false,
   );
 
-  // Lobby id from backend
   const [realLobbyId, setRealLobbyId] = useState<string>("");
-
-  // players
   const [players, setPlayers] = useState<Player[]>([]);
-
-  // Ready status
   const [ready, setReady] = useState(false);
-
-  // Handling names on the game
-  const [tempName, setTempName] = useState("");
-
-  // Backend messages
   const [message, setMessage] = useState<string | null>(null);
 
-  // character carousel
+  // Character carousel
   const [index, setIndex] = useState(0);
   const character = Characters[index];
   const prev = () =>
@@ -61,7 +50,13 @@ export default function LobbyPage() {
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
 
-  // 1) FETCH LOBBY
+  useEffect(() => {
+    if (!hasPlayerName && lobbyId) {
+      navigate(`/enter-name?lobby=${lobbyId}`);
+    }
+  }, [hasPlayerName, lobbyId, navigate]);
+
+  // FETCH LOBBY
 
   useEffect(() => {
     const fetchLobby = async () => {
@@ -78,6 +73,7 @@ export default function LobbyPage() {
 
         if (data.players) {
           setPlayers(data.players);
+
           const me = data.players.find(
             (p: Player) =>
               p.name.trim().toLowerCase() === selectedPlayerName.toLowerCase(),
@@ -87,8 +83,8 @@ export default function LobbyPage() {
             setPlayerId(me.id);
             localStorage.setItem("playerId", me.id);
 
+            // From backend
             setIsHost(me.isHost);
-            localStorage.setItem("isHost", me.isHost ? "true" : "false");
           }
         }
       } catch (err) {
@@ -99,11 +95,8 @@ export default function LobbyPage() {
     fetchLobby();
   }, [lobbyId, selectedPlayerName]);
 
-  const hasName =
-    !!location.state?.playerName ||
-    !!localStorage.getItem("wordmaster-player-name");
+  // SIGNALR CONNECTION
 
-  // 2) SIGNALR CONNECTION
   useEffect(() => {
     if (!realLobbyId) return;
 
@@ -149,12 +142,12 @@ export default function LobbyPage() {
     };
   }, [realLobbyId, navigate]);
 
-  // 3) READY FUNCTION
+  // READY FUNCTION
 
   const handleReady = async () => {
     if (!realLobbyId) return;
 
-    // The host
+    // Only the quest
     if (!isHost) {
       const joinResponse = await fetch(
         `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
@@ -188,7 +181,7 @@ export default function LobbyPage() {
     setReady(true);
   };
 
-  // 4) START GAME (HOST ONLY)
+  // START GAME (HOST ONLY)
 
   const handleStartGame = async () => {
     if (!isHost) return;
@@ -210,14 +203,15 @@ export default function LobbyPage() {
     }
   };
 
-  // 5) AUTO-CLEAR MESSAGE
+  // AUTO-CLEAR MESSAGE
+
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => setMessage(null), 3000);
     return () => clearTimeout(timer);
   }, [message]);
 
-  // 6) INFO BOX CLICK OUTSIDE
+  // 8) INFO BOX CLICK OUTSIDE
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -236,42 +230,16 @@ export default function LobbyPage() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  // COPY LINK
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
     alert("Länk kopierad!");
   };
 
-if (!hasName) {
-  return (
-    <div className="page">
-      <div className="container">
-        <h1 className="title">SKRIV DITT NAMN</h1>
-
-        <input
-          className="wm-modal-input"
-          placeholder="Ditt namn..."
-          value={tempName}
-          onChange={(e) => setTempName(e.target.value)}
-        />
-
-        <button
-          className="wm-modal-btn wm-modal-btn--confirm"
-          onClick={() => {
-            if (!tempName.trim()) return;
-
-            localStorage.setItem("wordmaster-player-name", tempName.trim());
-
-            navigate(`/lobby/${lobbyId}`, {
-              state: { playerName: tempName.trim(), isHost: false },
-            });
-          }}
-        >
-          FORTSÄTT
-        </button>
-      </div>
-    </div>
-  );
-}
+  if (!hasPlayerName) {
+    return null;
+  }
 
   return (
     <div className="page">
@@ -279,14 +247,10 @@ if (!hasName) {
         <div className="col">
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
-          {/* Player name */}
-          {selectedPlayerName && (
-            <div className="player-box" style={{ marginBottom: "20px" }}>
-              <p>DITT NAMN: {selectedPlayerName}</p>
-            </div>
-          )}
+          <div className="player-box" style={{ marginBottom: "20px" }}>
+            <p>DITT NAMN: {selectedPlayerName}</p>
+          </div>
 
-          {/* Players list */}
           <div className="players-list">
             {players.map((p, index) => (
               <div key={p.id} className="player-box">
@@ -297,7 +261,6 @@ if (!hasName) {
             ))}
           </div>
 
-          {/* Lobby info */}
           {realLobbyId && (
             <div className="lobby-info">
               <p className="wm-modal-label">
@@ -321,7 +284,6 @@ if (!hasName) {
             </div>
           )}
 
-          {/* Character carousel */}
           <div className="character-carousel">
             <button className="ch-arrow" onClick={prev}>
               <img src="/images/prev.png" className="ch-arrow-img" />
@@ -340,10 +302,8 @@ if (!hasName) {
             </button>
           </div>
 
-          {/* Backend message */}
           {message && <div className="lobby-message">{message}</div>}
 
-          {/* Ready / Start button */}
           <button
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
             onClick={() => {
@@ -361,7 +321,6 @@ if (!hasName) {
               : "Redo"}
           </button>
 
-          {/* Info box */}
           <div className="info-wrapper">
             <div
               ref={infoBoxRef}
