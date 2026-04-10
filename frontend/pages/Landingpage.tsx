@@ -23,9 +23,9 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose, lobbyId, inviteCode 
     if (trimmedName.length < 1) return
 
     localStorage.setItem("wordmaster-player-name", playerName)
-    navigate(`/lobby/${inviteCode || lobbyId}`, {
-      state: {isHost: true, playerName: trimmedName},
-    })
+    navigate(`/lobby/${lobbyId}`, {
+      state: { isHost: true, playerName: trimmedName },
+    });
   }
  return (
     <div className="wm-modal-overlay" onClick={handleBackdrop} data-testid="create-modal">
