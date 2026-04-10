@@ -29,6 +29,23 @@ export default function LobbyPage() {
     localStorage.getItem("playerId"),
   );
 
+  // Host flag after fetching the lobby
+  const [isHost, setIsHost] = useState<boolean>(
+    location.state?.isHost ?? localStorage.getItem("isHost") === "true",
+  );
+
+  // Lobby id from backend
+  const [realLobbyId, setRealLobbyId] = useState<string>("");
+
+  // players
+  const [players, setPlayers] = useState<Player[]>([]);
+
+  // Ready status
+  const [ready, setReady] = useState(false);
+
+
+
+
   // Om isHost inte skickas via navigation, defaulta till false
   const isHostFromNav = location.state?.isHost ?? false; // default till false om inte skickat från navigation
   const isHost = isHostFromNav; // sätt initialt värde baserat på navigation state
