@@ -93,6 +93,51 @@ export default function LobbyPage() {
     fetchLobby();
   }, [lobbyId, selectedPlayerName]);
 
+  // 2) SIGNALR CONNECTION
+  useEffect(() => {
+    if (!realLobbyId) return;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("http://127.0.0.1:5024/lobbyHub")
+      .withAutomaticReconnect()
+      .build();
+
+    connection
+      .start()
+      .then(async () => {
+        await connection.invoke("JoinLobbyGroup", realLobbyId);
+
+        connection.onreconnected(async () => {
+          await connection.invoke("JoinLobbyGroup", realLobbyId);
+        });
+
+        connection.on("PlayerJoined", (player: Player) => {
+          setPlayers((prev) => {
+            if (prev.some((p) => p.id === player.id)) return prev;
+            if (prev.length >= 2) return prev;
+            return [...prev, player];
+          });
+        });
+
+        connection.on("PlayerReady", (playerId: string) => {
+          setPlayers((prev) =>
+            prev.map((p) => (p.id === playerId ? { ...p, isReady: true } : p))
+          );
+        });
+
+        connection.on("GameStarted", (lobbyId: string) => {
+          navigate(/game/${lobbyId});
+        });
+      })
+      .catch((err) => console.error("SignalR error:", err));
+
+    return () => {
+      connection.off("PlayerJoined");
+      connection.off("PlayerReady");
+      connection.off("GameStarted");
+      connection.stop();
+    };
+  }, [realLobbyId, navigate]);
 
 
   // Om isHost inte skickas via navigation, defaulta till false
