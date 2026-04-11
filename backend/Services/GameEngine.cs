@@ -255,6 +255,29 @@ public class GameEngine
         return true;
     }
 
+    public Player? AddBot(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return null;
+        if (lobby.Players.Count >= 2) return null;
+        if (lobby.State != GameState.WaitingForPlayers && lobby.State != GameState.WaitingForReady)
+            return null;
+
+        var bot = new Player
+        {
+            Name = "Easy Bot",
+            IsBot = true,
+            IsReady = true,
+            CharacterId = "ugglan"
+        };
+
+        lobby.Players.Add(bot);
+        if (lobby.Players.Count == 2)
+            lobby.State = GameState.WaitingForReady;
+
+        return bot;
+    }
+
     // Method to handle player submitting their word for the round. This checks if the submission is valid and if both players have submitted, it ends the round.
     public bool SubmitRound(string lobbyId, string playerId)
     {
@@ -316,6 +339,8 @@ public class Player
 
     // PLAYER NAME, can be set by the client when they join the lobby
     public string Name { get; set; } = string.Empty;
+    //indicate character
+     public string CharacterId { get; set; } = "";
 
     // Indicates if this player is the HOST of the lobby (the one who created it)
     public bool IsHost { get; set; }
@@ -334,6 +359,8 @@ public class Player
 
     // Indicates if the player has submitted a word for the current round.
     public bool HasSubmitted { get; set; }
+
+    public bool IsBot { get; set; }
 
     // we can add more player-specific properties here later, like avatar, language preference, etc.
     // public string PreferredLanguage { get; set; } = "sv, en, etc.";
