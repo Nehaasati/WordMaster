@@ -50,12 +50,6 @@ export default function LobbyPage() {
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!hasPlayerName && lobbyId) {
-      navigate(`/enter-name?lobby=${lobbyId}`);
-    }
-  }, [hasPlayerName, lobbyId, navigate]);
-
   // FETCH LOBBY
 
   useEffect(() => {
