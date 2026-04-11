@@ -5,6 +5,59 @@ import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
 import * as signalR from "@microsoft/signalr";
 
+// Reuse Name + Join Modal from  LandingPage
+const NameModal: React.FC<{
+  lobbyIdFromUrl?: string;
+  onConfirm: (name: string, code?: string) => void;
+}> = ({ lobbyIdFromUrl, onConfirm }) => {
+  const [playerName, setPlayerName] = useState("");
+  const [code, setCode] = useState("");
+
+  const isInviteLink = !!lobbyIdFromUrl;
+
+  return (
+    <div className="wm-modal-overlay">
+      <div className="wm-modal">
+        <h2 className="wm-modal-title">Join Lobby</h2>
+
+        <p className="wm-modal-label">Välj ett namn</p>
+        <input
+          className="wm-modal-input"
+          placeholder="Skriv ditt namn ..."
+          value={playerName}
+          maxLength={20}
+          onChange={(e) => setPlayerName(e.target.value)}
+        />
+
+        {!isInviteLink && (
+          <input
+            className="wm-modal-input"
+            placeholder="Enter lobby code..."
+            value={code}
+            maxLength={6}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+          />
+        )}
+
+        <div className="wm-modal-btns">
+          <button
+            className="wm-modal-btn wm-modal-btn--confirm"
+            disabled={!playerName.trim() || (!isInviteLink && !code.trim())}
+            onClick={() =>
+              onConfirm(
+                playerName.trim(),
+                isInviteLink ? lobbyIdFromUrl : code.trim(),
+              )
+            }
+          >
+            Fortsätt
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Characters: Character[] = [
   { id: 1, name: "Owl", image: "../images/owl.png" },
   { id: 2, name: "Leopard", image: "../images/leo.png" },
@@ -49,6 +102,7 @@ export default function LobbyPage() {
   const [open, setOpen] = useState(false);
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
+
 
   // FETCH LOBBY
 
