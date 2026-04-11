@@ -71,6 +71,9 @@ app.MapPost("/api/lobby", (
 
     var lobby = engine.CreateLobby(host);
 
+    // Log the player creating for debugging purposes
+    Console.WriteLine($"{host.Name} created lobby {lobby.Id}");
+    
     return Results.Ok(new
     {
         lobbyId = lobby.Id,
@@ -139,6 +142,9 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
 ) =>
 {
     engine.SetPlayerReady(lobbyId, playerId);
+
+    // log ready
+    Console.WriteLine($"Player {playerId} is ready in lobby {lobbyId}");
 
     await hub.Clients.Group(lobbyId)
         .SendAsync("PlayerReady", playerId);
