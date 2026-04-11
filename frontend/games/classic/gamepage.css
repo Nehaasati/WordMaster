@@ -1,0 +1,322 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&display=swap');
+
+/* WordMaster Game Page Styles */
+:root {
+  --bubble-animal: #f28f33;
+  --bubble-land: #12a07a;
+  --bubble-food: #b84444;
+  --bubble-colour: #34a9c3;
+  --bubble-job: #cb9e3d;
+  --bubble-object: #817bd8;
+}
+
+/* ─────────────────────────────── */
+/* SCENE + BACKGROUND */
+/* ─────────────────────────────── */
+.wm-scene {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wm-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/bg-landing.jpg.png');
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.wm-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 0, 20, 0.25);
+  z-index: 1;
+}
+
+.wm-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.65) 100%);
+  z-index: 2;
+}
+
+/* ─────────────────────────────── */
+/* MAIN UI */
+/* ─────────────────────────────── */
+.wm-ui {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: min(90%, 480px);
+  text-align: center;
+}
+
+/* Title */
+.wm-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  color: #fff;
+  margin: 0;
+  text-shadow:
+    0 0 20px rgba(255, 60, 60, 0.9),
+    0 0 50px rgba(220, 30, 30, 0.6),
+    0 0 90px rgba(180, 0, 0, 0.3),
+    3px 3px 0px #7a0000;
+}
+
+/* ─────────────────────────────── */
+/* STATUS BAR */
+/* ─────────────────────────────── */
+.wm-status-bar {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-family: 'Cinzel', serif;
+  color: #f8e8ff;
+  font-size: 1rem;
+}
+
+.wm-status-item {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(180, 120, 255, 0.3);
+}
+
+.wm-timer.danger {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+/* ─────────────────────────────── */
+/* INFO BOX */
+/* ─────────────────────────────── */
+.wm-info-box {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(160, 80, 255, 0.35);
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.wm-info-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  color: rgba(210, 175, 255, 0.6);
+}
+
+.wm-info-value {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.3rem;
+  color: #fff;
+}
+
+/* ─────────────────────────────── */
+/* INPUT */
+/* ─────────────────────────────── */
+.wm-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(160, 80, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  outline: none;
+}
+
+.wm-input::placeholder {
+  color: rgba(200, 170, 255, 0.35);
+}
+
+/* ─────────────────────────────── */
+/* BUTTONS */
+/* ─────────────────────────────── */
+.wm-btn {
+  width: 100%;
+  padding: 14px 0;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #1a0a2e;
+  background: linear-gradient(160deg, #f0ebe0 0%, #faf6ee 40%, #ede6d6 100%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  transition: 0.2s ease;
+}
+
+.wm-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.wm-next-btn {
+  margin-top: 10px;
+}
+
+/* ─────────────────────────────── */
+/* HINT (inside wm-info-box) */
+/* ─────────────────────────────── */
+.wm-hint-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.wm-hint-char {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.2rem;
+  color: #fff;
+  min-width: 20px;
+  text-align: center;
+  border-bottom: 2px solid rgba(160, 80, 255, 0.5);
+  padding-bottom: 2px;
+}
+
+/* ─────────────────────────────── */
+/* ACTION ROW (Skippa / Ge bokstav) */
+/* ─────────────────────────────── */
+.wm-action-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.wm-action-row .wm-btn {
+  flex: 1;
+}
+
+.wm-btn--secondary {
+  background: linear-gradient(160deg, rgba(160, 80, 255, 0.15) 0%, rgba(120, 50, 200, 0.25) 100%);
+  border: 1px solid rgba(160, 80, 255, 0.4);
+  color: #e0c8ff;
+}
+
+.wm-btn--secondary:hover {
+  background: linear-gradient(160deg, rgba(160, 80, 255, 0.25) 0%, rgba(120, 50, 200, 0.4) 100%);
+}
+
+.wm-btn--secondary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ─────────────────────────────── */
+/* FEEDBACK */
+/* ─────────────────────────────── */
+.wm-feedback {
+  color: #ffe0f0;
+  font-family: 'Cinzel', serif;
+  min-height: 24px;
+}
+
+/* ─────────────────────────────── */
+/* RESPONSIVE */
+/* ─────────────────────────────── */
+@media (max-width: 480px) {
+  .wm-status-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .wm-info-box {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
+
+
+/* ─────────────────────────────── */
+/* LETTER BUBBLES */
+/* ─────────────────────────────── */
+.wm-letter-bubbles {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.wm-bubble {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.3rem;
+  color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  user-select: none;
+  pointer-events: none;
+
+  transition: 0.25s ease;
+}
+
+.wm-bubble--used {
+  opacity: 0.25;
+  filter: grayscale(0.7);
+  transform: scale(0.85);
+}
+
+/* ───────────────────────────── */
+/*  Categories colors  */
+/* ───────────────────────────── */
+
+.category-Animal .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-animal), #b85e00);
+  box-shadow: 0 0 20px var(--bubble-animal);
+}
+
+.category-Land .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-land), #0b8f6a);
+  box-shadow: 0 0 20px var(--bubble-land);
+}
+
+.category-Food .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-food), #b33939);
+  box-shadow: 0 0 20px var(--bubble-food);
+}
+
+.category-Colour .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-colour), #0a3d62);
+  box-shadow: 0 0 20px var(--bubble-colour);
+}
+
+.category-Job .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-job), #b8860b);
+  box-shadow: 0 0 20px var(--bubble-job);
+}
+
+.category-Object .wm-bubble {
+  background: radial-gradient(circle, var(--bubble-object), #4b4b9f);
+  box-shadow: 0 0 20px var(--bubble-object);
+}
+
+@media (max-width: 480px) {
+  .wm-bubble {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+}

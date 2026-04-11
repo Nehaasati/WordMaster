@@ -165,6 +165,7 @@ const GamePage: React.FC = () => {
     }
     fetchPlayerCharacter()
   }, [lobbyId])
+
   useEffect(() => {
     const fetchInitialLetters = async () => {
       try {
