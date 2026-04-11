@@ -61,10 +61,16 @@
   font-style: italic;
 }
 /* ── SCORE ── */
+.gp-score-emoji {
+  font-size: 2.5rem;
+}
 .gp-score {
   position: relative;
   z-index: 2;
+  display: flex;
+  align-items: center;
   text-align: center;
+  justify-content: center;
   font-family: 'Cinzel Decorative', serif;
   font-size: 1.3rem;
   font-weight: 900;
@@ -114,11 +120,11 @@
   z-index: 2;
   display: flex;
   flex: 1;
- padding: 0 40px 16px;
-  gap: 40px;
+ padding: 0 20px 16px;
+  gap: 0px;
   overflow: hidden;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
 }
  
 /* ── LEFT — CATEGORIES ── */
@@ -126,8 +132,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 0 0 380px;
+  flex: 0 0 480px;
   justify-content: center;
+  padding-left: 20px;
 }
  
 .gp-cat-row {
@@ -141,7 +148,7 @@
   font-weight: 700;
   color: #fff;
   font-style: italic;
-  min-width: 90px;
+  min-width: 100px;
   text-align: right;
 }
  
@@ -191,23 +198,24 @@
 }
   /* ── RIGHT ── */
 .gp-right {
-flex: 0 0 auto;
+flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
+  align-items: flex-end;
+  justify-content: Center;
   gap: 24px;
+   padding-right: 40px;
   padding-bottom: 20px;
-  padding-top: 60px;
+  padding-top: 40px;
 }
 /* ── BIG GREEN LETTERS ── */
 .gp-letters {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
-  align-content: center;
-  max-width: 400px;
+  gap: 6px;
+  justify-content: flex-end;
+  align-content: flex-start;
+  max-width: 380px;
 }
  
 .gp-letter {
@@ -216,7 +224,7 @@ flex: 0 0 auto;
   font-weight: 900;
   color: #00ff00;
   text-shadow:0 0 10px rgba(0, 255, 0, 0.8), 2px 2px 0 #006600, 4px 4px 0 rgba(0,80,0,0.4);
-  min-width: 50px;
+  min-width: 55px;
   text-align: center;
   line-height: 1.1;
   transition: all 0.3s ease;
@@ -234,7 +242,7 @@ flex: 0 0 auto;
 .gp-letter--used {
   opacity: 0.15;
   text-decoration: line-through;
-  animation: letterBlink 0.4s ease;
+  animation: letterBlink 0.4s ease forwards;;
   color: #888;
   text-shadow: none;
 }

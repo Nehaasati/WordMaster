@@ -478,11 +478,14 @@ const handleFreeze = () => {
       <div className="gp-bg" />
       <Stars />
  
-      <div className="gp-top-bar">
-        <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
-        <div className="gp-score" data-testid="score">POÄNG: {score}</div>
-        <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
-      </div>
+<div className="gp-top-bar">
+  <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
+  <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
+</div>
+
+<div className="gp-score" data-testid="score">
+  <span className="gp-score-emoji">💰</span> POÄNG: {score} <span className="gp-score-emoji">💰</span>
+</div>
     <div className="gp-powerups">
         <button className="gp-btn gp-btn--freeze" onClick={handleFreezePowerup} data-testid="btn-freeze">Freeze</button>
         <button className="gp-btn gp-btn--black" onClick={() => connectionRef.current?.invoke('UseInk', lobbyId)} data-testid="btn-black">Bläck</button>
