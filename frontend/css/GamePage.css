@@ -124,7 +124,7 @@
   gap: 0px;
   overflow: hidden;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 }
  
 /* ── LEFT — CATEGORIES ── */
@@ -133,8 +133,8 @@
   flex-direction: column;
   gap: 10px;
   flex: 0 0 480px;
-  justify-content: center;
-  padding-left: 20px;
+  margin: 0 auto; 
+  padding-left: 0;
 }
  
 .gp-cat-row {
@@ -219,7 +219,7 @@ flex: 1;
 }
  
 .gp-letter {
-  font-family: 'Cinzel Decorative', serif;
+  font-family: 'Creepster', cursive;
   font-size: 2.8rem;
   font-weight: 900;
   color: #00ff00;
