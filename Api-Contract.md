@@ -1,259 +1,162 @@
 # 🎮 WordMaster API Contract
- WordMaster multiplayer word game.
-Includes REST endpoints, SignalR real-time communication, and data models.
-------------------------------------------------------------------------
 
+WordMaster is a multiplayer word game where players compete to find words in different categories using a shared set of letters.
+This document defines the REST endpoints, SignalR real-time communication, and data models for the WordMaster backend.
 
-## 📸 Overview Diagram
-
-![System Overview](images/api-overview.png)
-
-------------------------------------------------------------------------
-
+---
 
 ## 📌 API Overview
 
-| Property            | Value                       |
-| ------------------- | --------------------------- |
-| Base URLBAckend | `http://localhost:5024`     |
-|  API Version**   | `1.0.0`                     |
-| **Format**          | JSON (UTF-8)                |
-| **Real-time**       | SignalR `/lobbyHub`         |
-| frontend         | http://localhost:5173/
+| Property         | Value                        |
+| ---------------- | ---------------------------- |
+| **Frontend**     | `http://localhost:5173`      |
+| **Backend**      | `http://localhost:5024`      |
+| **API Version**  | `1.1.0`                      |
+| **Format**       | JSON (UTF-8)                 |
+| **Real-time**    | SignalR `/lobbyHub`          |
 
-# 📡 Common Headers
+### 📡 Common Headers
 
 | Header         | Value              | Description       |
 | -------------- | ------------------ | ----------------- |
 | `Content-Type` | `application/json` | Required for POST |
-| `Accept`       | `application/json` | Preferred         |
+| `Accept`       | `application/json` | Recommended       |
 
+---
 
-------------------------------------------------------------------------
-## ⚠️ Response Format
+## ⚠️ Response Formats
 
-### Error
-
+### Error Response
 ```json
-{ "error": "Human readable message." }
+{
+  "error": "Detailed error message here."
+}
 ```
 
-### Status Codes
+### Common Status Codes
+| Code | Meaning      | Description                                      |
+| ---- | ------------ | ------------------------------------------------ |
+| 200  | OK           | Request succeeded.                               |
+| 201  | Created      | Resource created successfully.                   |
+| 400  | Bad Request  | Validation error or invalid state (e.g. not ready).|
+| 404  | Not Found    | Lobby, Player, or Character not found.           |
+| 409  | Conflict     | Player already in lobby or lobby full.           |
 
-| Code | Meaning     |
-| ---- | ----------- |
-| 200  | OK          |
-| 201  | Created     |
-| 400  | Bad Request |
-| 404  | Not Found   |
-| 409  | Conflict    |
+---
 
+# 🏠 Lobby & Game Setup
 
+## POST `/api/lobby`
+Creates a new game lobby.
 
-
-
-
-
-------------------------------------------------------------------------
-
-# 🎭 Character Endpoints
-
-## GET `http://localhost:5024/api/character/`
-
-Returns all characters.
-
-### ✅ Response
-
+### 📤 Response (200 OK)
 ```json
-[
-    [
+{
+  "lobbyId": "85E689",
+  "inviteCode": "fe6ffc4c1dff"
+}
+```
+
+---
+
+## GET `/api/lobby/{lobbyId}`
+Retrieves lobby details. `{lobbyId}` can be the 6-char ID or the 12-char invite code.
+
+### 📤 Response (200 OK)
+```json
+{
+  "id": "85E689",
+  "inviteCode": "fe6ffc4c1dff",
+  "letters": ["N", "H", "Ö", "Z", "A", ...],
+  "players": [
     {
-        "id": "ugglan",
-        "name": "Ugglan",
-        "description": "The wise owl rewards long words.",
-        "ability": {
-            "type": 0,
-            "bonusPoints": 3,
-            "thresholdLength": 8,
-            "thresholdSeconds": null,
-            "effectDescription": "+3 bonus points for words longer than 8 letters"
-        }
-    },
-    {
-        "id": "leopard",
-        "name": "Leopard",
-        "description": "Lightning fast — rewards quick answers.",
-        "ability": {
-            "type": 1,
-            "bonusPoints": 3,
-            "thresholdLength": null,
-            "thresholdSeconds": 10,
-            "effectDescription": "+3 bonus points for words submitted within 10 seconds"
-        }
-    },
-    {
-        "id": "musen",
-        "name": "Musen",
-        "description": "Small but mighty — loves short words.",
-        "ability": {
-            "type": 2,
-            "bonusPoints": 1,
-            "thresholdLength": 4,
-            "thresholdSeconds": null,
-            "effectDescription": "+1 bonus point for words shorter than 4 letters"
-        }
-    },
-    {
-        "id": "björnen",
-        "name": "Björnen",
-        "description": "The bear shrugs off freeze attacks.",
-        "ability": {
-            "type": 3,
-            "bonusPoints": 0,
-            "thresholdLength": null,
-            "thresholdSeconds": null,
-            "effectDescription": "Immune to the Freeze chaos event"
-        }
+      "id": "uuid-string",
+      "name": "Fatima",
+      "isHost": true,
+      "connectionId": "signalr-id",
+      "score": 0,
+      "isReady": true,
+      "joinedAt": "2026-04-09T09:04:15Z"
     }
-]
-]
----
-
-## GET `http://localhost:5024/api/character/ugglan`
-
-{
-    "id": "ugglan",
-    "name": "Ugglan",
-    "description": "The wise owl rewards long words.",
-    "ability": {
-        "type": 0,
-        "bonusPoints": 3,
-        "thresholdLength": 8,
-        "thresholdSeconds": null,
-        "effectDescription": "+3 bonus points for words longer than 8 letters"
-    }
-}
-
-| Param | Type   | Description  |
-| ----- | ------ | ------------ |
-| id    | string | Character ID |
-
----
-
-## POST `http://localhost:5024/api/character/ability`
-
-Calculate bonus points.
-
-### 📥 Request
-
-```json
-{
-  "characterId": "ugglan",
-  "word": "katastrofal",
-  "secondsTaken": 7.3
-}
-```
-
-### 📤 Response
-
-```json
-{
-  "bonusPoints": 3,
-  "abilityTriggered": true
+  ]
 }
 ```
 
 ---
 
-# 🏠 Lobby Endpoints
-
-## POST `http://localhost:5024/api/lobby/`
-
-Create a lobby.
-
-
-
-{
-    "lobbyId": "85E689",
-    "inviteCode": "fe6ffc4c1dff"
-}
-
-
------------------------------------------------------------
-
-## GET `http://localhost:5024/api/lobby/{{lobbyId}}/`
-{
-    "id": "85E689",
-    "inviteCode": "fe6ffc4c1dff",
-    "letters": [
-        "N",
-        "H",
-        "Ö",
-        "Z",
-        "N",
-        "N",
-        "R",
-        "X",
-        "A",
-        "K",
-        "U",
-        "Å",
-        "A",
-        "L",
-        "H"
-    ],
-    "players": [
-        {
-            "id": "a4099d0c-bc36-4828-af5f-b617c619765f",
-            "name": "Fatima",
-            "isHost": false,
-            "connectionId": "666cf63d-900f-4cdd-af14-463bb717924f",
-            "score": 0,
-            "isReady": true,
-            "joinedAt": "2026-04-09T09:04:15.4831992Z"
-        },
-        {
-            "id": "b9bb01ad-7db4-42fd-8db8-6e5f50486529",
-            "name": "Oskar",
-            "isHost": false,
-            "connectionId": "cc99c74c-b4ba-4253-8adc-475afbe88196",
-            "score": 0,
-            "isReady": true,
-            "joinedAt": "2026-04-09T09:04:15.5710071Z"
-        }
-    ]
-}
-
-## POST `http://localhost:5024/api/lobby/{id}/join`
-
+## POST `/api/lobby/{lobbyId}/join`
 Join a lobby.
 
+### 📥 Request
+```json
 {
-  "name": "Fatima"
+  "id": "optional-uuid",
+  "name": "Oskar",
+  "isHost": false
 }
+```
 
-## POST `http://localhost:5024/api/lobby/{id}/ready/{playerId}`
-
-Marks player as ready.
+### 📤 Response (200 OK)
+```json
 {
-  "name": "Fatima"
+  "message": "Player joined successfully",
+  "lobbyId": "85E689",
+  "player": {
+    "id": "uuid",
+    "name": "Oskar",
+    "isHost": false,
+    "connectionId": "signalr-id",
+    "score": 0,
+    "isReady": false,
+    "joinedAt": "2026-04-10T12:00:00Z"
+  }
 }
+```
+
 ---
 
+## POST `/api/lobby/{lobbyId}/ready/{playerId}`
+Marks a player as ready.
 
+### 📤 Response (200 OK)
+Returns empty body. Triggers `PlayerReady` SignalR event.
 
-# 🎮 Game Endpoint
+---
 
-## POST `http://localhost:5024/api/game/{lobbyId}/validate`
+## POST `/api/lobby/{lobbyId}/start`
+Starts the game if all players (max 2) are ready.
 
+### 📤 Response
+- **200 OK**: Game starting. Triggers `GameStarted` SignalR event.
+- **400 Bad Request**: "Players not ready" or "Lobby not full".
+
+---
+
+# 🎮 In-Game Endpoints
+
+## GET `/api/game/letters?count={count}`
+Generates a list of random weighted letters. Default count is 25.
+
+### 📤 Response (200 OK)
+```json
+["A", "E", "S", "K", "L", ...]
+```
+
+---
+
+## POST `/api/word/validate`
+Validates if a word exists in the dictionary, belongs to the category, and can be formed with the letters.
+
+### 📥 Request
+```json
 {
   "word": "KATT",
   "category": "Animal",
-  "letters": ["K","A","T","T"]
-}`
+  "letters": ["K", "A", "T", "T", "B", "R", "U"]
+}
+```
 
-### 📤 Response
-
+### 📤 Response (200 OK)
 ```json
 {
   "isValid": true,
@@ -263,88 +166,147 @@ Marks player as ready.
 
 ---
 
-# 🧮 Score Calculation
-
-## POST `http://localhost:5024/api/score/calculate`
+## POST `/api/game/calculate-score`
+Calculates score for a single player's submissions.
 
 ### 📥 Request
-
-
-### 📤 Response
-
 ```json
 {
-  "player1": 50,
-  "player2": 30
+  "categories": [
+    { "id": "Animal", "word": "KATT", "isValid": true },
+    { "id": "Food", "word": "PASTA", "isValid": true }
+  ]
 }
 ```
-------------------------------------------------------------------------
 
-## 🧾 Rules
+### 📤 Response (200 OK)
+```json
+{
+  "score": 15
+}
+```
 
-| Rule           | Points |
-| -------------- | ------ |
-| Unique word    | +10    |
-| Shared word    | +5     |
-| Long word      | +5     |
-| All categories | +50    |
+---
+
+# 🎭 Characters & Abilities
+
+## GET `/api/character`
+Returns all available characters.
+
+### 📤 Response (200 OK)
+```json
+[
+  {
+    "id": "ugglan",
+    "name": "Ugglan",
+    "description": "The wise owl rewards long words.",
+    "ability": {
+      "type": 0,
+      "bonusPoints": 3,
+      "thresholdLength": 8,
+      "effectDescription": "+3 bonus points for words longer than 8 letters"
+    }
+  },
+  ...
+]
+```
+*Note: Ability types are 0: LongWord, 1: FastAnswer, 2: ShortWord, 3: FreezeImmunity.*
+
+---
+
+## GET `/api/character/{id}`
+Returns a single character by id.
+
+### 📤 Response (200 OK)
+```json
+{
+  "id": "ugglan",
+  "name": "Ugglan",
+  "description": "The wise owl rewards long words.",
+  "ability": {
+    "type": 0,
+    "bonusPoints": 3,
+    "thresholdLength": 8,
+    "effectDescription": "+3 bonus points for words longer than 8 letters"
+  }
+}
+```
+
+---
+
+## POST `/api/character/ability`
+Calculates bonus points for a specific character ability.
+
+### 📥 Request
+```json
+{
+  "characterId": "leopard",
+  "word": "HEJ",
+  "secondsTaken": 4.5
+}
+```
+
+### 📤 Response (200 OK)
+```json
+{
+  "characterId": "leopard",
+  "word": "HEJ",
+  "bonusPoints": 3,
+  "abilityTriggered": true
+}
+```
+
+---
+
+## GET `/api/character/{id}/freeze-immune`
+Checks if a character is immune to freeze attacks.
+
+### 📤 Response (200 OK)
+```json
+{
+  "characterId": "björnen",
+  "isFreezeImmune": true
+}
+```
 
 ---
 
 # ⚡ Real-time (SignalR)
 
-## Hub URL
+**Hub URL:** `http://localhost:5024/lobbyHub`
 
-```
-/lobbyHub
-```
+### 📞 Client Methods (Invocations)
+| Method | Arguments | Description |
+| :--- | :--- | :--- |
+| `JoinLobbyGroup` | `lobbyId` (string) | Subscribes the client to updates for a specific lobby. |
+| `UseInk` | `lobbyId` (string) | Sends an "Ink" attack to others in the lobby. |
+| `UseFreeze` | `lobbyId` (string) | Sends a "Freeze" attack to others in the lobby. |
 
----
-
-## Events
-
-### PlayerJoined
-
-```js
-connection.on("PlayerJoined", (player) => {});
-```
-
-### PlayerReady
-
-```js
-connection.on("PlayerReady", (id) => {});
-```
-
-### GameStarted
-
-```js
-connection.on("GameStarted", (lobbyId) => {});
-```
+### 🔔 Server Events (On-Receive)
+| Event | Payload | Description |
+| :--- | :--- | :--- |
+| `PlayerJoined` | `Player` (object) | A new player has joined the lobby. |
+| `PlayerReady` | `playerId` (string) | A player has clicked "Ready". |
+| `GameStarted` | `lobbyId` (string) | The host has started the game. |
+| `InkReceived` | - | You have been hit with an ink attack! |
+| `FreezeReceived` | - | You have been frozen! |
+| `NotifyPlayerJoined` | `Player` (object) | Alternate event for player joining. |
 
 ---
 
-# 🔄 Core Flow
+# 🧮 Scoring Rules
 
-```
-Create Lobby → Join → Ready → Start → Play → Score
-```
+| Rule | Points | Description |
+| :--- | :--- | :--- |
+| **Unique Word** | +10 | Word not found by any other player. |
+| **Shared Word** | +5 | Word found by at least one other player. |
+| **Long Word** | +5 | Bonus for words longer than 7 characters. |
+| **All Categories** | +50 | Bonus for filling all categories with valid words. |
 
-------------------------------------------------------------------------
+---
 
-# 🔐 Notes
-
-* No authentication required
-* Max 2 players per lobby
-* In-memory storage
-* Requires CORS config
-
-------------------------------------------------------------------------
-
-# 🚀 Future Improvements
-
-* Authentication (JWT)
-* Persistent database
-* Match history
-* Rankings
-
-------------------------------------------------------------------------
+# 🛠️ Development Notes
+* **CORS**: Must allow `http://localhost:5173`.
+* **Storage**: In-memory. Data is lost on server restart.
+* **Lobby Limit**: Maximum 2 players.
+* **Health Check**: `GET /api/health` returns "OK".
