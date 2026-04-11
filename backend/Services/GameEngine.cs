@@ -181,7 +181,6 @@ public class GameEngine
         error = string.Empty;
 
         var lobby = GetLobby(lobbyId);
-
         if (lobby is null)
         {
             error = "Lobby not found";
@@ -196,6 +195,16 @@ public class GameEngine
             return false;
         }
 
+        // If player with same name already exists, reuse existing player
+        var existing = lobby.Players.FirstOrDefault(p => p.Name == player.Name);
+        if (existing != null)
+        {
+            player.Id = existing.Id;
+            player.IsHost = existing.IsHost;
+            player.IsReady = existing.IsReady;
+            return true;
+        }
+
         // Max 2 players
         if (lobby.Players.Count >= 2)
         {
@@ -203,13 +212,7 @@ public class GameEngine
             return false;
         }
 
-        // Player already in lobby
-        if (lobby.Players.Any(p => p.Id == player.Id))
-        {
-            error = "Player already in lobby";
-            return false;
-        }
-
+        // Add new player
         lobby.Players.Add(player);
 
         // When the second player joins => move to ready phase
