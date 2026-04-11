@@ -65,6 +65,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
         state: {
           isHost: true,
           playerName: trimmedName,
+          lobbyId: data.lobbyId,
         },
       });
     } catch (err) {

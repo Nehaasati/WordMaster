@@ -11,11 +11,15 @@
   background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
+  overflow-y: auto;   
 }
 .col {
     align-items: center;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+    overflow-y: auto;
+    padding-bottom: 40px;
 }
 .title {
     font-family: "Inter", sans-serif;
@@ -34,17 +38,36 @@
 }
 
 .character-carousel {
-    align-items: center;
     display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 320px;
 }
 
-.ch-arrow {
+..ch-arrow {
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
     transition: transform .15s;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
 
+.ch-arrow:first-child {
+    left: 0px;
+}
+
+.ch-arrow:last-child {
+    right: 0px;
+}
+
+.ch-arrow:active {
+    transform: translateY(-50%) scale(0.98);
 }
 .ch-arrow:active {
     transform: scale(0.98);
@@ -58,9 +81,18 @@
 }
 
 
+.characters {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .characters img {
-  width: auto;   
-  height: 450px;
+  width: auto;
+  height: 280px;
+  display: block;
+  margin: 0 auto;
 }
 
 .ready-btn {
@@ -73,7 +105,7 @@
     font-weight: 800;
     font-family: "Inter", sans-serif;
     font-style: italic;
-    margin-top: -25px;
+    margin-top: 16px;   
 }
 
 .ready-btn:active {
@@ -213,4 +245,85 @@
   padding: 8px 10px;
   width: fit-content;
   font-size: 12px;
+}
+
+.character-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  text-align: center;
+}
+  
+.character-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-style: italic;
+  color: #eedeff;
+  text-shadow: 0 0 10px rgba(160, 80, 255, 0.6);
+  margin: 0;
+}
+.character-description {
+  font-size: 0.9rem;
+  color: rgba(225, 200, 255, 0.8);
+  margin: 0;
+}
+.ability-badge {
+  display: inline-block;
+  background: rgba(160, 80, 255, 0.2);
+  border: 1px solid rgba(160, 80, 255, 0.5);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.82rem;
+  color: #d4b3ff;
+  font-style: italic;
+}
+/* ── Game mode picker ─────────────────────────────── */
+.game-mode-picker {
+  margin: 16px 0;
+  text-align: center;
+}
+
+.game-mode-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  color: #d4b3ff;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 8px rgba(160, 80, 255, 0.5);
+}
+
+.game-mode-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.game-mode-btn {
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: 1px solid rgba(160, 80, 255, 0.65);
+  background: rgba(80, 20, 140, 0.45);
+  color: #e8d5ff;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: 0.2s ease;
+  text-shadow: 0 0 6px rgba(200, 150, 255, 0.4);
+}
+
+.game-mode-btn.active {
+  background: rgba(130, 50, 220, 0.55);
+  border-color: rgba(180, 100, 255, 0.9);
+  color: #f0e0ff;
+  box-shadow: 0 0 18px rgba(160, 80, 255, 0.5);
+  text-shadow: 0 0 8px rgba(220, 180, 255, 0.6);
+}
+
+.game-mode-btn:hover:not(.active) {
+  background: rgba(100, 35, 180, 0.5);
+  border-color: rgba(160, 80, 255, 0.8);
+  color: #f0e0ff;
 }

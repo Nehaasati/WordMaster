@@ -103,6 +103,19 @@ public class GameEngine
         return true;
     }
 
+    // OSKAR's new method in order to fix the conflict // fatima
+    public bool StartGame(string lobbyId)
+    {
+        // Classic mode start (teammate’s logic)
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return false;
+
+        // Classic mode does NOT require host or playerId
+        // It simply starts the game for solo mode
+        lobby.State = GameState.PlayingRound;
+        return true;
+    }
+
     // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
     public void SetPlayerReady(string lobbyId, string playerId)
     {
@@ -241,6 +254,28 @@ public class GameEngine
 
         return true;
     }
+    public Player? AddBot(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return null;
+        if (lobby.Players.Count >= 2) return null;
+        if (lobby.State != GameState.WaitingForPlayers && lobby.State != GameState.WaitingForReady)
+            return null;
+
+        var bot = new Player
+        {
+            Name = "Easy Bot",
+            IsBot = true,
+            IsReady = true,
+            CharacterId = "ugglan"
+        };
+
+        lobby.Players.Add(bot);
+        if (lobby.Players.Count == 2)
+            lobby.State = GameState.WaitingForReady;
+
+        return bot;
+    }
 }
 
 public class Lobby
@@ -271,6 +306,8 @@ public class Player
 
     // PLAYER NAME, can be set by the client when they join the lobby
     public string Name { get; set; } = string.Empty;
+    //indicate character
+     public string CharacterId { get; set; } = "";
 
     // Indicates if this player is the HOST of the lobby (the one who created it)
     public bool IsHost { get; set; }
@@ -294,6 +331,7 @@ public class Player
 
     // Indicates if the player has finished the game.
     public bool HasFinished { get; set; }
+    public bool IsBot { get; set; }
 }
 
 // Enum to represent the different states of the game. 

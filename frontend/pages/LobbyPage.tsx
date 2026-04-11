@@ -5,12 +5,12 @@ import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
 import * as signalR from "@microsoft/signalr";
 
-/* -------------------------------------------------------
+/*
    Name Modal — supports 3 entry modes:
    - host: name only
    - invite: name only
    - join: name + lobby code
--------------------------------------------------------- */
+ */
 const NameModal: React.FC<{
   mode: "host" | "invite" | "join";
   lobbyIdFromUrl?: string;
@@ -65,32 +65,30 @@ const NameModal: React.FC<{
       </div>
     </div>
   );
+  };
+
+// Map backend character ID → local image path
+const CHARACTER_IMAGES: Record<string, string> = {
+  ugglan:   "/images/owl.png",
+  leopard:  "/images/leo.png",
+  musen:    "/images/mouse.png",
+  björnen:  "/images/bear.png",
 };
 
-/* -------------------------------------------------------
-   Character list
--------------------------------------------------------- */
-const Characters: Character[] = [
-  { id: 1, name: "Owl", image: "../images/owl.png" },
-  { id: 2, name: "Leopard", image: "../images/leo.png" },
-  { id: 3, name: "Mouse", image: "../images/mouse.png" },
-  { id: 4, name: "Bear", image: "../images/bear.png" },
-];
-
-/* -------------------------------------------------------
+/*
    Lobby Page
--------------------------------------------------------- */
+ */
 export default function LobbyPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* -------------------------------------------------------
+  /*
      Determine entry mode:
      - host: came from CreateModal
      - join: came from JoinModal
      - invite: direct URL access
-  -------------------------------------------------------- */
+ */
   const entryMode: "host" | "join" | "invite" =
     location.state?.isHost === true
       ? "host"
@@ -100,10 +98,44 @@ export default function LobbyPage() {
           ? "invite"
           : "invite";
 
-  /* -------------------------------------------------------
+  const selectedPlayerName =
+    location.state?.playerName?.trim() ||
+    localStorage.getItem("wordmaster-player-name")?.trim() ||
+    "";
+
+  /*
+
+ Lobby state and  Player identity
+*/
+
+  const [realLobbyId, setRealLobbyId] = useState<string>(""); ////── Lobby state
+
+  // State för att hålla koll på spelare i lobbyn
+
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [playerId, setPlayerId] = useState<string | null>(
+    localStorage.getItem("playerId"),
+  );
+  const [isHost, setIsHost] = useState<boolean>(false);
+  const [ready, setReady] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  // ── Character state ──────────────────────────────────────────
+  const [characters, setCharacters] = useState<Character[]>([]);
+
+  const [loadingCharacters, setLoadingCharacters] = useState(true);
+
+  // Ensure host & invite links always have lobbyId
+  useEffect(() => {
+    if (lobbyId) {
+      setRealLobbyId(lobbyId);
+    }
+  }, [lobbyId]);
+  
+  /*
      Clean old playerId when entering via invite link
      (prevents incorrect host/guest behavior)
-  -------------------------------------------------------- */
+ */
   useEffect(() => {
     if (entryMode === "invite") {
       localStorage.removeItem("playerId");
@@ -111,9 +143,7 @@ export default function LobbyPage() {
     }
   }, [entryMode]);
 
-  /* -------------------------------------------------------
-   Player name handling
--------------------------------------------------------- */
+  // Player name handling
   // Determine initial name depending on entry mode
   const initialNameFromStorage =
     entryMode === "invite"
@@ -130,47 +160,62 @@ export default function LobbyPage() {
     entryMode === "invite" ? true : !playerName,
   );
 
-  /* -------------------------------------------------------
-     Player identity and lobby state
-  -------------------------------------------------------- */
-  const [playerId, setPlayerId] = useState<string | null>(
-    localStorage.getItem("playerId"),
-  );
+  // Fetch Characters
+  useEffect(() => {
+    const fetchCharacters = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5024/api/character");
+        if (res.ok) {
+          const data = await res.json();
+          const withImages: Character[] = data.map(
+            (c: Omit<Character, "image">) => ({
+              ...c,
+              image: CHARACTER_IMAGES[c.id] ?? "/images/owl.png",
+            }),
+          );
+          setCharacters(withImages);
+        }
+      } catch (err) {
+        console.error("Error fetching characters:", err);
+      } finally {
+        setLoadingCharacters(false);
+      }
+    };
+    fetchCharacters();
+  }, []);
 
-  const [isHost, setIsHost] = useState<boolean>(false);
-  const [realLobbyId, setRealLobbyId] = useState<string>(lobbyId || "");
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [ready, setReady] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  /* -------------------------------------------------------
+  /*
      Character carousel
-  -------------------------------------------------------- */
-  const [index, setIndex] = useState(0);
-  const character = Characters[index];
-  const prev = () =>
-    setIndex((i) => (i - 1 + Characters.length) % Characters.length);
-  const next = () => setIndex((i) => (i + 1) % Characters.length);
+  */
+  const [index, setIndex] = useState(0); // för att ha koll på vilken karaktär visas
 
-  /* -------------------------------------------------------
+  const character = characters[index];
+  const prev = () =>
+    setIndex((i) => (i - 1 + characters.length) % characters.length);
+  const next = () => setIndex((i) => (i + 1) % characters.length);
+
+  //Game mode
+  const [gameMode, setGameMode] = useState<"standard" | "blitz">("standard");
+
+  /*
      Info box
-  -------------------------------------------------------- */
+ */
   const [open, setOpen] = useState(false);
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
 
-  /* -------------------------------------------------------
+  /*
      Auto-clear message
-  -------------------------------------------------------- */
+ */
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => setMessage(null), 3000);
     return () => clearTimeout(timer);
   }, [message]);
 
-  /* -------------------------------------------------------
+  /*
      Close info box on outside click
-  -------------------------------------------------------- */
+  */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -188,11 +233,11 @@ export default function LobbyPage() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  /* -------------------------------------------------------
+  /*
      Fetch lobby data from backend
      - Determines real playerId, isHost, isReady
      - Ensures frontend trusts backend as the source of truth
-  -------------------------------------------------------- */
+ */
   useEffect(() => {
     if (!realLobbyId || !playerName) return;
 
@@ -226,9 +271,9 @@ export default function LobbyPage() {
     fetchLobby();
   }, [realLobbyId, playerName]);
 
-  /* -------------------------------------------------------
+  /*
      SignalR connection
-  -------------------------------------------------------- */
+ */
   useEffect(() => {
     if (!realLobbyId) return;
 
@@ -237,94 +282,108 @@ export default function LobbyPage() {
       .withAutomaticReconnect()
       .build();
 
-    connection.start().then(async () => {
-      await connection.invoke("JoinLobbyGroup", realLobbyId);
+    connection
+      .start()
+      .then(async () => {
+        await connection.invoke("JoinLobbyGroup", realLobbyId);
 
-      // When a new player joins
-      connection.on("PlayerJoined", (p: Player) =>
-        setPlayers((prev) =>
-          prev.some((x) => x.id === p.id) ? prev : [...prev, p],
-        ),
-      );
+        // When a player joins the lobby
+        connection.on("PlayerJoined", (player: Player) => {
+          console.log("Player joined:", player);
 
-      // When a player becomes ready
-      connection.on("PlayerReady", (id: string) =>
-        setPlayers((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, isReady: true } : p)),
-        ),
-      );
+          setPlayers((prevPlayers) => {
+            // prevent duplicate players
+            if (prevPlayers.some((p) => p.id === player.id)) {
+              return prevPlayers;
+            }
+            // prevent adding more than 2 players
+            if (prevPlayers.length >= 2) {
+              return prevPlayers;
+            }
 
-      // When host starts the game
-      connection.on("GameStarted", (id: string) => navigate(`/game/${id}`));
-    });
+            return [...prevPlayers, player];
+          });
+        });
 
+        // When a player becomes ready
+        connection.on("PlayerReady", (playerId: string) => {
+          setPlayers((prevPlayers) =>
+            prevPlayers.map((p) =>
+              p.id === playerId ? { ...p, isReady: true } : p,
+            ),
+          );
+        });
+
+        // When the host starts the game
+        connection.on("GameStarted", (lobbyId: string, mode: string) => {
+          if (mode === "blitz") {
+            navigate("/classic-game");
+          } else {
+            navigate(`/game/${lobbyId}`);
+          }
+        });
+      })
+      .catch((err) => console.error("SignalR error:", err));
+
+    // Cleanup when component unmounts
     return () => {
       connection.stop();
     };
   }, [realLobbyId, navigate]);
 
-  /* -------------------------------------------------------
+  /*
      Handle Ready:
      - Host: only send ready
      - Guest: always attempt join first
        (backend will reuse existing player if already joined)
-  -------------------------------------------------------- */
-const handleReady = async () => {
-  // HOST → only send ready
-  if (isHost) {
+ */
+  const handleReady = async () => {
+    // HOST => only send ready
+    if (isHost) {
+      await fetch(
+        `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${playerId}`,
+        { method: "POST" },
+      );
+      setReady(true);
+      return;
+    }
+
+    // GUEST => always attempt join
+    const joinRes = await fetch(
+      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: playerName }),
+      },
+    );
+
+    const data = await joinRes.json();
+
+    if (!joinRes.ok) {
+      setMessage(data.error || "Ett fel uppstår, kunde inte joina lobbyn");
+      return;
+    }
+
+    // Use the returned playerId immediately
+    const newId = data.player.id;
+    setPlayerId(newId);
+    localStorage.setItem("playerId", newId);
+
+    // Send ready immediately after join
     await fetch(
-      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${playerId}`,
-      { method: "POST" },
+      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${newId}`,
+      {
+        method: "POST",
+      },
     );
+
     setReady(true);
-    return;
-  }
-
-  // GUEST → always attempt join
-  const joinRes = await fetch(
-    `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: playerName }),
-    },
-  );
-
-  const data = await joinRes.json();
-
-  if (!joinRes.ok) {
-    setMessage(data.error || "Failed to join lobby");
-    return;
-  }
-
-  // Use the returned playerId immediately
-  const newId = data.player.id;
-  setPlayerId(newId);
-  localStorage.setItem("playerId", newId);
-
-  // Send ready immediately after join
-  await fetch(`http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${newId}`, {
-    method: "POST",
-  });
-
-  setReady(true);
-};
-
-  /* -------------------------------------------------------
-     Host starts the game
-  -------------------------------------------------------- */
-  const handleStartGame = async () => {
-    const res = await fetch(
-      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/start/${playerId}`,
-      { method: "POST" },
-    );
-
-    if (!res.ok) setMessage(await res.text());
   };
 
-  /* -------------------------------------------------------
+  /*
      Show modal if name not set
-  -------------------------------------------------------- */
+  */
 
   if (showNameModal) {
     return (
@@ -334,6 +393,14 @@ const handleReady = async () => {
         onConfirm={(name, code) => {
           localStorage.setItem("wordmaster-player-name", name);
           setPlayerName(name);
+
+          // Never change realLobbyId if it is the host
+          if (entryMode === "host") {
+            setShowNameModal(false);
+            return;
+          }
+
+          // Only if it's a guest
           setRealLobbyId(code || lobbyId || "");
           setShowNameModal(false);
         }}
@@ -341,9 +408,9 @@ const handleReady = async () => {
     );
   }
 
-  /* -------------------------------------------------------
+  /*
      Copy invite link
-  -------------------------------------------------------- */
+  */
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
     alert("Länk kopierad!");
@@ -351,9 +418,8 @@ const handleReady = async () => {
 
   if (!playerName) return null;
 
-  /* -------------------------------------------------------
-     UI Rendering
-  -------------------------------------------------------- */
+  // UI Rendering
+
   return (
     <div className="page">
       <div className="container">
@@ -361,7 +427,7 @@ const handleReady = async () => {
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
           <div className="player-box" style={{ marginBottom: "20px" }}>
-            <p>DITT NAMN: {playerName}</p>
+            <p>Dit namn: {playerName}</p>
           </div>
 
           <div className="players-list">
@@ -397,43 +463,166 @@ const handleReady = async () => {
             </div>
           )}
 
-          <div className="character-carousel">
-            <button className="ch-arrow" onClick={prev}>
-              <img src="/images/prev.png" className="ch-arrow-img" />
-            </button>
+          {/* Character carousel */}
+          {loadingCharacters ? (
+            <p style={{ color: "#fff", margin: "40px 0", fontSize: "1.2rem" }}>
+              Laddar karaktärer...
+            </p>
+          ) : character ? (
+            <div className="character-carousel">
+              <button className="ch-arrow" onClick={prev}>
+                <img src="/images/prev.png" className="ch-arrow-img" />
+              </button>
 
-            <div className="characters">
-              <img
-                key={character.id}
-                src={character.image}
-                alt={character.name}
-              />
+              <div className="characters">
+                <img
+                  key={character.id}
+                  src={character.image}
+                  alt={character.name}
+                />
+                <div className="character-info">
+                  <h2 className="character-name">{character.name}</h2>
+                  <p className="character-description">
+                    {character.description}
+                  </p>
+                  <span className="ability-badge">
+                    ✦ {character.ability.effectDescription}
+                  </span>
+                </div>
+              </div>
+
+              <button className="ch-arrow" onClick={next}>
+                <img src="/images/next.png" className="ch-arrow-img" />
+              </button>
             </div>
+          ) : (
+            <p style={{ color: "red" }}>Kunde inte ladda karaktärer.</p>
+          )}
 
-            <button className="ch-arrow" onClick={next}>
-              <img src="/images/next.png" className="ch-arrow-img" />
+          {/* Add bot button — host only */}
+          {isHost && !ready && players.length < 2 && (
+            <button
+              className="wm-modal-btn wm-modal-btn--cancel"
+              style={{ marginBottom: "12px" }}
+              onClick={async () => {
+                const res = await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/add-bot`,
+                  { method: "POST" },
+                );
+                if (!res.ok) {
+                  const data = await res.json();
+                  setMessage(data.error || "Kunde inte lägga till bot.");
+                }
+              }}
+            >
+              + Lägg till motståndare (Easy Bot)
             </button>
-          </div>
+          )}
+
+          {/* Game mode picker — host only */}
+          {isHost && !ready && (
+            <div className="game-mode-picker">
+              <p className="game-mode-label">Välj spelläge</p>
+              <div className="game-mode-btns">
+                <button
+                  className={`game-mode-btn ${
+                    gameMode === "standard" ? "active" : ""
+                  }`}
+                  onClick={() => setGameMode("standard")}
+                >
+                  Standard WordMaster
+                </button>
+                <button
+                  className={`game-mode-btn ${
+                    gameMode === "blitz" ? "active" : ""
+                  }`}
+                  onClick={() => setGameMode("blitz")}
+                >
+                  Blitz WordMaster
+                </button>
+              </div>
+            </div>
+          )}
 
           {message && <div className="lobby-message">{message}</div>}
 
+          {/* Ready / Start button */}
           <button
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
-            onClick={() => {
+            onClick={async () => {
+              // FIRST CLICK → not ready yet
               if (!ready) {
-                handleReady();
-              } else if (isHost) {
-                handleStartGame();
+                // HOST → send ready only
+                if (isHost) {
+                  await handleReady();
+                  return;
+                }
+
+                // GUEST → join then ready
+                const response = await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      name: selectedPlayerName || character.name,
+                      characterId: character.id,
+                      isHost: false,
+                    }),
+                  },
+                );
+
+                if (!response.ok) {
+                  const data = await response.json();
+                  setMessage(
+                    data.error ||
+                      "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
+                  );
+                  return;
+                }
+
+                const data = await response.json();
+                const joinedPlayer = data.player;
+
+                localStorage.setItem("wordmaster-player-id", joinedPlayer.id);
+                setPlayerId(joinedPlayer.id);
+
+                await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${joinedPlayer.id}`,
+                  { method: "POST" },
+                );
+
+                setReady(true);
+                return;
+              }
+
+              // SECOND CLICK → host starts the game
+              if (isHost) {
+                if (players.length < 2) {
+                  setMessage("Väntar på att den andra spelaren ska gå med...");
+                  return;
+                }
+
+                const startResponse = await fetch(
+                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/start`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ gameMode }),
+                  },
+                );
+
+                if (!startResponse.ok) {
+                  const errorMsg = await startResponse.text();
+                  setMessage("Kunde inte starta: " + errorMsg);
+                }
               }
             }}
           >
-            {ready
-              ? isHost
-                ? "Starta spelet"
-                : "Väntar på värden..."
-              : "Redo"}
+            {ready ? "Starta spelet" : "Redo"}
           </button>
 
+          {/* Info box */}
           <div className="info-wrapper">
             <div
               ref={infoBoxRef}
