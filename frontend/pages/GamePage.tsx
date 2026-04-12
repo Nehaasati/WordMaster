@@ -76,23 +76,41 @@ const GamePage: React.FC = () => {
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
 
+  // SignalR
+
   useEffect(() => {
-    if (!lobbyId) return
+    if (!lobbyId) return;
+
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://127.0.0.1:5024/lobbyHub')
+      .withUrl("http://127.0.0.1:5024/lobbyHub")
       .withAutomaticReconnect()
-      .build()
+      .build();
+
     connection.start().then(async () => {
-      await connection.invoke('JoinLobbyGroup', lobbyId)
-    connection.on('InkReceived', () => {
-      setShowInk(true)
-      setTimeout(() => setInkActive(true), 50)
-    })
-      connection.on('FreezeReceived', () => handleFreeze())
-    })
-    connectionRef.current = connection
-    return () => { connection.stop() }
-  }, [lobbyId])
+      await connection.invoke("JoinLobbyGroup", lobbyId);
+
+      connection.on("InkReceived", () => {
+        setShowInk(true);
+        setTimeout(() => setInkActive(true), 50);
+      });
+
+      connection.on("FreezeReceived", () => handleFreeze());
+
+      // End the game and redirect the players to the lobby
+      connection.on("MatchEnded", (lobbyId: string) => {
+        setStopped(true);
+        setTimeout(() => {
+          navigate(`/lobby/${lobbyId}`);
+        }, 2000);
+      });
+    });
+
+    connectionRef.current = connection;
+
+    return () => {
+      connection.stop();
+    };
+  }, [lobbyId]);
 
   useEffect(() => {
     if (stopped) return
@@ -521,7 +539,26 @@ const handleFreeze = () => {
     })
   }
  
-  const allDone = CATEGORY_LIST.every(c => categories[c.id].valid)
+  const allDone = CATEGORY_LIST.every(c => categories[c.id].valid);
+
+  //Send all done to backend
+  useEffect(() => {
+    const notifyFinished = async () => {
+      if (!allDone || stopped) return;
+
+      const playerId = localStorage.getItem("wordmaster-player-id");
+      if (!playerId || !lobbyId) return;
+
+      await fetch(
+        `http://127.0.0.1:5024/api/lobby/${lobbyId}/player-finished/${playerId}`,
+        { method: "POST" },
+      );
+      setStopped(true);
+    };
+
+    notifyFinished();
+  }, [allDone, stopped, lobbyId]);
+  
   return (
  <div className="gp-scene" data-testid="game-page">
       <div className="gp-bg" />
