@@ -252,6 +252,14 @@ public class GameEngine
 
         lobby.MatchEnded = true;
 
+        // Reset players state
+        foreach (var p in lobby.Players)
+            {
+                p.IsReady = false;
+                p.HasFinished = false;
+                p.CategoriesCompleted = false;
+            }
+
         return true;
     }
     public Player? AddBot(string lobbyId)
