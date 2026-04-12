@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from "react-router-dom";
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
 import * as signalR from '@microsoft/signalr'
 import '../css/GamePage.css'
@@ -76,6 +76,7 @@ const GamePage: React.FC = () => {
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
 
+  const navigate = useNavigate();
   // SignalR
 
   useEffect(() => {
