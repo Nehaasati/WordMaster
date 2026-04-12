@@ -540,7 +540,8 @@ const handleFreeze = () => {
         <button className="gp-btn gp-btn--black" onClick={() => connectionRef.current?.invoke('UseInk', lobbyId)} data-testid="btn-black">Bläck</button>
         <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
       </div>
-     <div className="gp-content">
+      <div className="gp-content">
+      <div className="gp-left-spacer" />
         <div className="gp-categories" data-testid="categories">
           {CATEGORY_LIST.map(cat => (
             <div className="gp-cat-row" key={cat.id}>
