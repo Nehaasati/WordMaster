@@ -56,4 +56,12 @@ public class LobbyHub : Hub
   {
     await Clients.OthersInGroup(lobbyId).SendAsync("FreezeReceived");
   }
+
+  public async Task FinishGame(string lobbyId)
+  {
+    await Clients.Group(lobbyId).SendAsync("MatchEnded", lobbyId);
+    
+    Console.WriteLine($"Lobby {lobbyId} has finished by a player.");
+  }
+
 }

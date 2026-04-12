@@ -261,6 +261,7 @@ export default function LobbyPage() {
           localStorage.setItem("playerId", me.id);
           setIsHost(me.isHost);
           setReady(me.isReady);
+          localStorage.setItem("isHost", me.isHost.toString());
         }
       } catch (err) {
         console.error("Faild to fetch lobby", err);
