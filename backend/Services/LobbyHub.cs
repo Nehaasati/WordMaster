@@ -60,8 +60,13 @@ public class LobbyHub : Hub
   public async Task FinishGame(string lobbyId)
   {
     await Clients.Group(lobbyId).SendAsync("MatchEnded", lobbyId);
-    
+
     Console.WriteLine($"Lobby {lobbyId} has finished by a player.");
   }
 
+  // A signalR to manage restart the game/ new round
+  public async Task LobbyReset(string lobbyId)
+  {
+    await Clients.Group(lobbyId).SendAsync("LobbyReset", lobbyId);
+  }
 }
