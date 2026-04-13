@@ -74,56 +74,81 @@ const GamePage: React.FC = () => {
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
   // SignalR
+  
+useEffect(() => {
+  if (!lobbyId) return;
 
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl("http://127.0.0.1:5024/lobbyHub")
+    .withAutomaticReconnect()
+    .build();
 
-  useEffect(() => {
-    if (!lobbyId) return;
+  connection.start().then(async () => {
+    await connection.invoke("JoinLobbyGroup", lobbyId);
 
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://127.0.0.1:5024/lobbyHub")
-      .withAutomaticReconnect()
-      .build();
+    // NEW ROUND
+    connection.on("LobbyReset", async () => {
+      console.log("Lobby reset → new round");
 
-    connection.start().then(async () => {
-      await connection.invoke("JoinLobbyGroup", lobbyId);
+      setStopped(false);
+      setTimeLeft(0);
 
-      connection.on("InkReceived", () => {
-        setShowInk(true);
-        setTimeout(() => setInkActive(true), 50);
+      // reset categories
+      const initial: Record<string, CategoryData> = {};
+      CATEGORY_LIST.forEach((cat) => {
+        initial[cat.id] = { word: "", valid: false, feedback: "" };
       });
+      setCategories(initial);
 
-      connection.on("FreezeReceived", () => handleFreeze());
-
-      // End the game and redirect the players to the lobby
-      connection.on("MatchEnded", (lId: string) => {
-        setStopped(true);
-        // Reset local state
-        setCategories(() => {
-          const initial: Record<string, CategoryData> = {};
-          CATEGORY_LIST.forEach((cat) => {
-            initial[cat.id] = { word: "", valid: false, feedback: "" };
-          });
-          return initial;
-        });
-        setAllLetters([]);
-
-        setTimeout(() => {
-          navigate(`/lobby/${lId}`, {
-            state: {
-              playerName: localStorage.getItem("wordmaster-player-name"),
-              isHost: localStorage.getItem("isHost") === "true",
-            },
-          });
-        }, 3000); // To watch the result before redirecting
-      });
+      // fetch new letters
+      const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAllLetters(
+          data.letters.map((char: string) => ({
+            id: Math.random().toString(36),
+            char,
+            used: false,
+            isExtra: false,
+          })),
+        );
+      }
     });
 
-    connectionRef.current = connection;
+    // PLAYER LEFT
+    connection.on("PlayerLeft", (playerId: string) => {
+      console.log("Player left:", playerId);
+    });
 
-    return () => {
-      connection.stop();
-    };
-  }, [lobbyId]);
+    // HOST CHANGED
+    connection.on("HostChanged", (newHostId: string) => {
+      const myId = localStorage.getItem("wordmaster-player-id");
+      if (myId === newHostId) {
+        localStorage.setItem("isHost", "true");
+        console.log("You are now the host");
+      }
+    });
+
+    // MATCH ENDED
+    connection.on("MatchEnded", (lId: string) => {
+      setStopped(true);
+
+      setTimeout(() => {
+        navigate(`/lobby/${lId}`, {
+          state: {
+            playerName: localStorage.getItem("wordmaster-player-name"),
+            isHost: localStorage.getItem("isHost") === "true",
+          },
+        });
+      }, 3000);
+    });
+  });
+
+  connectionRef.current = connection;
+  return () => {
+    connection.stop();
+  };
+}, [lobbyId]);
 
   useEffect(() => {
     if (stopped) return;
@@ -660,6 +685,19 @@ const GamePage: React.FC = () => {
     notifyFinished();
   }, [allDone, lobbyId, stopped]);
 
+  // Handle restart
+  const handleRestart = async () => {
+    const playerId = localStorage.getItem("wordmaster-player-id");
+
+    if (!lobbyId || !playerId) return;
+
+    await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}/restart`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId }),
+    });
+  };
+
   return (
     <div className="gp-scene" data-testid="game-page">
       <div className="gp-bg" />
@@ -744,8 +782,9 @@ const GamePage: React.FC = () => {
                 <input
                   type="text"
                   ref={(el) => (inputRefs.current[cat.id] = el)}
-                  className={`gp-cat-input ${categories[cat.id].valid ? "gp-cat-input--valid" : ""
-                    }`}
+                  className={`gp-cat-input ${
+                    categories[cat.id].valid ? "gp-cat-input--valid" : ""
+                  }`}
                   value={categories[cat.id].word}
                   onChange={(e) => handleInputChange(cat.id, e)}
                   disabled={categories[cat.id].valid || frozen || stopped}
@@ -771,8 +810,9 @@ const GamePage: React.FC = () => {
             {allLetters.map((letter) => (
               <div
                 key={letter.id}
-                className={`gp-letter ${letter.isExtra ? "gp-letter--extra" : ""
-                  } ${letter.used ? "gp-letter--used" : ""}`}
+                className={`gp-letter ${
+                  letter.isExtra ? "gp-letter--extra" : ""
+                } ${letter.used ? "gp-letter--used" : ""}`}
                 data-testid="letter-tile"
               >
                 {letter.char}
@@ -788,8 +828,9 @@ const GamePage: React.FC = () => {
           src="/videos/Bläck.webm"
           autoPlay
           muted
-          className={`gp-overlay-video ${inkActive ? "gp-overlay-video--visible" : ""
-            }`}
+          className={`gp-overlay-video ${
+            inkActive ? "gp-overlay-video--visible" : ""
+          }`}
           onEnded={() => {
             setInkActive(false);
             setTimeout(() => setShowInk(false), 400);
@@ -803,8 +844,9 @@ const GamePage: React.FC = () => {
           src="/videos/Freeze5Sec.webm"
           autoPlay
           muted
-          className={`gp-overlay-video ${freezeActive ? "gp-overlay-video--visible" : ""
-            }`}
+          className={`gp-overlay-video ${
+            freezeActive ? "gp-overlay-video--visible" : ""
+          }`}
         />
       )}
 
@@ -816,6 +858,22 @@ const GamePage: React.FC = () => {
             <p>Din tid: {timeLeft} sekunder</p>
             <p>Din poäng: {score}</p>
 
+            {/* 🆕 Restart button (ONLY HOST) */}
+            {lobbyId && localStorage.getItem("isHost") === "true" && (
+              <button
+                className="gp-btn"
+                onClick={handleRestart}
+                style={{
+                  marginTop: "15px",
+                  width: "100%",
+                  backgroundColor: "#2ecc71",
+                }}
+              >
+                Starta ny runda
+              </button>
+            )}
+
+            {/* Classic mode */}
             {!lobbyId && (
               <button
                 className="gp-btn"
