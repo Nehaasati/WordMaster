@@ -1,560 +1,725 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+﻿import React, { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from "react-router-dom";
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
 import * as signalR from '@microsoft/signalr'
 import '../css/GamePage.css'
 ///Star annimation
+const STATIC_STARS: StarData[] = Array.from({ length: 60 }).map((_, i) => ({
+  id: i,
+  left: Math.random() * 100,
+  top: Math.random() * 100,
+  size: Math.random() * 2 + 0.5,
+  d: (2 + Math.random() * 4).toFixed(1) + 's',
+  del: (Math.random() * 5).toFixed(1) + 's',
+  min: (0.2 + Math.random() * 0.3).toFixed(2),
+}));
+
 const Stars: React.FC = () => {
-  const stars = useRef<StarData[]>([])
-  if (!stars.current.length) {
-    for (let i = 0; i < 60; i++) {
-      const size = Math.random() * 2 + 0.5
-      stars.current.push({
-        id: i,
-        left: Math.random() * 100,
-        top:  Math.random() * 100,
-        size,
-        d:   (2 + Math.random() * 4).toFixed(1) + 's',
-        del: (Math.random() * 5).toFixed(1) + 's',
-        min: (0.2 + Math.random() * 0.3).toFixed(2),
-      })
-    }
-  }
   return (
     <div className="gp-stars">
-      {stars.current.map(s => (
-        <div
-          key={s.id}
-          className="gp-star"
-          style={{
-            left:   s.left + '%',
-            top:    s.top  + '%',
-            width:  s.size + 'px',
+      {STATIC_STARS.map(s => (
+        <div key={s.id} className="gp-star" style={{
+            left: s.left + '%',
+            top: s.top + '%',
+            width: s.size + 'px',
             height: s.size + 'px',
-            ['--d'   as string]: s.d,
+            ['--d' as string]: s.d,
             ['--del' as string]: s.del,
             ['--min' as string]: s.min,
-          } as React.CSSProperties}
-        />
+          } as React.CSSProperties} />
       ))}
     </div>
-  )
-}
+  );
+};
 const CATEGORY_LIST: Category[] = [
   { id: 'Name',   label: 'Namn'      },
-  { id: 'Food',   label: 'Mat/Frukt' },
+  { id: 'Food',   label: 'Mat'       },
   { id: 'Job',    label: 'Jobb'      },
-  { id: 'Land',   label: 'Stad/Land' },
+  { id: 'Land',   label: 'Stad'      },
   { id: 'Colour', label: 'Färg'      },
   { id: 'Animal', label: 'Djur'      },
   { id: 'Object', label: 'Sak'       },
 ]
 const GamePage: React.FC = () => {
-  const { lobbyId } = useParams<{ lobbyId: string }>()
-  const [allLetters, setAllLetters] = useState<Letter[]>([])
-  const [categories, setCategories] = useState<Record<string, CategoryData>>(() => {
-    const initial: Record<string, CategoryData> = {}
-    CATEGORY_LIST.forEach(cat => {
-      initial[cat.id] = { word: '', valid: false, feedback: '' }
-    })
-    return initial
-  })
-    const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
-  const [timeLeft,  setTimeLeft]  = useState(0)
-  const [frozen,    setFrozen]    = useState(false)
-  const [freezeMsg, setFreezeMsg] = useState('')
-  const [stopped,   setStopped]   = useState(false)
-  const [score,     setScore]     = useState(0)
-  const [characterId, setCharacterId] = useState<string>('')      
-  const [roundStartTime] = useState<number>(Date.now()) 
-  const [showInk, setShowInk] = useState(false)
-  const [inkActive, setInkActive] = useState(false)
-  const [showFreeze, setShowFreeze] = useState(false)
-  const [freezeActive, setFreezeActive] = useState(false)
-  const connectionRef = useRef<signalR.HubConnection | null>(null)
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
-  const bonusRef = useRef<number>(0)
-  const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ'
+
+  const { lobbyId } = useParams<{ lobbyId: string }>();
+  const navigate = useNavigate();
+  const [allLetters, setAllLetters] = useState<Letter[]>([]);
+  const [categories, setCategories] = useState<Record<string, CategoryData>>(
+    () => {
+      const initial: Record<string, CategoryData> = {};
+      CATEGORY_LIST.forEach((cat) => {
+        initial[cat.id] = { word: "", valid: false, feedback: "" };
+      });
+      return initial;
+    },
+  );
+  const [backendConnected, setBackendConnected] = useState<boolean | null>(
+    null,
+  );
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [frozen, setFrozen] = useState(false);
+  const [freezeMsg, setFreezeMsg] = useState("");
+  const [stopped, setStopped] = useState(false);
+  const [score, setScore] = useState(0);
+  const [characterId, setCharacterId] = useState<string>("");
+  const [roundStartTime] = useState<number>(Date.now());
+  const [showInk, setShowInk] = useState(false);
+  const [inkActive, setInkActive] = useState(false);
+  const [showFreeze, setShowFreeze] = useState(false);
+  const [freezeActive, setFreezeActive] = useState(false);
+  const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
+
+  // SignalR
+
 
   useEffect(() => {
-    if (!lobbyId) return
+    if (!lobbyId) return;
+
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://127.0.0.1:5024/lobbyHub')
+      .withUrl("http://127.0.0.1:5024/lobbyHub")
       .withAutomaticReconnect()
-      .build()
+      .build();
+
     connection.start().then(async () => {
-      await connection.invoke('JoinLobbyGroup', lobbyId)
-    connection.on('InkReceived', () => {
-      setShowInk(true)
-      setTimeout(() => setInkActive(true), 50)
-    })
-      connection.on('FreezeReceived', () => handleFreeze())
-    })
-    connectionRef.current = connection
-    return () => { connection.stop() }
-  }, [lobbyId])
+      await connection.invoke("JoinLobbyGroup", lobbyId);
+
+      connection.on("InkReceived", () => {
+        setShowInk(true);
+        setTimeout(() => setInkActive(true), 50);
+      });
+
+      connection.on("FreezeReceived", () => handleFreeze());
+
+      // End the game and redirect the players to the lobby
+      connection.on("MatchEnded", (lId: string) => {
+        setStopped(true);
+        // Reset local state
+        setCategories(() => {
+          const initial: Record<string, CategoryData> = {};
+          CATEGORY_LIST.forEach((cat) => {
+            initial[cat.id] = { word: "", valid: false, feedback: "" };
+          });
+          return initial;
+        });
+        setAllLetters([]);
+
+        setTimeout(() => {
+          navigate(`/lobby/${lId}`, {
+            state: {
+              playerName: localStorage.getItem("wordmaster-player-name"),
+              isHost: localStorage.getItem("isHost") === "true",
+            },
+          });
+        }, 3000); // To watch the result before redirecting
+      });
+    });
+
+    connectionRef.current = connection;
+
+    return () => {
+      connection.stop();
+    };
+  }, [lobbyId]);
 
   useEffect(() => {
-    if (stopped) return
+    if (stopped) return;
     const t = setInterval(() => {
-      setTimeLeft(prev => prev + 1)
-    }, 1000)
-    return () => clearInterval(t)
-  }, [stopped])
+      setTimeLeft((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [stopped]);
   // Weighted randomizer to reduce duplicates
-  const generateRandomLetters = (count: number, currentLetters: Letter[] = [], isExtra: boolean = false) => {
-    const letters: Letter[] = []
-    
+  const generateRandomLetters = (
+    count: number,
+    currentLetters: Letter[] = [],
+    isExtra: boolean = false,
+  ) => {
+    const letters: Letter[] = [];
+
     for (let i = 0; i < count; i++) {
       // Calculate current letter frequencies in existing pool + what we just generated
-      const pool = [...currentLetters, ...letters].map(l => l.char)
-      const frequencies: Record<string, number> = {}
+      const pool = [...currentLetters, ...letters].map((l) => l.char);
+      const frequencies: Record<string, number> = {};
       for (const char of pool) {
-        frequencies[char] = (frequencies[char] || 0) + 1
+        frequencies[char] = (frequencies[char] || 0) + 1;
       }
 
       // Filter alphabet to avoid too many duplicates (max 2 of same)
-      let availableChars = ALPHABET.split('').filter(char => (frequencies[char] || 0) < 2)
-      
-      // If we filtered everything (unlikely), reset to full alphabet
-      if (availableChars.length === 0) availableChars = ALPHABET.split('')
+      let availableChars = ALPHABET.split("").filter(
+        (char) => (frequencies[char] || 0) < 2,
+      );
 
-      const randomChar = availableChars[Math.floor(Math.random() * availableChars.length)]
-      
+      // If we filtered everything (unlikely), reset to full alphabet
+      if (availableChars.length === 0) availableChars = ALPHABET.split("");
+
+      const randomChar =
+        availableChars[Math.floor(Math.random() * availableChars.length)];
+
       letters.push({
         id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
         char: randomChar,
         used: false,
-        isExtra
-      })
+        isExtra,
+      });
     }
-    return letters
-  }
+    return letters;
+  };
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:5024/api/health')
-        setBackendConnected(response.ok)
+        const response = await fetch("http://127.0.0.1:5024/api/health");
+        setBackendConnected(response.ok);
       } catch {
-        setBackendConnected(false)
+        setBackendConnected(false);
       }
-    }
-    
-    checkBackend()
-    const interval = setInterval(checkBackend, 5000)
-    return () => clearInterval(interval)
-  }, [])
+    };
+
+    checkBackend();
+    const interval = setInterval(checkBackend, 5000);
+    return () => clearInterval(interval);
+  }, []);
   useEffect(() => {
     const fetchPlayerCharacter = async () => {
-      if (!lobbyId) return
+      if (!lobbyId) return;
       try {
-        const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`)
+        const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
         if (res.ok) {
-          const data = await res.json()
-          const storedPlayerId = localStorage.getItem('wordmaster-player-id')
-          const player = data.players?.find((p: any) => p.id === storedPlayerId)
-            ?? data.players?.[0]
+          const data = await res.json();
+          const storedPlayerId = localStorage.getItem("wordmaster-player-id");
+          const player =
+            data.players?.find((p: any) => p.id === storedPlayerId) ??
+            data.players?.[0];
           if (player?.characterId) {
-            setCharacterId(player.characterId)
-            console.log('Character loaded:', player.characterId)
+            setCharacterId(player.characterId);
+            console.log("Character loaded:", player.characterId);
           }
         }
       } catch (err) {
-        console.error('Failed to fetch character:', err)
+        console.error("Failed to fetch character:", err);
       }
-    }
-    fetchPlayerCharacter()
-  }, [lobbyId])
+    };
+    fetchPlayerCharacter();
+  }, [lobbyId]);
 
   useEffect(() => {
     const fetchInitialLetters = async () => {
       try {
-        const url = lobbyId 
+        const url = lobbyId
           ? `http://127.0.0.1:5024/api/lobby/${lobbyId}`
-          : 'http://127.0.0.1:5024/api/game/letters'
-          
-        const response = await fetch(url)
+          : "http://127.0.0.1:5024/api/game/letters";
+
+        const response = await fetch(url);
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
           const letters: string[] = lobbyId ? data.letters : data;
-          setAllLetters(letters.map(char => ({
-            id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
-            char,
-            used: false,
-            isExtra: false
-          })))
+          setAllLetters(
+            letters.map((char) => ({
+              id:
+                Math.random().toString(36).substr(2, 9) +
+                Date.now().toString(36),
+              char,
+              used: false,
+              isExtra: false,
+            })),
+          );
         } else {
-          setAllLetters(generateRandomLetters(15))
+          setAllLetters(generateRandomLetters(15));
         }
       } catch {
-        setAllLetters(generateRandomLetters(15))
+        setAllLetters(generateRandomLetters(15));
       }
-    }
-    fetchInitialLetters()
-  }, [lobbyId])
+    };
+    fetchInitialLetters();
+  }, [lobbyId]);
 
   const addExtraLetters = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5024/api/game/letters?count=5')
+      const response = await fetch(
+        "http://127.0.0.1:5024/api/game/letters?count=5",
+      );
       if (response.ok) {
-        const letters: string[] = await response.json()
-        const newLetters = letters.map(char => ({
+        const letters: string[] = await response.json();
+        const newLetters = letters.map((char) => ({
           id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
           char,
           used: false,
-          isExtra: true
-        }))
-        setAllLetters(prev => [...prev, ...newLetters])
+          isExtra: true,
+        }));
+        setAllLetters((prev) => [...prev, ...newLetters]);
       }
     } catch {
-      setAllLetters(prev => [...prev, ...generateRandomLetters(5, prev, true)])
+      setAllLetters((prev) => [
+        ...prev,
+        ...generateRandomLetters(5, prev, true),
+      ]);
     }
-  }
+  };
   const calculateAbilityBonus = async (word: string): Promise<number> => {
-    if (!characterId) return 0
-    const secondsTaken = (Date.now() - roundStartTime) / 1000
+    if (!characterId) return 0;
+    const secondsTaken = (Date.now() - roundStartTime) / 1000;
     try {
-      const res = await fetch('http://127.0.0.1:5024/api/character/ability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId, word, secondsTaken })
-      })
+      const res = await fetch("http://127.0.0.1:5024/api/character/ability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ characterId, word, secondsTaken }),
+      });
       if (res.ok) {
-        const data = await res.json()
-        console.log(`Ability: ${characterId} | Word: ${word} | Seconds: ${secondsTaken.toFixed(1)} | Bonus: ${data.bonusPoints}`)
-        return data.bonusPoints
+        const data = await res.json();
+        console.log(
+          `Ability: ${characterId} | Word: ${word} | Seconds: ${secondsTaken.toFixed(1)} | Bonus: ${data.bonusPoints}`,
+        );
+        return data.bonusPoints;
       }
     } catch (err) {
-      console.error('Ability check failed:', err)
+      console.error("Ability check failed:", err);
     }
-    return 0
-  }
+    return 0;
+  };
   const updateUsedLetters = () => {
-    let combinedWord = ''
+    let combinedWord = "";
     for (const catId in categories) {
       if (!categories[catId].valid) {
-        combinedWord += categories[catId].word
+        combinedWord += categories[catId].word;
       }
     }
-    combinedWord = combinedWord.toUpperCase()
+    combinedWord = combinedWord.toUpperCase();
 
-    setAllLetters(prev => {
-      const nextLetters = prev.map(l => ({ ...l, used: false }))
+    setAllLetters((prev) => {
+      const nextLetters = prev.map((l) => ({ ...l, used: false }));
       for (const char of combinedWord) {
-        const letter = nextLetters.find(l => !l.used && l.char === char)
+        const letter = nextLetters.find((l) => !l.used && l.char === char);
         if (letter) {
-          letter.used = true
+          letter.used = true;
         }
       }
-      return nextLetters
-    })
-  }
+      return nextLetters;
+    });
+  };
   const checkWordWithLetters = (word: string, categoryId: string) => {
-    const wordUpper = word.toUpperCase()
-    
+    const wordUpper = word.toUpperCase();
+
     // Get pool of available letters (all minus those used by OTHER non-valid categories)
-    let otherUsedWord = ''
+    let otherUsedWord = "";
     for (const catId in categories) {
       if (catId !== categoryId && !categories[catId].valid) {
-        otherUsedWord += categories[catId].word
+        otherUsedWord += categories[catId].word;
       }
     }
-    otherUsedWord = otherUsedWord.toUpperCase()
+    otherUsedWord = otherUsedWord.toUpperCase();
 
-    const pool = allLetters.map(l => l.char)
+    const pool = allLetters.map((l) => l.char);
     // Remove other used letters from pool first
     for (const char of otherUsedWord) {
-      const index = pool.indexOf(char)
-      if (index !== -1) pool.splice(index, 1)
+      const index = pool.indexOf(char);
+      if (index !== -1) pool.splice(index, 1);
     }
 
     // Now check if current word can be formed
     for (const char of wordUpper) {
-      const index = pool.indexOf(char)
-      if (index === -1) return false
-      pool.splice(index, 1)
+      const index = pool.indexOf(char);
+      if (index === -1) return false;
+      pool.splice(index, 1);
     }
-    return true
-  }
+    return true;
+  };
 
   const validateWord = async (word: string, categoryId: string) => {
     if (word.length === 0) {
-      setCategories(prev => ({
+      setCategories((prev) => ({
         ...prev,
-        [categoryId]: { ...prev[categoryId], feedback: '', valid: false, word }
-      }))
-      return
+        [categoryId]: { ...prev[categoryId], feedback: "", valid: false, word },
+      }));
+      return;
     }
 
     if (word.length < 2) {
-      setCategories(prev => ({
+      setCategories((prev) => ({
         ...prev,
-        [categoryId]: { ...prev[categoryId], feedback: 'Too short', valid: false, word }
-      }))
-      return
+        [categoryId]: {
+          ...prev[categoryId],
+          feedback: "Too short",
+          valid: false,
+          word,
+        },
+      }));
+      return;
     }
 
     if (!checkWordWithLetters(word, categoryId)) {
-      setCategories(prev => ({
+      setCategories((prev) => ({
         ...prev,
-        [categoryId]: { ...prev[categoryId], valid: false, word }
-      }))
-      return
+        [categoryId]: { ...prev[categoryId], valid: false, word },
+      }));
+      return;
     }
 
     try {
       // Determine letters available for THIS validation
-      let otherUsedWord = ''
+      let otherUsedWord = "";
       for (const catId in categories) {
         if (catId !== categoryId && !categories[catId].valid) {
-          otherUsedWord += categories[catId].word
+          otherUsedWord += categories[catId].word;
         }
       }
-      otherUsedWord = otherUsedWord.toUpperCase()
-      
-      const availablePool = allLetters.map(l => l.char)
+      otherUsedWord = otherUsedWord.toUpperCase();
+
+      const availablePool = allLetters.map((l) => l.char);
       for (const char of otherUsedWord) {
-        const index = availablePool.indexOf(char)
-        if (index !== -1) availablePool.splice(index, 1)
+        const index = availablePool.indexOf(char);
+        if (index !== -1) availablePool.splice(index, 1);
       }
 
-      const url = 'http://127.0.0.1:5024/api/word/validate'
+      const url = "http://127.0.0.1:5024/api/word/validate";
       const response = await fetch(url, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        mode: 'cors',
-        body: JSON.stringify({ 
-          word: word.trim(), 
+        mode: "cors",
+        body: JSON.stringify({
+          word: word.trim(),
           category: categoryId,
-          letters: availablePool
-        })
-      })
-      
+          letters: availablePool,
+        }),
+      });
+
       if (!response.ok) {
-        setCategories(prev => ({
+        setCategories((prev) => ({
           ...prev,
-          [categoryId]: { ...prev[categoryId], feedback: 'Error fetching', valid: false, word }
-        }))
-        return
+          [categoryId]: {
+            ...prev[categoryId],
+            feedback: "Error fetching",
+            valid: false,
+            word,
+          },
+        }));
+        return;
       }
 
-      const data = await response.json()
+      const data = await response.json();
       if (data.isValid) {
-        // ── Character ability bonus ──────────────────
+
         // ── Character ability bonus ──────────────────
         const bonus = await calculateAbilityBonus(word)
         if (bonus > 0) {
           bonusRef.current += bonus    // ← store bonus in ref
           console.log(`+${bonus} bonus from ${characterId}! Total bonus: ${bonusRef.current}`)
+
         }
         // ────────────────────────────────────────────
         // Fetch replacement letters from backend
-        let newLetterChars: string[] = []
+        let newLetterChars: string[] = [];
         try {
-          const resp = await fetch(`http://127.0.0.1:5024/api/game/letters?count=${word.length}`)
-          if (resp.ok) newLetterChars = await resp.json()
-        } catch { /* fallback to local generation below */ }
+          const resp = await fetch(
+            `http://127.0.0.1:5024/api/game/letters?count=${word.length}`,
+          );
+          if (resp.ok) newLetterChars = await resp.json();
+        } catch {
+          /* fallback to local generation below */
+        }
 
         // Re-implementing letter replacement more robustly
-        setAllLetters(prev => {
-          const nextLetters = [...prev]
-          const wordUpper = word.toUpperCase()
-          const charsToReplace = wordUpper.split('')
-          
+        setAllLetters((prev) => {
+          const nextLetters = [...prev];
+          const wordUpper = word.toUpperCase();
+          const charsToReplace = wordUpper.split("");
+
           for (let i = 0; i < nextLetters.length; i++) {
-            const l = nextLetters[i]
+            const l = nextLetters[i];
             if (l.used) {
-              const charIdx = charsToReplace.indexOf(l.char)
+              const charIdx = charsToReplace.indexOf(l.char);
               if (charIdx !== -1) {
                 // Replace this letter
-                const newChar = newLetterChars[0] || generateRandomLetters(1, nextLetters.filter((_, idx) => idx !== i))[0].char
-                if (newLetterChars.length > 0) newLetterChars.shift()
-                
+                const newChar =
+                  newLetterChars[0] ||
+                  generateRandomLetters(
+                    1,
+                    nextLetters.filter((_, idx) => idx !== i),
+                  )[0].char;
+                if (newLetterChars.length > 0) newLetterChars.shift();
+
                 nextLetters[i] = {
                   ...l,
                   char: newChar,
                   used: false,
-                  id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
-                }
-                charsToReplace.splice(charIdx, 1)
+                  id:
+                    Math.random().toString(36).substr(2, 9) +
+                    Date.now().toString(36),
+                };
+                charsToReplace.splice(charIdx, 1);
               }
             }
           }
-          return nextLetters
-        })
+          return nextLetters;
+        });
 
-        setCategories(prev => ({
+        setCategories((prev) => ({
           ...prev,
-          [categoryId]: { ...prev[categoryId], feedback: '', valid: true, word }
-        }))
+          [categoryId]: {
+            ...prev[categoryId],
+            feedback: "",
+            valid: true,
+            word,
+          },
+        }));
       } else {
-        setCategories(prev => ({
+        setCategories((prev) => ({
           ...prev,
-          [categoryId]: { ...prev[categoryId], feedback: data.message || 'Word not found', valid: false, word }
-        }))
+          [categoryId]: {
+            ...prev[categoryId],
+            feedback: data.message || "Word not found",
+            valid: false,
+            word,
+          },
+        }));
       }
     } catch (error: any) {
-      setCategories(prev => ({
+      setCategories((prev) => ({
         ...prev,
-        [categoryId]: { ...prev[categoryId], feedback: 'Error fetching', valid: false, word }
-      }))
+        [categoryId]: {
+          ...prev[categoryId],
+          feedback: "Error fetching",
+          valid: false,
+          word,
+        },
+      }));
     }
-  }
-
+  };
 
   // Automatic focus shift
-  useEffect(() => {
-    const nextCat = CATEGORY_LIST.find(cat => !categories[cat.id].valid)
-    if (nextCat) {
-      inputRefs.current[nextCat.id]?.focus()
-    }
-  }, CATEGORY_LIST.map(cat => categories[cat.id].valid))
+  useEffect(
+    () => {
+      const nextCat = CATEGORY_LIST.find((cat) => !categories[cat.id].valid);
+      if (nextCat) {
+        inputRefs.current[nextCat.id]?.focus();
+      }
+    },
+    CATEGORY_LIST.map((cat) => categories[cat.id].valid),
+  );
 
   useEffect(() => {
-    updateUsedLetters()
-  }, [categories])
+    updateUsedLetters();
+  }, [categories]);
 
   useEffect(() => {
     const calculateScore = async () => {
-      const categorySubmissions = CATEGORY_LIST.map(cat => ({
+      const categorySubmissions = CATEGORY_LIST.map((cat) => ({
         id: cat.id,
         word: categories[cat.id].word,
-        isValid: categories[cat.id].valid
-      }))
+        isValid: categories[cat.id].valid,
+      }));
       try {
-        const response = await fetch('http://127.0.0.1:5024/api/game/calculate-score', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ categories: categorySubmissions })
-        })
+        const response = await fetch(
+          "http://127.0.0.1:5024/api/game/calculate-score",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ categories: categorySubmissions }),
+          },
+        );
         if (response.ok) {
+
           const data = await response.json()
           setScore(data.score + bonusRef.current)   // ← ADD bonus on top
+
         }
       } catch (error) {
-        console.error('Failed to calculate score:', error)
+        console.error("Failed to calculate score:", error);
       }
-    }
-    calculateScore()
-  }, [categories])
+    };
+    calculateScore();
+  }, [categories]);
 
-  const handleInputChange = (categoryId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-      if (frozen || stopped) return
-    const val = e.target.value.toUpperCase()
-    
+  const handleInputChange = (
+    categoryId: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (frozen || stopped) return;
+    const val = e.target.value.toUpperCase();
+
     // If it was valid, typing in it again (if allowed) should reset valid
     // But it's disabled when valid, so this only happens if we programmatically reset it.
     if (categories[categoryId].valid) {
-      setCategories(prev => ({
+      setCategories((prev) => ({
         ...prev,
-        [categoryId]: { ...prev[categoryId], valid: false }
-      }))
+        [categoryId]: { ...prev[categoryId], valid: false },
+      }));
     }
 
     if (val.length > categories[categoryId].word.length) {
-      const addedChar = val[val.length - 1]
-      
+      const addedChar = val[val.length - 1];
+
       // Check if we have this letter available (not used by other NON-VALID categories).
-      let otherUsedWord = ''
+      let otherUsedWord = "";
       for (const catId in categories) {
         if (catId !== categoryId && !categories[catId].valid) {
-          otherUsedWord += categories[catId].word
+          otherUsedWord += categories[catId].word;
         }
       }
-      otherUsedWord = otherUsedWord.toUpperCase()
-      
-      const pool = allLetters.map(l => l.char)
+      otherUsedWord = otherUsedWord.toUpperCase();
+
+      const pool = allLetters.map((l) => l.char);
       for (const char of otherUsedWord) {
-        const index = pool.indexOf(char)
-        if (index !== -1) pool.splice(index, 1)
+        const index = pool.indexOf(char);
+        if (index !== -1) pool.splice(index, 1);
       }
 
-      const charCountInWord = val.split('').filter(c => c === addedChar).length
-      const charCountInPool = pool.filter(c => c === addedChar).length
-      
-      if (charCountInPool < charCountInWord) return
+      const charCountInWord = val
+        .split("")
+        .filter((c) => c === addedChar).length;
+      const charCountInPool = pool.filter((c) => c === addedChar).length;
+
+      if (charCountInPool < charCountInWord) return;
     }
-    
-    validateWord(val, categoryId)
-  }
-const handleFreeze = () => {
-    setFrozen(true)
-    setShowFreeze(true)
-    setFreezeMsg('Freeze: Du kan inte skriva i 5 sekunder')
-    
+
+    validateWord(val, categoryId);
+  };
+  const handleFreeze = () => {
+    setFrozen(true);
+    setShowFreeze(true);
+    setFreezeMsg("Freeze: Du kan inte skriva i 5 sekunder");
+
     // Fade in
     setTimeout(() => {
-      setFreezeActive(true)
-    }, 50)
+      setFreezeActive(true);
+    }, 50);
 
     // Start fade out at 4.6s
     setTimeout(() => {
-      setFreezeActive(false)
-    }, 4600)
+      setFreezeActive(false);
+    }, 4600);
 
     // Remove from DOM at 5s
-    setTimeout(() => { 
-      setFrozen(false)
-      setFreezeMsg('')
-      setShowFreeze(false)
-    }, 5000)
-  }
- 
+    setTimeout(() => {
+      setFrozen(false);
+      setFreezeMsg("");
+      setShowFreeze(false);
+    }, 5000);
+  };
+
   const handleFreezePowerup = () => {
     if (lobbyId && connectionRef.current) {
-      connectionRef.current.invoke('UseFreeze', lobbyId)
+      connectionRef.current.invoke("UseFreeze", lobbyId);
     } else {
-      handleFreeze()
+      handleFreeze();
     }
-  }
- 
+  };
+
   const handleMix = () => {
-    setAllLetters(prev => {
-      const shuffled = [...prev]
+    setAllLetters((prev) => {
+      const shuffled = [...prev];
       for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
       }
-      return shuffled
-    })
-  }
- 
-  const allDone = CATEGORY_LIST.every(c => categories[c.id].valid)
+      return shuffled;
+    });
+  };
+
+  // The classic game
+  const handleFinishClassic = () => {
+    setStopped(true);
+  };
+
+  const allDone = CATEGORY_LIST.every((c) => categories[c.id].valid);
+
+  //Send all done to backend
+  useEffect(() => {
+    const notifyFinished = async () => {
+      if (allDone && !stopped) {
+        if (lobbyId && connectionRef.current) {
+          connectionRef.current
+            .invoke("FinishGame", lobbyId)
+            .catch((err) => console.error("SignalR Finish Error:", err));
+          const playerId = localStorage.getItem("wordmaster-player-id");
+          if (playerId) {
+            fetch(
+              `http://127.0.0.1:5024/api/lobby/${lobbyId}/player-finished/${playerId}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }, // أضف هذا
+                body: JSON.stringify({
+                  categoriesCompleted: true,
+                  score: score,
+                }),
+              },
+            ).catch((err) => console.error("API Finish Error:", err));
+          }
+        } else if (!lobbyId) {
+          setStopped(true);
+        }
+      }
+    };
+
+    notifyFinished();
+  }, [allDone, lobbyId, stopped]);
+
   return (
- <div className="gp-scene" data-testid="game-page">
+    <div className="gp-scene" data-testid="game-page">
       <div className="gp-bg" />
       <Stars />
  
-      <div className="gp-top-bar">
-        <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
-        <div className="gp-score" data-testid="score">POÄNG: {score}</div>
-        <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
-      </div>
+<div className="gp-top-bar">
+  <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
+  <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
+</div>
+
+<div className="gp-score" data-testid="score">
+  <span className="gp-score-emoji">💰</span> POÄNG: {score} <span className="gp-score-emoji">💰</span>
+</div>
+                {/* The classic game stopp button*/}
+        {!lobbyId && !stopped && (
+          <button
+            className="gp-btn gp-btn--finish"
+            onClick={() => setStopped(true)}
+            style={{
+              backgroundColor: "#d31f2e",
+              marginLeft: "15px",
+              padding: "8px 20px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              border: "none",
+              color: "white",
+              boxShadow: "0 4px 15px rgba(255, 71, 87, 0.3)",
+            }}
+          >
+            Avsluta Spel
+          </button>
     <div className="gp-powerups">
         <button className="gp-btn gp-btn--freeze" onClick={handleFreezePowerup} data-testid="btn-freeze">Freeze</button>
         <button className="gp-btn gp-btn--black" onClick={() => connectionRef.current?.invoke('UseInk', lobbyId)} data-testid="btn-black">Bläck</button>
         <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
       </div>
-     <div className="gp-content">
+      <div className="gp-content">
+      <div className="gp-left-spacer" />
+
         <div className="gp-categories" data-testid="categories">
-          {CATEGORY_LIST.map(cat => (
+          {CATEGORY_LIST.map((cat) => (
             <div className="gp-cat-row" key={cat.id}>
               <label className="gp-cat-label">{cat.label}:</label>
               <div className="gp-cat-input-wrap">
                 <input
                   type="text"
-                  ref={(el: HTMLInputElement | null) => { inputRefs.current[cat.id] = el }}
-                  className={`gp-cat-input ${categories[cat.id].valid ? 'gp-cat-input--valid' : ''}`}
+                  ref={(el: HTMLInputElement | null) => {
+                    inputRefs.current[cat.id] = el;
+                  }}
+                  className={`gp-cat-input ${categories[cat.id].valid ? "gp-cat-input--valid" : ""}`}
                   value={categories[cat.id].word}
-                  onChange={e => handleInputChange(cat.id, e)}
+                  onChange={(e) => handleInputChange(cat.id, e)}
                   disabled={categories[cat.id].valid || frozen || stopped}
                   data-testid={`input-${cat.id}`}
                 />
                 {categories[cat.id].feedback && (
-                  <span className="gp-feedback" data-testid={`feedback-${cat.id}`}>
+                  <span
+                    className="gp-feedback"
+                    data-testid={`feedback-${cat.id}`}
+                  >
                     {categories[cat.id].feedback}
                   </span>
                 )}
@@ -562,61 +727,68 @@ const handleFreeze = () => {
             </div>
           ))}
         </div>
-  <div className="gp-right">
+        <div className="gp-right">
           <div className="gp-letters" data-testid="letters">
-            {allLetters.map(letter => (
+            {allLetters.map((letter) => (
               <div
                 key={letter.id}
-                className={`gp-letter ${letter.isExtra ? 'gp-letter--extra' : ''} ${letter.used ? 'gp-letter--used' : ''}`}
+                className={`gp-letter ${letter.isExtra ? "gp-letter--extra" : ""} ${letter.used ? "gp-letter--used" : ""}`}
                 data-testid="letter-tile"
               >
                 {letter.char}
               </div>
             ))}
           </div>
-          <button
-            className={`gp-stop-btn ${allDone ? 'gp-stop-btn--ready' : ''}`}
-            onClick={() => setStopped(true)}
-            disabled={stopped}
-            data-testid="btn-stop"
-          >
-            Stopp
-          </button>
         </div>
       </div>
-    {showInk && (
+      {showInk && (
         <video
           src="/videos/Bläck.webm"
           autoPlay
           muted
-          className={`gp-overlay-video ${inkActive ? 'gp-overlay-video--visible' : ''}`}
+          className={`gp-overlay-video ${inkActive ? "gp-overlay-video--visible" : ""}`}
           onEnded={() => {
-            setInkActive(false)
-            setTimeout(() => setShowInk(false), 400)
+            setInkActive(false);
+            setTimeout(() => setShowInk(false), 400);
           }}
         />
       )}
 
-    {showFreeze && (
+      {showFreeze && (
         <video
           src="/videos/Freeze5Sec.webm"
           autoPlay
           muted
-          className={`gp-overlay-video ${freezeActive ? 'gp-overlay-video--visible' : ''}`}
+          className={`gp-overlay-video ${freezeActive ? "gp-overlay-video--visible" : ""}`}
         />
       )}
 
-    {stopped && (
+      {stopped && (
         <div className="gp-stopped-overlay" data-testid="stopped-overlay">
           <div className="gp-stopped-card">
             <h2>Stopp!</h2>
             <p>Din tid: {timeLeft} sekunder</p>
             <p>Din poäng: {score}</p>
+
+            {/* To go back */}
+            {!lobbyId && (
+              <button
+                className="gp-btn"
+                onClick={() => navigate("/")}
+                style={{
+                  marginTop: "20px",
+                  width: "100%",
+                  backgroundColor: "#205795",
+                }}
+              >
+                Tillbaka till menyn
+              </button>
+            )}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
  
 export default GamePage
