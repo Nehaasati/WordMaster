@@ -27,20 +27,25 @@ public class GameEngine
         _categories = categories;
     }
 
-    public Lobby CreateLobby()
+    public Lobby CreateLobby(Player host)
     {
         var lobbyId = Guid.NewGuid().ToString("N")[..6].ToUpper();
-        var inviteCode = Guid.NewGuid().ToString("N")[..12]; // 12-char longer string
-        
-        var lobby = new Lobby { 
-            Id = lobbyId, 
-            InviteCode = inviteCode, 
-            Letters = GenerateLetters() 
+        var inviteCode = Guid.NewGuid().ToString("N")[..12];
+
+        // The player who creates the lobby is automatically the host.
+        host.IsHost = true;
+
+        var lobby = new Lobby
+        {
+            Id = lobbyId,
+            InviteCode = inviteCode,
+            Letters = GenerateLetters(),
+            Players = new List<Player> { host }
         };
-        
+
         _lobbies[lobbyId] = lobby;
         _inviteCodesToId[inviteCode] = lobbyId;
-        
+
         return lobby;
     }
 
@@ -74,73 +79,42 @@ public class GameEngine
         return lobby.Players.All(p => p.IsReady);
     }
 
-    // Start the game by setting the lobby state to PlayingRound, initializing round number, and resetting player states as needed.
-    public bool StartGame(string lobbyId)
+    public bool StartGame(string lobbyId, string playerId)
     {
         var lobby = GetLobby(lobbyId);
-        if (lobby == null) return false;
-
-        if (!CanStartGame(lobbyId))
+        if (lobby == null)
             return false;
 
-        lobby.State = GameState.PlayingRound;
-        lobby.CurrentRound = 1;
-        lobby.RoundStartTime = DateTime.UtcNow;
+        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+        if (player == null)
+            return false;
 
-        foreach (var player in lobby.Players)
-        {
-            player.HasSubmitted = false;
-            player.Score = 0;
-        }
+        if (!player.IsHost)
+            return false;
+        if (lobby.Players.Count != 2)
+            return false;
+
+        if (!lobby.Players.All(p => p.IsReady))
+            return false;
+
+        lobby.GameStarted = true;
+        InitializeRounds(lobby);
 
         return true;
     }
 
-    // End the current round by setting the lobby state to RoundFinished.
-    public void EndRound(string lobbyId)
+    // OSKAR's new method in order to fix the conflict // fatima
+    public bool StartGame(string lobbyId)
     {
-        var lobby = GetLobby(lobbyId);
-        if (lobby == null) return;
-
-        lobby.State = GameState.RoundFinished;
-    }
-
-    // Start the next round by incrementing the round number, generating new letters, resetting player states, and setting the lobby state to PlayingRound again. If the max number of rounds has been reached, transition to GameFinished state instead.
-    public void StartNextRound(string lobbyId)
-    {
-        var lobby = GetLobby(lobbyId);
-        if (lobby == null) return;
-
-        if (lobby.CurrentRound >= lobby.MaxRounds)
-        {
-            lobby.State = GameState.GameFinished;
-            return;
-        }
-
-        lobby.CurrentRound++;
-
-        lobby.Letters = GenerateLetters();
-
-        lobby.RoundStartTime = DateTime.UtcNow;
-
-        foreach (var player in lobby.Players)
-        {
-            player.HasSubmitted = false;
-        }
-
-        lobby.State = GameState.PlayingRound;
-    }
-
-    // Check if the round time is over by comparing the current time with the round start time and the round duration. This can be called by the client to check if they should show a "Round Over" message or trigger the end of the round in case the timer runs out.
-    public bool IsRoundTimeOver(string lobbyId)
-    {
+        // Classic mode start (teammate’s logic)
         var lobby = GetLobby(lobbyId);
         if (lobby == null) return false;
 
-        return (DateTime.UtcNow - lobby.RoundStartTime)
-            .TotalSeconds >= lobby.RoundDurationSeconds;
+        // Classic mode does NOT require host or playerId
+        // It simply starts the game for solo mode
+        lobby.State = GameState.PlayingRound;
+        return true;
     }
-
 
     // Set a player as ready in the lobby. This can be called by the client when they click a "Ready" button.
     public void SetPlayerReady(string lobbyId, string playerId)
@@ -158,7 +132,7 @@ public class GameEngine
     {
         var random = new Random();
         var letters = new List<char>();
-        
+
         var weightedPool = new List<char>();
         foreach (var c in Alphabet)
         {
@@ -209,13 +183,17 @@ public class GameEngine
         return true;
     }
 
+    private void InitializeRounds(Lobby lobby)
+    {
+        lobby.State = GameState.PlayingRound;
+    }
+
     // Try to join a lobby by ID or invite code. Returns true if successful, false if lobby not found, full, or player already in lobby.
     public bool TryJoinLobby(string lobbyId, Player player, out string error)
     {
         error = string.Empty;
 
         var lobby = GetLobby(lobbyId);
-
         if (lobby is null)
         {
             error = "Lobby not found";
@@ -230,6 +208,16 @@ public class GameEngine
             return false;
         }
 
+        // If player with same name already exists, reuse existing player
+        var existing = lobby.Players.FirstOrDefault(p => p.Name == player.Name);
+        if (existing != null)
+        {
+            player.Id = existing.Id;
+            player.IsHost = existing.IsHost;
+            player.IsReady = existing.IsReady;
+            return true;
+        }
+
         // Max 2 players
         if (lobby.Players.Count >= 2)
         {
@@ -237,13 +225,7 @@ public class GameEngine
             return false;
         }
 
-        // Player already in lobby
-        if (lobby.Players.Any(p => p.Id == player.Id))
-        {
-            error = "Player already in lobby";
-            return false;
-        }
-
+        // Add new player
         lobby.Players.Add(player);
 
         // When the second player joins => move to ready phase
@@ -255,6 +237,34 @@ public class GameEngine
         return true;
     }
 
+    public bool PlayerFinished(string lobbyId, string playerId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null)
+            return false;
+
+        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+        if (player == null)
+            return false;
+        if (!player.CategoriesCompleted)
+            return false;
+        player.HasFinished = true;
+
+        // If one of the players is done => End the match
+        lobby.MatchEnded = true;
+        lobby.State = GameState.WaitingForReady;
+
+        // Reset players state
+        foreach (var p in lobby.Players)
+        {
+            p.IsReady = false;
+            p.HasFinished = false;
+            p.CategoriesCompleted = false;
+            p.HasSubmitted = false;
+        }
+
+        return true;
+    }
     public Player? AddBot(string lobbyId)
     {
         var lobby = GetLobby(lobbyId);
@@ -277,32 +287,6 @@ public class GameEngine
 
         return bot;
     }
-
-    // Method to handle player submitting their word for the round. This checks if the submission is valid and if both players have submitted, it ends the round.
-    public bool SubmitRound(string lobbyId, string playerId)
-    {
-        var lobby = GetLobby(lobbyId);
-        if (lobby == null) return false;
-
-        if (lobby.State != GameState.PlayingRound)
-            return false;
-
-        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
-        if (player == null) return false;
-
-        if (player.HasSubmitted)
-            return false;
-
-        player.HasSubmitted = true;
-
-        // If both players submitted → end round
-        if (lobby.Players.All(p => p.HasSubmitted))
-        {
-            EndRound(lobbyId);
-        }
-
-        return true;
-    }
 }
 
 public class Lobby
@@ -318,17 +302,11 @@ public class Lobby
     // Game state can be used to track the current phase of the game 
     public GameState State { get; set; } = GameState.WaitingForPlayers;
 
-    // Current round number, can be used to track how many rounds have been played and when to end the game based on MaxRounds
-    public int CurrentRound { get; set; } = 0;
+    // Indicates if the game has started
+    public bool GameStarted { get; set; }
 
-    // Max rounds can be used to determine when the game should end. Once CurrentRound reaches MaxRounds, we can transition to GameFinished state and show final scores.
-    public int MaxRounds { get; set; } = 5;
-
-    // Timestamp for when the current round started, can be used to implement round timers and show countdowns on the client side.
-    public DateTime RoundStartTime { get; set; }
-
-    // Duration of each round in seconds, can be used to determine when a round should end and transition to RoundFinished state.
-    public int RoundDurationSeconds { get; set; } = 60;
+    // Indicates if the match has ended
+    public bool MatchEnded { get; set; }
 }
 
 // Player class to represent a player in the lobby. This can be expanded with more properties as needed.
@@ -360,12 +338,11 @@ public class Player
     // Indicates if the player has submitted a word for the current round.
     public bool HasSubmitted { get; set; }
 
-    public bool IsBot { get; set; }
+    public bool CategoriesCompleted { get; internal set; }
 
-    // we can add more player-specific properties here later, like avatar, language preference, etc.
-    // public string PreferredLanguage { get; set; } = "sv, en, etc.";
-    // public string Language { get; set; } = "sv";
-    // public string AvatarColor { get; set; } = "#c300ff";
+    // Indicates if the player has finished the game.
+    public bool HasFinished { get; set; }
+    public bool IsBot { get; set; }
 }
 
 // Enum to represent the different states of the game. 
@@ -374,6 +351,5 @@ public enum GameState
     WaitingForPlayers,
     WaitingForReady,
     PlayingRound,
-    RoundFinished,
     GameFinished
 }
