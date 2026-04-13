@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+﻿import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
 import * as signalR from '@microsoft/signalr'
@@ -42,9 +42,9 @@ const Stars: React.FC = () => {
 }
 const CATEGORY_LIST: Category[] = [
   { id: 'Name',   label: 'Namn'      },
-  { id: 'Food',   label: 'Mat/Frukt' },
+  { id: 'Food',   label: 'Mat'       },
   { id: 'Job',    label: 'Jobb'      },
-  { id: 'Land',   label: 'Stad/Land' },
+  { id: 'Land',   label: 'Stad'      },
   { id: 'Colour', label: 'Färg'      },
   { id: 'Animal', label: 'Djur'      },
   { id: 'Object', label: 'Sak'       },
@@ -527,17 +527,21 @@ const handleFreeze = () => {
       <div className="gp-bg" />
       <Stars />
  
-      <div className="gp-top-bar">
-        <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
-        <div className="gp-score" data-testid="score">POÄNG: {score}</div>
-        <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
-      </div>
+<div className="gp-top-bar">
+  <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
+  <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
+</div>
+
+<div className="gp-score" data-testid="score">
+  <span className="gp-score-emoji">💰</span> POÄNG: {score} <span className="gp-score-emoji">💰</span>
+</div>
     <div className="gp-powerups">
         <button className="gp-btn gp-btn--freeze" onClick={handleFreezePowerup} data-testid="btn-freeze">Freeze</button>
         <button className="gp-btn gp-btn--black" onClick={() => connectionRef.current?.invoke('UseInk', lobbyId)} data-testid="btn-black">Bläck</button>
         <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
       </div>
-     <div className="gp-content">
+      <div className="gp-content">
+      <div className="gp-left-spacer" />
         <div className="gp-categories" data-testid="categories">
           {CATEGORY_LIST.map(cat => (
             <div className="gp-cat-row" key={cat.id}>
