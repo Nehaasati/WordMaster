@@ -5,3 +5,7 @@ export interface ShopItem {
   cost: number
   type: 'vowel' | 'letter' | 'powerup'
 }
+export interface BuyRequest {
+  itemId: string
+  cost: number
+}
