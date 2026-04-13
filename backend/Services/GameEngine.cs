@@ -254,15 +254,6 @@ public class GameEngine
         lobby.MatchEnded = true;
         lobby.State = GameState.WaitingForReady;
 
-        // Reset players state
-        foreach (var p in lobby.Players)
-        {
-            p.IsReady = false;
-            p.HasFinished = false;
-            p.CategoriesCompleted = false;
-            p.HasSubmitted = false;
-        }
-
         return true;
     }
 
