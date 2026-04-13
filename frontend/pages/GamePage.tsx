@@ -35,14 +35,14 @@ const CATEGORY_LIST: Category[] = [
   { id: 'Name',   label: 'Namn'      },
   { id: 'Food',   label: 'Mat'       },
   { id: 'Job',    label: 'Jobb'      },
-  { id: 'Land',   label: 'Stad'      },
+  { id: 'Land',   label: 'Land'      },
   { id: 'Colour', label: 'Färg'      },
   { id: 'Animal', label: 'Djur'      },
   { id: 'Object', label: 'Sak'       },
 ]
 const GamePage: React.FC = () => {
 
-  const { lobbyId } = useParams<{ lobbyId: string }>();
+  const { lobbyId } = useParams<{ lobbyId: string; }>();
   const navigate = useNavigate();
   const [allLetters, setAllLetters] = useState<Letter[]>([]);
   const [categories, setCategories] = useState<Record<string, CategoryData>>(
@@ -405,10 +405,10 @@ const GamePage: React.FC = () => {
       if (data.isValid) {
 
         // ── Character ability bonus ──────────────────
-        const bonus = await calculateAbilityBonus(word)
+        const bonus = await calculateAbilityBonus(word);
         if (bonus > 0) {
-          bonusRef.current += bonus    // ← store bonus in ref
-          console.log(`+${bonus} bonus from ${characterId}! Total bonus: ${bonusRef.current}`)
+          bonusRef.current += bonus;    // ← store bonus in ref
+          console.log(`+${bonus} bonus from ${characterId}! Total bonus: ${bonusRef.current}`);
 
         }
         // ────────────────────────────────────────────
@@ -513,6 +513,7 @@ const GamePage: React.FC = () => {
         word: categories[cat.id].word,
         isValid: categories[cat.id].valid,
       }));
+
       try {
         const response = await fetch(
           "http://127.0.0.1:5024/api/game/calculate-score",
@@ -522,16 +523,16 @@ const GamePage: React.FC = () => {
             body: JSON.stringify({ categories: categorySubmissions }),
           },
         );
+
         if (response.ok) {
-
-          const data = await response.json()
-          setScore(data.score + bonusRef.current)   // ← ADD bonus on top
-
+          const data = await response.json();
+          setScore(data.score + bonusRef.current);
         }
       } catch (error) {
         console.error("Failed to calculate score:", error);
       }
     };
+
     calculateScore();
   }, [categories]);
 
@@ -642,7 +643,7 @@ const GamePage: React.FC = () => {
               `http://127.0.0.1:5024/api/lobby/${lobbyId}/player-finished/${playerId}`,
               {
                 method: "POST",
-                headers: { "Content-Type": "application/json" }, // أضف هذا
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   categoriesCompleted: true,
                   score: score,
@@ -663,58 +664,94 @@ const GamePage: React.FC = () => {
     <div className="gp-scene" data-testid="game-page">
       <div className="gp-bg" />
       <Stars />
- 
-<div className="gp-top-bar">
-  <div className="gp-freeze-msg" data-testid="freeze-msg">{freezeMsg}</div>
-  <div className="gp-timer" data-testid="timer">TID: {timeLeft} sekunder</div>
-</div>
 
-<div className="gp-score" data-testid="score">
-  <span className="gp-score-emoji">💰</span> POÄNG: {score} <span className="gp-score-emoji">💰</span>
-</div>
-                {/* The classic game stopp button*/}
-        {!lobbyId && !stopped && (
-          <button
-            className="gp-btn gp-btn--finish"
-            onClick={() => setStopped(true)}
-            style={{
-              backgroundColor: "#d31f2e",
-              marginLeft: "15px",
-              padding: "8px 20px",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              border: "none",
-              color: "white",
-              boxShadow: "0 4px 15px rgba(255, 71, 87, 0.3)",
-            }}
-          >
-            Avsluta Spel
-          </button>
-    <div className="gp-powerups">
-        <button className="gp-btn gp-btn--freeze" onClick={handleFreezePowerup} data-testid="btn-freeze">Freeze</button>
-        <button className="gp-btn gp-btn--black" onClick={() => connectionRef.current?.invoke('UseInk', lobbyId)} data-testid="btn-black">Bläck</button>
-        <button className="gp-btn gp-btn--mix" onClick={handleMix} data-testid="btn-mix">Mix</button>
+      {/* Top bar */}
+      <div className="gp-top-bar">
+        <div className="gp-freeze-msg" data-testid="freeze-msg">
+          {freezeMsg}
+        </div>
+        <div className="gp-timer" data-testid="timer">
+          TID: {timeLeft} sekunder
+        </div>
       </div>
-      <div className="gp-content">
-      <div className="gp-left-spacer" />
 
+      {/* Score */}
+      <div className="gp-score" data-testid="score">
+        <span className="gp-score-emoji">💰</span>
+        POÄNG: {score}
+        <span className="gp-score-emoji">💰</span>
+      </div>
+
+      {/* Classic game stop button */}
+      {!lobbyId && !stopped && (
+        <button
+          className="gp-btn gp-btn--finish"
+          onClick={() => setStopped(true)}
+          style={{
+            backgroundColor: "#d31f2e",
+            marginLeft: "15px",
+            padding: "8px 20px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold",
+            border: "none",
+            color: "white",
+            boxShadow: "0 4px 15px rgba(255, 71, 87, 0.3)",
+          }}
+        >
+          Avsluta Spel
+        </button>
+      )}
+
+      {/* Powerups */}
+      <div className="gp-powerups">
+        <button
+          className="gp-btn gp-btn--freeze"
+          onClick={handleFreezePowerup}
+          data-testid="btn-freeze"
+        >
+          Freeze
+        </button>
+
+        <button
+          className="gp-btn gp-btn--black"
+          onClick={() => connectionRef.current?.invoke("UseInk", lobbyId)}
+          data-testid="btn-black"
+        >
+          Bläck
+        </button>
+
+        <button
+          className="gp-btn gp-btn--mix"
+          onClick={handleMix}
+          data-testid="btn-mix"
+        >
+          Mix
+        </button>
+      </div>
+
+      {/* Main content */}
+      <div className="gp-content">
+        <div className="gp-left-spacer" />
+
+        {/* Categories */}
         <div className="gp-categories" data-testid="categories">
           {CATEGORY_LIST.map((cat) => (
             <div className="gp-cat-row" key={cat.id}>
               <label className="gp-cat-label">{cat.label}:</label>
+
               <div className="gp-cat-input-wrap">
                 <input
                   type="text"
-                  ref={(el: HTMLInputElement | null) => {
-                    inputRefs.current[cat.id] = el;
-                  }}
-                  className={`gp-cat-input ${categories[cat.id].valid ? "gp-cat-input--valid" : ""}`}
+                  ref={(el) => (inputRefs.current[cat.id] = el)}
+                  className={`gp-cat-input ${categories[cat.id].valid ? "gp-cat-input--valid" : ""
+                    }`}
                   value={categories[cat.id].word}
                   onChange={(e) => handleInputChange(cat.id, e)}
                   disabled={categories[cat.id].valid || frozen || stopped}
                   data-testid={`input-${cat.id}`}
                 />
+
                 {categories[cat.id].feedback && (
                   <span
                     className="gp-feedback"
@@ -727,12 +764,15 @@ const GamePage: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Letters */}
         <div className="gp-right">
           <div className="gp-letters" data-testid="letters">
             {allLetters.map((letter) => (
               <div
                 key={letter.id}
-                className={`gp-letter ${letter.isExtra ? "gp-letter--extra" : ""} ${letter.used ? "gp-letter--used" : ""}`}
+                className={`gp-letter ${letter.isExtra ? "gp-letter--extra" : ""
+                  } ${letter.used ? "gp-letter--used" : ""}`}
                 data-testid="letter-tile"
               >
                 {letter.char}
@@ -741,12 +781,15 @@ const GamePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Ink animation */}
       {showInk && (
         <video
           src="/videos/Bläck.webm"
           autoPlay
           muted
-          className={`gp-overlay-video ${inkActive ? "gp-overlay-video--visible" : ""}`}
+          className={`gp-overlay-video ${inkActive ? "gp-overlay-video--visible" : ""
+            }`}
           onEnded={() => {
             setInkActive(false);
             setTimeout(() => setShowInk(false), 400);
@@ -754,15 +797,18 @@ const GamePage: React.FC = () => {
         />
       )}
 
+      {/* Freeze animation */}
       {showFreeze && (
         <video
           src="/videos/Freeze5Sec.webm"
           autoPlay
           muted
-          className={`gp-overlay-video ${freezeActive ? "gp-overlay-video--visible" : ""}`}
+          className={`gp-overlay-video ${freezeActive ? "gp-overlay-video--visible" : ""
+            }`}
         />
       )}
 
+      {/* Stopped overlay */}
       {stopped && (
         <div className="gp-stopped-overlay" data-testid="stopped-overlay">
           <div className="gp-stopped-card">
@@ -770,7 +816,6 @@ const GamePage: React.FC = () => {
             <p>Din tid: {timeLeft} sekunder</p>
             <p>Din poäng: {score}</p>
 
-            {/* To go back */}
             {!lobbyId && (
               <button
                 className="gp-btn"
