@@ -70,6 +70,10 @@ const GamePage: React.FC = () => {
   const [freezeActive, setFreezeActive] = useState(false);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [toast, setToast] = useState<string>("");
+  const [isHost, setIsHost] = useState(
+    localStorage.getItem("isHost") === "true",
+  );
 
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
@@ -118,14 +122,24 @@ useEffect(() => {
     // PLAYER LEFT
     connection.on("PlayerLeft", (playerId: string) => {
       console.log("Player left:", playerId);
+
+      const myId = localStorage.getItem("wordmaster-player-id");
+
+      if (playerId !== myId) {
+        setToast("En spelare lämnade lobbyn");
+        setTimeout(() => setToast(""), 3000);
+      }
     });
 
     // HOST CHANGED
     connection.on("HostChanged", (newHostId: string) => {
       const myId = localStorage.getItem("wordmaster-player-id");
+
       if (myId === newHostId) {
         localStorage.setItem("isHost", "true");
-        console.log("You are now the host");
+        setIsHost(true);
+      } else {
+        setIsHost(false);
       }
     });
 
@@ -698,13 +712,36 @@ useEffect(() => {
     });
   };
 
+  // To leave the lobby
+  const handleLeave = async () => {
+    const playerId = localStorage.getItem("wordmaster-player-id");
+
+    if (!lobbyId || !playerId) return;
+
+    await fetch(
+      `http://127.0.0.1:5024/api/lobby/${lobbyId}/leave/${playerId}`,
+      { method: "POST" },
+    );
+
+    navigate("/");
+  };
+
   return (
     <div className="gp-scene" data-testid="game-page">
       <div className="gp-bg" />
       <Stars />
+      {toast && <div className="gp-toast">{toast}</div>}
 
       {/* Top bar */}
       <div className="gp-top-bar">
+        {isHost && <div className="gp-host">Värden</div>}
+
+        {/* Leave the lobby */}
+        <button className='gp-leave'
+          onClick={handleLeave}
+        >
+          Leave
+        </button>
         <div className="gp-freeze-msg" data-testid="freeze-msg">
           {freezeMsg}
         </div>
@@ -725,17 +762,6 @@ useEffect(() => {
         <button
           className="gp-btn gp-btn--finish"
           onClick={() => setStopped(true)}
-          style={{
-            backgroundColor: "#d31f2e",
-            marginLeft: "15px",
-            padding: "8px 20px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            border: "none",
-            color: "white",
-            boxShadow: "0 4px 15px rgba(255, 71, 87, 0.3)",
-          }}
         >
           Avsluta Spel
         </button>
@@ -878,11 +904,6 @@ useEffect(() => {
               <button
                 className="gp-btn"
                 onClick={() => navigate("/")}
-                style={{
-                  marginTop: "20px",
-                  width: "100%",
-                  backgroundColor: "#205795",
-                }}
               >
                 Tillbaka till menyn
               </button>
