@@ -15,7 +15,7 @@ function App() {
       <Route path="/game/:lobbyId" element={<GamePage />} />
       <Route path="/classic-game" element={<ClassicGamePage />} />
     </Routes>
-  )
+  );
 }
-export default App
+export default App;
 

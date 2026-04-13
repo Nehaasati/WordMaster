@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "dabb9c4f-7d9c-4bf7-8b75-a06121045776",
+    "_postman_id": "91055189-b25a-4c19-a3a6-0c5d0c2ca63e",
     "name": "WordMasterApi",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "50588661"
@@ -9,7 +9,7 @@
     {
       "name": "Characters_Api",
       "item": [
-         {
+        {
           "name": "ugglanTest",
           "event": [
             {
@@ -298,8 +298,8 @@
         }
       ]
     },
-        {
-      "name": "LobbyApiAndRounds",
+    {
+      "name": "LobbyApi",
       "item": [
         {
           "name": "Create Lobby",
@@ -308,98 +308,23 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status is 200\", () => {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));\r",
                   "const json = pm.response.json();\r",
-                  "\r",
                   "pm.collectionVariables.set(\"lobbyId\", json.lobbyId);\r",
                   "pm.collectionVariables.set(\"inviteCode\", json.inviteCode);\r",
-                  "\r",
-                  "pm.test(\"Lobby ID and Invite Code exist\", () => {\r",
-                  "    pm.expect(json.lobbyId).to.be.a(\"string\");\r",
-                  "    pm.expect(json.inviteCode).to.be.a(\"string\");\r",
-                  "});"
+                  "pm.collectionVariables.set(\"hostId\", json.playerId);\r",
+                  "pm.test(\"Lobby ID exists\", () => pm.expect(json.lobbyId).to.be.a(\"string\"));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
                 "requests": {}
               }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/lobby",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "lobby"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Lobby",
-          "event": [
+            },
             {
-              "listen": "test",
+              "listen": "prerequest",
               "script": {
                 "exec": [
-                  "pm.test(\"Status is 200\", () => {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "const json = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Lobby contains letters\", () => {\r",
-                  "    pm.expect(json.letters.length).to.be.above(0);\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/lobby/{{lobbyId}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "lobby",
-                "{{lobbyId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "JoinPlayer1",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 200\", () => {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "const json = pm.response.json();\r",
-                  "\r",
-                  "pm.collectionVariables.set(\"player1Id\", json.player.id);\r",
-                  "\r",
-                  "pm.test(\"Player 1 joined\", () => {\r",
-                  "    pm.expect(json.player.name).to.eql(\"Fatima\");\r",
-                  "});"
+                  ""
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -420,28 +345,71 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/lobby/{{lobbyId}}/join",
+              "raw": "{{base_url}}/lobby",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "lobby",
-                "{{lobbyId}}",
-                "join"
+                "lobby"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "JoinPlayer2",
+          "name": "Get Lobby",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Join lobby guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));\r",
                   "const json = pm.response.json();\r",
-                  "pm.collectionVariables.set(\"player2Id\", json.player.id);"
+                  "pm.collectionVariables.set(\"guestId\", json.player.id);\r",
+                  "pm.test(\"Guest ID exists\", () => pm.expect(json.player.id).to.be.a(\"string\"));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -470,54 +438,6 @@
                 "lobby",
                 "{{lobbyId}}",
                 "join"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Can't start the game with one player or when not both player are ready",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Cannot start with only one player\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Correct error returned\", function () {\r",
-                  "    const json = pm.response.json();\r",
-                  "    pm.expect(json.error).to.include(\"players\");\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "lobby",
-                "{{lobbyId}}",
-                "start"
               ]
             }
           },
@@ -578,13 +498,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 404\", function () {\r",
-                  "    pm.response.to.have.status(404);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Error message returned\", function () {\r",
-                  "    const json = pm.response.json();\r",
-                  "    pm.expect(json).to.have.property(\"error\");\r",
+                  "pm.test(\"Status code is 400\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -620,15 +535,13 @@
           "response": []
         },
         {
-          "name": "Ready Player1",
+          "name": "Ready host",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Player 1 ready\", () => {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});"
+                  "pm.test(\"Host ready OK\", () => pm.response.to.have.status(200));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -640,7 +553,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{player1Id}}",
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{hostId}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -648,70 +561,20 @@
                 "lobby",
                 "{{lobbyId}}",
                 "ready",
-                "{{player1Id}}"
+                "{{hostId}}"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Can't start the game with one player or when not both player are ready Copy",
+          "name": "Ready guest",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Cannot start with only one player\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Correct error returned\", function () {\r",
-                  "    const json = pm.response.json();\r",
-                  "    pm.expect(json.error).to.include(\"players\");\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "lobby",
-                "{{lobbyId}}",
-                "start"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Ready Player2",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Player 2 ready\", () => {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});"
+                  "pm.test(\"Guest ready OK\", () => pm.response.to.have.status(200));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -723,7 +586,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{player2Id}}",
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{guestId}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -731,27 +594,21 @@
                 "lobby",
                 "{{lobbyId}}",
                 "ready",
-                "{{player2Id}}"
+                "{{guestId}}"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Can't start the game with one player or when not both player are ready Copy 2",
+          "name": "Start Game (Guest - Should Fail)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Cannot start with only one player\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Correct error returned\", function () {\r",
-                  "    const json = pm.response.json();\r",
-                  "    pm.expect(json.error).to.include(\"players\");\r",
-                  "});"
+                  "pm.test(\"Guest cannot start\", () => pm.response.to.have.status(400));\r",
+                  "pm.test(\"Correct error message\", () => pm.expect(pm.response.text()).to.include(\"Only host can start the game\"));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -772,29 +629,41 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start/{{guestId}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "lobby",
                 "{{lobbyId}}",
-                "start"
+                "start",
+                "{{guestId}}"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Start Play",
+          "name": "Start Game (Host - Should Pass)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Game started\", () => {\r",
-                  "    pm.response.to.have.status(200);\r",
+                  "pm.test(\"Host can start the game\", function () {\r",
+                  "    pm.expect(pm.response.code).to.eql(200);\r",
                   "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -804,29 +673,61 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-Player-Id",
+                "value": "{{hostId}}",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{base_url}}/lobby/{{lobbyId}}/start",
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start/{{hostId}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "lobby",
                 "{{lobbyId}}",
-                "start"
+                "start",
+                "{{hostId}}"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Submit-round player1",
+          "name": "Finish Host",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Host finished OK\", () => pm.response.to.have.status(200));\r",
+                  "pm.test(\"Match ended\", () => pm.expect(pm.response.json().matchEnded).to.eql(true));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "",
+              "raw": "{ \"categoriesCompleted\": true }",
               "options": {
                 "raw": {
                   "language": "json"
@@ -834,28 +735,53 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/game/submit/{{lobbyId}}/{{player1Id}}",
+              "raw": "{{base_url}}/game/finish/{{lobbyId}}/{{hostId}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "game",
-                "submit",
+                "finish",
                 "{{lobbyId}}",
-                "{{player1Id}}"
+                "{{hostId}}"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Submit-round player2",
+          "name": "Finish Guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Guest finished OK\", () => pm.response.to.have.status(200));\r",
+                  "pm.test(\"Match ended\", () => pm.expect(pm.response.json().matchEnded).to.eql(true));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "",
+              "raw": "{ \"categoriesCompleted\": true }",
               "options": {
                 "raw": {
                   "language": "json"
@@ -863,217 +789,15 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/game/submit/{{lobbyId}}/{{player2Id}}",
+              "raw": "{{base_url}}/game/finish/{{lobbyId}}/{{guestId}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "game",
-                "submit",
+                "finish",
                 "{{lobbyId}}",
-                "{{player2Id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Round-Status",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/game/round-status/{{lobbyId}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "game",
-                "round-status",
-                "{{lobbyId}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Validate-Words",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status is 200\", () => {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "const json = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Word should be valid\", () => {\r",
-                  "    pm.expect(json.isValid).to.be.true;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Message should indicate success\", () => {\r",
-                  "    pm.expect(json.message).to.include(\"found\");\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"word\": \"KATT\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"K\",\"A\",\"T\",\"T\"]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/word/validate",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "word",
-                "validate"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Letters -onTheRound",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "const letters = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Response is an array\", function () {\r",
-                  "    pm.expect(Array.isArray(letters)).to.be.true;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Array length is 15\", function () {\r",
-                  "    pm.expect(letters.length).to.eql(15);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"All items are strings\", function () {\r",
-                  "    letters.forEach(letter => {\r",
-                  "        pm.expect(letter).to.be.a(\"string\");\r",
-                  "    });\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"word\": \"CAT\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"C\",\"A\",\"T\"]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/game/letters?count=15",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "game",
-                "letters"
-              ],
-              "query": [
-                {
-                  "key": "count",
-                  "value": "15"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Health-Check",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response body is OK\", function () {\r",
-                  "    pm.expect(pm.response.text()).to.eql(\"OK\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response time is less than 500ms\", function () {\r",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);\r",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n  \"word\": \"CAT\",\r\n  \"category\": \"Animal\",\r\n  \"letters\": [\"C\",\"A\",\"T\"]\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{base_url}}/health",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "health"
+                "{{guestId}}"
               ]
             }
           },
@@ -1265,16 +989,9 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response body is OK\", function () {\r",
-                  "    pm.expect(pm.response.text()).to.eql(\"OK\");\r",
-                  "});\r",
-                  "\r",
-                  "pm.test(\"Response time is less than 500ms\", function () {\r",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+                  "pm.test(\"Response is OK\", function () {\r",
+                  "    const response = pm.response.text().replace(/\"/g, '');\r",
+                  "    pm.expect(response).to.eql(\"OK\");\r",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1385,6 +1102,14 @@
     },
     {
       "key": "player2Id",
+      "value": ""
+    },
+    {
+      "key": "hostId",
+      "value": ""
+    },
+    {
+      "key": "guestId",
       "value": ""
     }
   ]
