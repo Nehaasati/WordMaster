@@ -265,6 +265,33 @@ public class GameEngine
 
         return true;
     }
+
+    // A method to allow players to start a new round on the same lobby
+    public bool ResetLobbyForNewRound(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return false;
+
+        // Reset game state
+        lobby.State = GameState.WaitingForReady;
+        lobby.GameStarted = false;
+        lobby.MatchEnded = false;
+
+        // Generate new letters
+        lobby.Letters = GenerateLetters();
+
+        // Reset players
+        foreach (var p in lobby.Players)
+        {
+            p.IsReady = false;
+            p.HasFinished = false;
+            p.CategoriesCompleted = false;
+            p.HasSubmitted = false;
+        }
+
+        return true;
+    }
+
     public Player? AddBot(string lobbyId)
     {
         var lobby = GetLobby(lobbyId);
