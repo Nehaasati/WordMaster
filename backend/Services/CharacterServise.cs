@@ -47,7 +47,7 @@ public class CharacterService
             {
                 Type             = AbilityType.ShortWordBonus,
                 BonusPoints      = 1,
-                ThresholdLength  = 4,        // word must be SHORTER than 3 letters
+                ThresholdLength  = 4,        // word must be SHORTER than 4 letters
                 EffectDescription = "+1 bonus point for words shorter than 4 letters"
             }
         },
