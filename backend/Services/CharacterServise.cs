@@ -34,8 +34,8 @@ public class CharacterService
             {
                 Type              = AbilityType.FastAnswerBonus,
                 BonusPoints       = 3,
-                ThresholdSeconds  = 10,      // word must be submitted within 10 seconds
-                EffectDescription = "+3 bonus points for words submitted within 10 seconds"
+                ThresholdSeconds  = 60,      // word must be submitted within 60 seconds
+                EffectDescription = "+3 bonus points for words submitted within 60 seconds"
             }
         },
         new Character

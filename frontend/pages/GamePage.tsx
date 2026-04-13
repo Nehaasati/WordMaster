@@ -41,6 +41,7 @@ const CATEGORY_LIST: Category[] = [
   { id: 'Object', label: 'Sak'       },
 ]
 const GamePage: React.FC = () => {
+
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
   const [allLetters, setAllLetters] = useState<Letter[]>([]);
@@ -73,6 +74,7 @@ const GamePage: React.FC = () => {
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
   // SignalR
+
 
   useEffect(() => {
     if (!lobbyId) return;
@@ -401,11 +403,13 @@ const GamePage: React.FC = () => {
 
       const data = await response.json();
       if (data.isValid) {
+
         // ── Character ability bonus ──────────────────
-        const bonus = await calculateAbilityBonus(word);
+        const bonus = await calculateAbilityBonus(word)
         if (bonus > 0) {
-          setScore((prev) => prev + bonus);
-          console.log(`+${bonus} bonus from ${characterId}!`);
+          bonusRef.current += bonus    // ← store bonus in ref
+          console.log(`+${bonus} bonus from ${characterId}! Total bonus: ${bonusRef.current}`)
+
         }
         // ────────────────────────────────────────────
         // Fetch replacement letters from backend
@@ -519,8 +523,10 @@ const GamePage: React.FC = () => {
           },
         );
         if (response.ok) {
-          const data = await response.json();
-          setScore(data.score);
+
+          const data = await response.json()
+          setScore(data.score + bonusRef.current)   // ← ADD bonus on top
+
         }
       } catch (error) {
         console.error("Failed to calculate score:", error);
