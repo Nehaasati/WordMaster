@@ -63,6 +63,11 @@ public class LobbyHub : Hub
 
     Console.WriteLine($"Lobby {lobbyId} has finished by a player.");
   }
+  public async Task SubmitWord(string lobbyId, string playerId, string category, string word)
+  {
+      await Clients.Group(lobbyId).SendAsync("WordSubmitted", playerId, category, word.Trim().ToUpperInvariant());
+      Console.WriteLine($"Lobby {lobbyId}: Player {playerId} submitted '{word}' in '{category}'");
+  }
 
   // A signalR to manage restart the game/ new round
   public async Task LobbyReset(string lobbyId)

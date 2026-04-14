@@ -70,6 +70,10 @@ const GamePage: React.FC = () => {
   const [freezeActive, setFreezeActive] = useState(false);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const bonusRef = useRef<number>(0);
+  const myWordsRef = useRef<Record<string, string>>({});
+  const opponentWordsRef = useRef<Record<string, Set<string>>>({});
+  const [categoryPoints, setCategoryPoints] = useState<Record<string, number>>({});
   const [toast, setToast] = useState<string>("");
   const [isHost, setIsHost] = useState(
     localStorage.getItem("isHost") === "true",
@@ -156,6 +160,25 @@ useEffect(() => {
         });
       }, 3000);
     });
+  });
+  connection.on("WordSubmitted", (senderId, category, word) => {
+      const myPlayerId = localStorage.getItem("wordmaster-player-id") ?? "";
+      const isMine = senderId === myPlayerId;
+      if (isMine) {
+          myWordsRef.current[category] = word;
+      } else {
+          if (!opponentWordsRef.current[category]) opponentWordsRef.current[category] = new Set();
+          opponentWordsRef.current[category].add(word);
+      }
+      setCategoryPoints((prev) => {
+          const updated = { ...prev };
+          for (const cat of Object.keys(myWordsRef.current)) {
+              const myWord = myWordsRef.current[cat];
+              const opponentSet = opponentWordsRef.current[cat] ?? new Set();
+              updated[cat] = opponentSet.has(myWord) ? 5 : 10;
+          }
+          return updated;
+      });
   });
 
   connectionRef.current = connection;
@@ -506,6 +529,15 @@ useEffect(() => {
             word,
           },
         }));
+        if (lobbyId && connectionRef.current) {
+          const myPlayerId = localStorage.getItem("wordmaster-player-id") ?? "";
+          const normalizedWord = word.trim().toUpperCase();
+          myWordsRef.current[categoryId] = normalizedWord;
+          const opponentSet = opponentWordsRef.current[categoryId] ?? new Set();
+          setCategoryPoints((prev) => ({ ...prev, [categoryId]: opponentSet.has(normalizedWord) ? 5 : 10 }));
+          connectionRef.current.invoke("SubmitWord", lobbyId, myPlayerId, categoryId, normalizedWord)
+              .catch((err) => console.error("SignalR SubmitWord error:", err));
+        }
       } else {
         setCategories((prev) => ({
           ...prev,
@@ -546,34 +578,16 @@ useEffect(() => {
   }, [categories]);
 
   useEffect(() => {
-    const calculateScore = async () => {
-      const categorySubmissions = CATEGORY_LIST.map((cat) => ({
-        id: cat.id,
-        word: categories[cat.id].word,
-        isValid: categories[cat.id].valid,
-      }));
-
-      try {
-        const response = await fetch(
-          "http://127.0.0.1:5024/api/game/calculate-score",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ categories: categorySubmissions }),
-          },
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setScore(data.score + bonusRef.current);
-        }
-      } catch (error) {
-        console.error("Failed to calculate score:", error);
-      }
-    };
-
-    calculateScore();
-  }, [categories]);
+    let total = 0;
+    for (const cat of CATEGORY_LIST) {
+        const catData = categories[cat.id];
+        if (!catData.valid) continue;
+        const points = categoryPoints[cat.id] ?? 10;
+        total += points;
+        if (catData.word.length > 7) total += 5;
+    }
+    setScore(total + bonusRef.current);
+    }, [categories, categoryPoints]);
 
   const handleInputChange = (
     categoryId: string,
@@ -816,6 +830,14 @@ useEffect(() => {
                   disabled={categories[cat.id].valid || frozen || stopped}
                   data-testid={`input-${cat.id}`}
                 />
+                {categories[cat.id].valid && lobbyId && (
+                  <span
+                      style={{ color: (categoryPoints[cat.id] ?? 10) === 5 ? "#ff8c00" : "#4caf50" }}
+                      title={(categoryPoints[cat.id] ?? 10) === 5 ? "Samma ord som motståndaren – 5p" : "Unikt ord – 10p"}
+                  >
+                      {(categoryPoints[cat.id] ?? 10) === 5 ? "5p" : "10p"}
+                  </span>
+                )}
 
                 {categories[cat.id].feedback && (
                   <span

@@ -259,6 +259,7 @@ export default function LobbyPage() {
         if (me) {
           setPlayerId(me.id);
           localStorage.setItem("playerId", me.id);
+          localStorage.setItem("wordmaster-player-id", me.id);
           setIsHost(me.isHost);
           setReady(me.isReady);
           localStorage.setItem("isHost", me.isHost.toString());
@@ -369,6 +370,7 @@ export default function LobbyPage() {
     // Use the returned playerId immediately
     const newId = data.player.id;
     setPlayerId(newId);
+    localStorage.setItem("wordmaster-player-id", newId);
     localStorage.setItem("playerId", newId);
 
     // Send ready immediately after join
