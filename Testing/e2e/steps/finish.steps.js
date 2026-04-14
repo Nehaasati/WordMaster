@@ -1,4 +1,5 @@
 // Finish steps
+// Finish steps
 import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import { GamePage } from '../pages/game.page.js';
@@ -29,6 +30,3 @@ Then('all players should have IsReady = false', async () => {
   expect(true).toBeTruthy();
 });
 
-Then('the lobby state should be {string}', async ({ page }, stateText) => {
-  await expect(page.getByText(stateText)).toBeVisible();
-});

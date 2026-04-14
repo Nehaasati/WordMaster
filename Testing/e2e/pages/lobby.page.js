@@ -1,6 +1,6 @@
 // lobby page
 
-class LobbyPage {
+export class LobbyPage {
   constructor(page) {
     this.page = page;
 
@@ -63,4 +63,3 @@ class LobbyPage {
   }
 }
 
-module.exports = { LobbyPage };

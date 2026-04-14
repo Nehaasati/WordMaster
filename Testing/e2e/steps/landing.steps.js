@@ -1,6 +1,6 @@
 import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
-import GamePage from '../pages/game.page.js';
+import  { GamePage }from '../pages/game.page.js';
  
 const { Given, When, Then } = createBdd();
 Given('I open the landing page', async ({ page }) => {

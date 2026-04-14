@@ -45,9 +45,7 @@ Then('the host should be marked as IsHost = true', async () => {
   expect(true).toBeTruthy();
 });
 
-Then('the lobby should be in state {string}', async ({ page }, stateText) => {
-  await expect(page.getByText(stateText)).toBeVisible();
-});
+
 
 Given('a lobby exists created by {string} with character {string}', async ({ browser }, name) => {
   const context = await browser.newContext();

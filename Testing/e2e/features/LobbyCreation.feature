@@ -1,4 +1,4 @@
-// Lobby creation Gherkin
+# Lobby creation Gherkin
 
 Feature: Create Lobby
   As a host player

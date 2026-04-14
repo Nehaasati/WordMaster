@@ -1,4 +1,4 @@
-// Restart the game on the same lobby
+# Restart the game on the same lobby
 
 Feature: Restart Game
   As the host

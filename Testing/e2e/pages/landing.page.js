@@ -1,6 +1,6 @@
 // landing page
 
-class LandingPage {
+export class LandingPage {
   constructor(page) {
     this.page = page;
     this.createLobbyBtn = 'text=SKAPA EN LOBBY';
@@ -30,4 +30,3 @@ class LandingPage {
   }
 }
 
-module.exports = { LandingPage };

@@ -1,4 +1,4 @@
-// If both players are ready
+#If both players are ready
 
 Feature: Player Ready State
   As two players
