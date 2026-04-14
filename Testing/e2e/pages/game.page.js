@@ -1,3 +1,4 @@
+// game page
 import { expect } from '@playwright/test';
  
 export default class GamePage {
