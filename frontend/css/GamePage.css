@@ -323,3 +323,41 @@
 .gp-overlay-video.gp-overlay-video--visible {
   opacity: 1;
 }
+
+.gp-btn gp-btn--finish{
+  background-color: #d31f2e;
+  margin-left: 15px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border: #1a0a2e;
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+}
+.gp-toast {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  z-index: 999;
+  opacity: 0.9;
+}
+.gp-host{
+  color: #ffd700;
+  font-weight: bold;
+ 
+}
+.gp-leave{
+  margin-left: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: #444;
+  color: white;
+  border: #1a0a2e;
+  cursor: pointer;
+}

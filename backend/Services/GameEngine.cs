@@ -254,7 +254,24 @@ public class GameEngine
         lobby.MatchEnded = true;
         lobby.State = GameState.WaitingForReady;
 
-        // Reset players state
+        return true;
+    }
+
+    // A method to allow players to start a new round on the same lobby
+    public bool ResetLobbyForNewRound(string lobbyId)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return false;
+
+        // Reset game state
+        lobby.State = GameState.WaitingForReady;
+        lobby.GameStarted = false;
+        lobby.MatchEnded = false;
+
+        // Generate new letters
+        lobby.Letters = GenerateLetters();
+
+        // Reset players
         foreach (var p in lobby.Players)
         {
             p.IsReady = false;
@@ -265,6 +282,52 @@ public class GameEngine
 
         return true;
     }
+
+    // A method to allow players go out of the lobby and allow a new join
+    public bool RemovePlayer(string lobbyId, string playerId, out bool hostChanged)
+    {
+        hostChanged = false;
+
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return false;
+
+        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+        if (player == null) return false;
+
+        bool wasHost = player.IsHost;
+
+        lobby.Players.Remove(player);
+
+        // If the lobby is empty => remove it
+        if (lobby.Players.Count == 0)
+        {
+            _lobbies.Remove(lobbyId);
+            return true;
+        }
+
+        // If the removed player is the host => reset the other player as a host
+        if (wasHost)
+        {
+            var newHost = lobby.Players.First();
+            newHost.IsHost = true;
+            hostChanged = true;
+        }
+
+        // Reset players state
+        if (lobby.Players.Count == 1)
+        {
+            lobby.State = GameState.WaitingForPlayers;
+            lobby.MatchEnded = false;
+            lobby.GameStarted = false;
+
+            var remaining = lobby.Players.First();
+            remaining.IsReady = false;
+        }
+
+        return true;
+    }
+
+
     public Player? AddBot(string lobbyId)
     {
         var lobby = GetLobby(lobbyId);
