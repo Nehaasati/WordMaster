@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "npm run test:ui",
-    "bdd:gen": "bddgen",
-    "test:ui": "npm run bdd:gen && playwright test --project=ui",
+    "bdd:gen": "npx bddgen",
+    "test:ui": "npm run bdd:gen; npx playwright test --ui",
     "test:headed": "npm run bdd:gen && playwright test --project=ui --headed",
     "test:debug": "npm run bdd:gen && playwright test --project=ui --debug",
     "report": "playwright show-report"

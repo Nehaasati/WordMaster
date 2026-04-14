@@ -2,9 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
 
 const uiTestDir = defineBddConfig({
-  features: 'e2e/features/**/*.feature',
-  steps: ['e2e/steps/**/*.js', 'e2e/pages/**/*.js'],
-  outputDir: '.features-gen/tests'
+  features: 'Testing/e2e/features/**/*.feature',
+  steps: ['Testing/e2e/steps/**/*.js'],
+  outputDir: 'Testing/e2e/.features-gen'
 });
 
 export default defineConfig({
