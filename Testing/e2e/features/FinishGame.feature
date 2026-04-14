@@ -1,0 +1,1 @@
+// When one of the player is done with all categories
