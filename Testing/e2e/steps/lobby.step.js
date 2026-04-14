@@ -1,0 +1,72 @@
+import { createBdd } from 'playwright-bdd';
+import { expect } from '@playwright/test';
+
+const apiUrl = process.env.API_URL || 'http://127.0.0.1:5024';
+const { Then } = createBdd();
+
+const stateMap = {
+  0: 'WaitingForPlayers',
+  1: 'WaitingForReady',
+  2: 'PlayingRound',
+  3: 'GameFinished',
+};
+
+const parseLobby = async (response) => {
+  if (!response.ok) return null;
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
+const fetchLobby = async (page, lobbyId) => {
+  const response = await page.request.get(`${apiUrl}/api/lobby/${lobbyId}`);
+  return await parseLobby(response);
+};
+
+const getActualState = (lobby) => {
+  if (!lobby) return null;
+  return typeof lobby.state === 'number'
+    ? stateMap[lobby.state]
+    : lobby.state;
+};
+
+Then('the lobby should be in state {string}', async ({ page }, stateText) => {
+  const segment = page.url().split('/').pop();
+  const lobbyId = segment || '';
+
+  let actualState = null;
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const lobby = await fetchLobby(page, lobbyId);
+    actualState = getActualState(lobby);
+    if (actualState === stateText) {
+      return;
+    }
+    await page.waitForTimeout(300);
+  }
+
+  throw new Error(
+    `Expected lobby state to be ${stateText} but got ${actualState ?? 'unavailable'}`,
+  );
+});
+
+Then('the lobby should contain {int} players', async ({ page }, count) => {
+  const segment = page.url().split('/').pop();
+  const lobbyId = segment || '';
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const lobby = await fetchLobby(page, lobbyId);
+    if (lobby?.players?.length === count) {
+      return;
+    }
+    await page.waitForTimeout(300);
+  }
+
+  const lobby = await fetchLobby(page, lobbyId);
+  const actualCount = lobby?.players?.length ?? 'unavailable';
+  throw new Error(
+    `Expected ${count} players in lobby ${lobbyId} but got ${actualCount}`,
+  );
+});

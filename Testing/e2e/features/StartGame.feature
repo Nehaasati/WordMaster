@@ -1,5 +1,3 @@
-# Only the host can start the game
-
 Feature: Start Game
   As the host
   I want to start the game when both players are ready
@@ -12,5 +10,5 @@ Feature: Start Game
   Scenario: Host starts the game
     When the host starts the game
     Then the game should start successfully
-    And the lobby state should be "PlayingRound"
+    Then the lobby should be in state "PlayingRound"
     And GameStarted should be true

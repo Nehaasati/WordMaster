@@ -4,28 +4,24 @@ export class LobbyPage {
   constructor(page) {
     this.page = page;
 
-    // Player info
     this.playersList = '.players-list .player-box';
 
-    // Character carousel
     this.prevBtn = '.ch-arrow >> nth=0';
     this.nextBtn = '.ch-arrow >> nth=1';
-    this.characterName = '.character-name';
-    this.characterDescription = '.character-description';
 
-    // Game mode
     this.standardModeBtn = 'text=Standard WordMaster';
     this.blitzModeBtn = 'text=Blitz WordMaster';
 
-    // Buttons
     this.addBotBtn = 'text=+ Lägg till motståndare';
     this.readyBtn = '.ready-btn';
     this.startBtn = 'text=Starta spelet';
-    this.copyLinkBtn = 'text=KOPIERA INBJUDNINGSLÄNK';
+    this.nameInput = '.wm-modal-input';
+    this.confirmBtn = '.wm-modal-btn--confirm';
   }
 
   async waitForLobby() {
-    await this.page.waitForSelector('text=VÄLJ EN KARAKTÄR');
+    await this.page.waitForURL('**/lobby/**', { timeout: 15000 });
+    await this.page.waitForSelector(this.readyBtn, { timeout: 15000 });
   }
 
   async getPlayers() {
@@ -34,32 +30,30 @@ export class LobbyPage {
     );
   }
 
-  async selectNextCharacter() {
-    await this.page.click(this.nextBtn);
+  async enterName(name) {
+    await this.page.fill(this.nameInput, name);
   }
 
-  async selectPrevCharacter() {
-    await this.page.click(this.prevBtn);
-  }
-
-  async chooseStandardMode() {
-    await this.page.click(this.standardModeBtn);
-  }
-
-  async chooseBlitzMode() {
-    await this.page.click(this.blitzModeBtn);
-  }
-
-  async addBot() {
-    await this.page.click(this.addBotBtn);
+  async confirm() {
+    await this.page.click(this.confirmBtn);
   }
 
   async clickReady() {
-    await this.page.click(this.readyBtn);
+    await Promise.all([
+      this.page.waitForResponse((response) =>
+        response.url().includes('/ready/') && response.status() === 200,
+      ),
+      this.page.click(this.readyBtn),
+    ]);
   }
 
   async clickStart() {
-    await this.page.click(this.startBtn);
+    await Promise.all([
+      this.page.waitForResponse((response) =>
+        response.url().includes('/start') && response.status() === 200,
+      ),
+      this.page.click(this.startBtn),
+    ]);
   }
 }
 

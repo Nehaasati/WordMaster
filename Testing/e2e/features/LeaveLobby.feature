@@ -1,4 +1,4 @@
-#One of the player has left the current lobby
+
 
 Feature: Leave Lobby
   As a player

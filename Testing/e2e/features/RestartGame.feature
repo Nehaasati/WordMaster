@@ -1,4 +1,4 @@
-# Restart the game on the same lobby
+
 
 Feature: Restart Game
   As the host
@@ -13,4 +13,4 @@ Feature: Restart Game
     When the host restarts the lobby
     Then the lobby should reset for a new round
     And all players should have IsReady = false
-    And the lobby state should be "WaitingForReady"
+    Then the lobby should be in state "WaitingForReady"

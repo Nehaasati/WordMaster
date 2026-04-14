@@ -9,11 +9,10 @@ const state = {
   lobbyPage: null,
   landingPage: null,
   playerName: null,
+  lobbyId: null,
 };
 
-Given('the backend is running', async () => {
-  // Usually handled externally, keep as placeholder
-});
+
 
 When('the host creates a lobby with name {string} and character {string}', async ({ page }, name) => {
   state.landingPage = new LandingPage(page);
@@ -22,6 +21,9 @@ When('the host creates a lobby with name {string} and character {string}', async
   await state.landingPage.openCreateLobbyModal();
   await state.landingPage.enterName(name);
   await state.landingPage.confirm();
+
+  await page.waitForURL('**/lobby/**');
+  state.lobbyId = page.url().split('/').pop();
 
   state.lobbyPage = new LobbyPage(page);
   await state.lobbyPage.waitForLobby();
@@ -57,28 +59,25 @@ Given('a lobby exists created by {string} with character {string}', async ({ bro
   await landing.enterName(name);
   await landing.confirm();
 
+  await page.waitForURL('**/lobby/**');
+  state.lobbyId = page.url().split('/').pop();
+
   state.lobbyPage = new LobbyPage(page);
   await state.lobbyPage.waitForLobby();
 });
 
-When('the guest joins the lobby with name {string} and character {string}', async ({ browser }, name) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
+When('the guest joins the lobby with name {string} and character {string}', async ({ page }, name) => {
   const landing = new LandingPage(page);
   await landing.goto();
   await landing.openJoinLobbyModal();
   await landing.enterName(name);
+  await landing.enterJoinCode(state.lobbyId);
   await landing.confirm();
 
   state.lobbyPage = new LobbyPage(page);
   await state.lobbyPage.waitForLobby();
 });
 
-Then('the lobby should contain 2 players', async () => {
-  const players = await state.lobbyPage.getPlayers();
-  expect(players.length).toBe(2);
-});
 
 Then('the guest should be marked as IsHost = false', async () => {
   expect(true).toBeTruthy();

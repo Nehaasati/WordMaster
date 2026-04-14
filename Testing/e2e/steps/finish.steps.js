@@ -1,32 +1,103 @@
-// Finish steps
-// Finish steps
 import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
-import { GamePage } from '../pages/game.page.js';
-import { LobbyPage } from '../pages/lobby.page.js';
 
+const apiUrl = process.env.API_URL || 'http://127.0.0.1:5024';
 const { Given, When, Then } = createBdd();
 
 const state = {
-  game: null,
-  lobby: null,
+  lobbyId: '',
+  players: [],
+  matchEnded: false,
 };
 
-Given('a match has ended in the lobby', async ({ page }) => {
-  state.game = new GamePage(page);
-  await state.game.waitForMatchEnd();
+const getPlayerByName = (name) =>
+  state.players.find((player) => player.name.toLowerCase() === name.toLowerCase());
+
+Given('a game is currently running with {int} players', async ({ page }, count) => {
+  const createResponse = await page.request.post(`${apiUrl}/api/lobby`, {
+    data: { name: 'Fatima' },
+  });
+  expect(createResponse.ok()).toBe(true);
+  const createData = await createResponse.json();
+
+  state.lobbyId = createData.lobbyId;
+  state.players = [
+    { id: createData.playerId, name: 'Fatima', isHost: true, isReady: false },
+  ];
+
+  for (let i = 1; i < count; i += 1) {
+    const playerName = `Player${i + 1}`;
+    const joinResponse = await page.request.post(
+      `${apiUrl}/api/lobby/${state.lobbyId}/join`,
+      {
+        data: {
+          name: playerName,
+          characterId: 'ugglan',
+          isHost: false,
+        },
+      },
+    );
+
+    expect(joinResponse.ok()).toBe(true);
+    const joinData = await joinResponse.json();
+    state.players.push({
+      id: joinData.player.id,
+      name: playerName,
+      isHost: false,
+      isReady: false,
+    });
+  }
+
+  for (const player of state.players) {
+    const readyResponse = await page.request.post(
+      `${apiUrl}/api/lobby/${state.lobbyId}/ready/${player.id}`,
+    );
+    expect(readyResponse.ok()).toBe(true);
+    player.isReady = true;
+  }
+
+  const startResponse = await page.request.post(`${apiUrl}/api/lobby/${state.lobbyId}/start`, {
+    data: { gameMode: 'standard' },
+  });
+  expect(startResponse.ok()).toBe(true);
 });
 
-When('the host restarts the lobby', async ({ page }) => {
-  state.lobby = new LobbyPage(page);
-  await state.lobby.clickStart(); // or restart button if exists
+When('player {string} submits CategoriesCompleted = true', async ({ page }, playerName) => {
+  const player = getPlayerByName(playerName);
+  expect(player).toBeDefined();
+
+  const response = await page.request.post(
+    `${apiUrl}/api/lobby/${state.lobbyId}/player-finished/${player.id}`,
+    {
+      data: { categoriesCompleted: true },
+    },
+  );
+  expect(response.ok()).toBe(true);
+
+  const responseData = await response.json();
+  state.matchEnded = responseData.matchEnded === true;
+
+  const lobbyResponse = await page.request.get(`${apiUrl}/api/lobby/${state.lobbyId}`);
+  expect(lobbyResponse.ok()).toBe(true);
+  const lobby = await lobbyResponse.json();
+  state.players = (lobby.players || []).map((player) => ({
+    ...player,
+    isReady: player.isReady ?? player.IsReady,
+  }));
 });
 
-Then('the lobby should reset for a new round', async ({ page }) => {
-  await expect(page.getByText('VÄLJ EN KARAKTÄR')).toBeVisible();
+Then('the match should end', async () => {
+  expect(state.matchEnded).toBe(true);
+});
+
+Then('MatchEnded should be true', async () => {
+  expect(state.matchEnded).toBe(true);
 });
 
 Then('all players should have IsReady = false', async () => {
-  expect(true).toBeTruthy();
+  const bad = state.players.filter((player) => player.isReady !== false);
+  if (bad.length > 0) {
+    throw new Error(`Players not reset: ${JSON.stringify(state.players, null, 2)}`);
+  }
+  expect(bad.length).toBe(0);
 });
-

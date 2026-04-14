@@ -1,6 +1,7 @@
 // Ready steps
 import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
+import { LandingPage } from '../pages/landing.page.js';
 import { LobbyPage } from '../pages/lobby.page.js';
 
 const { Given, When, Then } = createBdd();
@@ -10,20 +11,31 @@ const state = {
   guestPage: null,
   hostLobby: null,
   guestLobby: null,
+  lobbyId: null,
 };
 
-Given('a lobby exists with host {string} and guest {string}', async ({ browser }, host, guest) => {
-  const context1 = await browser.newContext();
-  const page1 = await context1.newPage();
-  state.hostPage = page1;
+Given('a lobby exists with host {string} and guest {string}', async ({ page, browser }, host, guest) => {
+  const hostLanding = new LandingPage(page);
+  await hostLanding.goto();
+  await hostLanding.openCreateLobbyModal();
+  await hostLanding.enterName(host);
+  await hostLanding.confirm();
+  await page.waitForURL('**/lobby/**');
+  state.lobbyId = page.url().split('/').pop();
 
-  const context2 = await browser.newContext();
-  const page2 = await context2.newPage();
-  state.guestPage = page2;
+  state.hostPage = page;
+  state.hostLobby = new LobbyPage(page);
+  await state.hostLobby.waitForLobby();
 
-  // Assume lobby already created and both joined
-  state.hostLobby = new LobbyPage(page1);
-  state.guestLobby = new LobbyPage(page2);
+  const guestContext = await browser.newContext();
+  const guestPage = await guestContext.newPage();
+  state.guestPage = guestPage;
+  state.guestLobby = new LobbyPage(guestPage);
+  const appUrl = process.env.APP_URL || 'http://localhost:5173';
+  await guestPage.goto(`${appUrl}/lobby/${state.lobbyId}`);
+  await state.guestLobby.enterName(guest);
+  await state.guestLobby.confirm();
+  await state.guestLobby.waitForLobby();
 });
 
 When('the host sends ready', async () => {
@@ -35,10 +47,13 @@ When('the guest sends ready', async () => {
 });
 
 Then('both players should have IsReady = true', async () => {
-  // Ideally verify via UI indicators
-  expect(true).toBeTruthy();
+  const apiUrl = process.env.API_URL || 'http://127.0.0.1:5024';
+  const response = await state.hostPage.request.get(
+    `${apiUrl}/api/lobby/${state.lobbyId}`,
+  );
+  const lobby = await response.json();
+  expect(lobby.players.length).toBe(2);
+  expect(lobby.players.every((p) => p.isReady)).toBe(true);
+  await state.hostPage.waitForSelector('.player-box:has-text("Ja")', { timeout: 15000 });
 });
 
-Then('the lobby should be in state {string}', async ({ page }, stateText) => {
-  await expect(page.getByText(stateText)).toBeVisible();
-});

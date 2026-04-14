@@ -1,4 +1,5 @@
 // game page
+
 export class GamePage {
   constructor(page) {
     this.page = page;
