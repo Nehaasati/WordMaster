@@ -1,0 +1,1 @@
+// If both players are ready

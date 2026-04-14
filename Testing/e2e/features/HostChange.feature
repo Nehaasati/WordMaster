@@ -1,0 +1,1 @@
+// If the one who left the lobby is the host => change the guest to be the host because he is alone inside the lobby ==> so this player can invite someone else or play with the AI-bot
