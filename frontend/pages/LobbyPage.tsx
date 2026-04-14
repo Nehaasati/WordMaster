@@ -75,6 +75,18 @@ const CHARACTER_IMAGES: Record<string, string> = {
   björnen:  "/images/bear.png",
 };
 
+const STATE_LABELS: Record<number, string> = {
+  0: 'WaitingForPlayers',
+  1: 'WaitingForReady',
+  2: 'PlayingRound',
+  3: 'GameFinished',
+};
+
+const getStateLabel = (state: number | string | null | undefined) => {
+  if (typeof state === 'number') return STATE_LABELS[state] ?? String(state);
+  return state ?? '';
+};
+
 /*
    Lobby Page
  */
@@ -109,6 +121,7 @@ export default function LobbyPage() {
 */
 
   const [realLobbyId, setRealLobbyId] = useState<string>(""); ////── Lobby state
+  const [lobbyState, setLobbyState] = useState<string>("");
 
   // State för att hålla koll på spelare i lobbyn
 
@@ -250,6 +263,7 @@ export default function LobbyPage() {
 
         const data = await res.json();
         setPlayers(data.players || []);
+        setLobbyState(getStateLabel(data.state));
 
         // Find current player by name
         const me = data.players?.find(
@@ -271,6 +285,62 @@ export default function LobbyPage() {
 
     fetchLobby();
   }, [realLobbyId, playerName]);
+
+  useEffect(() => {
+    if (!realLobbyId || !playerName || entryMode !== "join") return;
+    if (!character) return;
+
+    const joinLobby = async () => {
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: playerName,
+              characterId: character.id,
+              isHost: false,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          const data = await response.json();
+          setMessage(data.error || "Kunde inte gå med i lobbyn.");
+          return;
+        }
+
+        const data = await response.json();
+        const joinedPlayer = data.player;
+        setPlayerId(joinedPlayer.id);
+        localStorage.setItem("playerId", joinedPlayer.id);
+
+        const lobbyResponse = await fetch(
+          `http://127.0.0.1:5024/api/lobby/${realLobbyId}`,
+        );
+        if (lobbyResponse.ok) {
+          const lobbyData = await lobbyResponse.json();
+          setPlayers(lobbyData.players || []);
+          setLobbyState(getStateLabel(lobbyData.state));
+
+          const me = lobbyData.players?.find(
+            (p: Player) => p.name.toLowerCase() === playerName.toLowerCase(),
+          );
+          if (me) {
+            setIsHost(me.isHost);
+            setReady(me.isReady);
+            localStorage.setItem("isHost", me.isHost.toString());
+          }
+        }
+      } catch (err) {
+        console.error("Failed to join lobby", err);
+        setMessage("Kunde inte gå med i lobbyn.");
+      }
+    };
+
+    joinLobby();
+  }, [realLobbyId, playerName, entryMode, character]);
 
   /*
      SignalR connection
@@ -426,6 +496,12 @@ export default function LobbyPage() {
       <div className="container">
         <div className="col">
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
+
+          {lobbyState && (
+            <div className="lobby-state" data-testid="lobby-state">
+              Lobby state: {lobbyState}
+            </div>
+          )}
 
           <div className="player-box" style={{ marginBottom: "20px" }}>
             <p>Dit namn: {playerName}</p>

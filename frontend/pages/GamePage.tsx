@@ -74,8 +74,26 @@ const GamePage: React.FC = () => {
   const [isHost, setIsHost] = useState(
     localStorage.getItem("isHost") === "true",
   );
+  const [lobbyState, setLobbyState] = useState<string>("");
 
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
+
+  useEffect(() => {
+    if (!lobbyId) return;
+
+    const fetchLobbyState = async () => {
+      try {
+        const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setLobbyState(data.state || "");
+      } catch (err) {
+        console.error("Could not fetch lobby state:", err);
+      }
+    };
+
+    fetchLobbyState();
+  }, [lobbyId]);
 
   // SignalR
   
@@ -705,11 +723,21 @@ useEffect(() => {
 
     if (!lobbyId || !playerId) return;
 
-    await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}/restart`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerId }),
-    });
+    const response = await fetch(
+      `http://127.0.0.1:5024/api/lobby/${lobbyId}/restart?playerId=${playerId}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+
+    if (response.ok) {
+      const statusRes = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
+      if (statusRes.ok) {
+        const data = await statusRes.json();
+        setLobbyState(data.state || "");
+      }
+    }
   };
 
   // To leave the lobby
@@ -735,6 +763,12 @@ useEffect(() => {
       {/* Top bar */}
       <div className="gp-top-bar">
         {isHost && <div className="gp-host">Värden</div>}
+
+        {lobbyState && (
+          <div className="gp-lobby-state" data-testid="lobby-state">
+            {lobbyState}
+          </div>
+        )}
 
         {/* Leave the lobby */}
         <button className='gp-leave'

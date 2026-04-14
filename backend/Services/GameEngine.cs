@@ -254,6 +254,12 @@ public class GameEngine
         lobby.MatchEnded = true;
         lobby.State = GameState.WaitingForReady;
 
+        // Reset ready status so players must ready again for the next round
+        foreach (var p in lobby.Players)
+        {
+            p.IsReady = false;
+        }
+
         return true;
     }
 
