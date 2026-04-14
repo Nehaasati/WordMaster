@@ -375,6 +375,72 @@ app.MapGet("/api/bot/word", (string category, Dictionary<string, List<string>> c
     return Results.Ok(new { word = word.ToUpper() });
 });
 
+// An endpoint to allow players to start a new round/game on the same lobby 
+app.MapPost("/api/lobby/{lobbyId}/restart", async (
+    string lobbyId,
+    string playerId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    if (lobby == null)
+        return Results.NotFound();
+
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.BadRequest("Invalid player");
+
+    if (!player.IsHost)
+        return Results.BadRequest("Only host can restart");
+
+    if (!lobby.MatchEnded)
+        return Results.BadRequest("Game not finished yet");
+
+    engine.ResetLobbyForNewRound(lobbyId);
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("LobbyReset", lobbyId);
+
+    return Results.Ok(new { message = "Lobby reset for new round" });
+});
+
+// An endpoint to allow new player to join the lobby if one if the lobby's previouse players has left
+app.MapPost("/api/lobby/{lobbyId}/leave/{playerId}", async (
+    string lobbyId,
+    string playerId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    var success = engine.RemovePlayer(lobbyId, playerId, out var hostChanged);
+
+    if (!success)
+        return Results.NotFound();
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("PlayerLeft", playerId);
+
+    if (hostChanged)
+    {
+        var lobby = engine.GetLobby(lobbyId);
+        var newHost = lobby?.Players.FirstOrDefault(p => p.IsHost);
+
+        if (newHost != null)
+        {
+            await hub.Clients.Group(lobbyId)
+                .SendAsync("HostChanged", newHost.Id);
+        }
+    }
+
+    return Results.Ok(new
+    {
+        message = "Player left lobby",
+        hostChanged
+    });
+});
+
+
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 

@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "91055189-b25a-4c19-a3a6-0c5d0c2ca63e",
+    "_postman_id": "f6bb74db-7e55-4237-b407-6deeb772c8fd",
     "name": "WordMasterApi",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "50588661"
@@ -309,11 +309,16 @@
               "script": {
                 "exec": [
                   "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));\r",
+                  "\r",
                   "const json = pm.response.json();\r",
+                  "\r",
                   "pm.collectionVariables.set(\"lobbyId\", json.lobbyId);\r",
                   "pm.collectionVariables.set(\"inviteCode\", json.inviteCode);\r",
                   "pm.collectionVariables.set(\"hostId\", json.playerId);\r",
-                  "pm.test(\"Lobby ID exists\", () => pm.expect(json.lobbyId).to.be.a(\"string\"));"
+                  "\r",
+                  "pm.test(\"Lobby ID exists\", () => pm.expect(json.lobbyId).to.be.a(\"string\"));\r",
+                  "pm.test(\"Invite code exists\", () => pm.expect(json.inviteCode).to.be.a(\"string\"));\r",
+                  "pm.test(\"Host ID exists\", () => pm.expect(json.playerId).to.be.a(\"string\"));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -337,7 +342,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"name\": \"Fatima\"\r\n}",
+              "raw": "{\r\n  \"name\": \"Fatima\",\r\n  \"isHost\": true,\r\n  \"characterId\": \"ugglan\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -363,7 +368,19 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  ""
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Lobby has correct structure\", () => {\r",
+                  "    pm.expect(json).to.have.property(\"id\");\r",
+                  "    pm.expect(json).to.have.property(\"players\");\r",
+                  "    pm.expect(json.players).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Host exists\", () => {\r",
+                  "    pm.expect(json.players.length).to.be.at.least(1);\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -407,9 +424,16 @@
               "script": {
                 "exec": [
                   "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));\r",
+                  "\r",
                   "const json = pm.response.json();\r",
+                  "\r",
                   "pm.collectionVariables.set(\"guestId\", json.player.id);\r",
-                  "pm.test(\"Guest ID exists\", () => pm.expect(json.player.id).to.be.a(\"string\"));"
+                  "\r",
+                  "pm.test(\"Player joined\", () => {\r",
+                  "    pm.expect(json.message).to.include(\"joined\");\r",
+                  "    pm.expect(json.player.name).to.eql(\"Oskar\");\r",
+                  "    pm.expect(json.player.characterId).to.eql(\"leopard\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -422,7 +446,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"name\": \"Oskar\"\r\n}",
+              "raw": "{\r\n  \"name\": \"Oskar\",\r\n  \"isHost\": false,\r\n  \"characterId\": \"leopard\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -450,13 +474,12 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Lobby should be full\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});\r",
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));\r",
                   "\r",
-                  "pm.test(\"Correct error returned\", function () {\r",
-                  "    const json = pm.response.json();\r",
-                  "    pm.expect(json).to.have.property(\"error\");\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Lobby full error\", () => {\r",
+                  "    pm.expect(json.error).to.exist;\r",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -470,7 +493,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"name\": \"Ali\"\r\n}",
+              "raw": "{\r\n  \"name\": \"Ali\",\r\n  \"isHost\": false,\r\n  \"characterId\": \"björnen\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -498,9 +521,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 400\", function () {\r",
-                  "    pm.response.to.have.status(400);\r",
-                  "});"
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -513,7 +534,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"name\": \"Arbaz\"\r\n}",
+              "raw": "{\r\n  \"name\": \"Arbaz\",\r\n  \"isHost\": false,\r\n  \"characterId\": \"björnen\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -529,6 +550,86 @@
                 "lobby",
                 "BB1BC3",
                 "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Empty player name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"\",\r\n  \"isHost\": false,\r\n  \"characterId\": \"ugglan\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start the game before all players are ready should fail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Should fail if players not ready\", () => {\r",
+                  "    pm.expect(pm.response.code).to.eql(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message correct\", () => {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"Players not ready\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start/{{hostId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "start",
+                "{{hostId}}"
               ]
             }
           },
@@ -607,8 +708,27 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Guest cannot start\", () => pm.response.to.have.status(400));\r",
-                  "pm.test(\"Correct error message\", () => pm.expect(pm.response.text()).to.include(\"Only host can start the game\"));"
+                  "pm.test(\"Guest cannot start\", () => {\r",
+                  "    pm.expect(pm.response.code).to.eql(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error is correct\", () => {\r",
+                  "    const text = pm.response.text();\r",
+                  "    pm.expect(text).to.satisfy(t => \r",
+                  "        t.includes(\"Only host\") || t.includes(\"Invalid player\")\r",
+                  "    );\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -696,14 +816,189 @@
           "response": []
         },
         {
+          "name": "Add Bot when lobby(Should fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cannot add bot to full lobby\", () => {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-Id",
+                "value": "{{hostId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/add-bot",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "add-bot"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Categories not completed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Should not finish\", () => {\r",
+                  "    pm.expect(pm.response.json().matchEnded).to.eql(false);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"categoriesCompleted\": false }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/player-finished/{{hostId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "player-finished",
+                "{{hostId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Restart before game ends",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cannot restart before finish\", () => {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/restart?playerId={{hostId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "restart"
+              ],
+              "query": [
+                {
+                  "key": "playerId",
+                  "value": "{{hostId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Finish Host",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Host finished OK\", () => pm.response.to.have.status(200));\r",
-                  "pm.test(\"Match ended\", () => pm.expect(pm.response.json().matchEnded).to.eql(true));"
+                  "pm.test(\"Finished OK\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Finished true\", () => {\r",
+                  "    pm.expect(json.finished).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Match ended exists\", () => {\r",
+                  "    pm.expect(json).to.have.property(\"matchEnded\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -735,14 +1030,14 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/game/finish/{{lobbyId}}/{{hostId}}",
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/player-finished/{{hostId}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "game",
-                "finish",
+                "lobby",
                 "{{lobbyId}}",
+                "player-finished",
                 "{{hostId}}"
               ]
             }
@@ -756,8 +1051,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Guest finished OK\", () => pm.response.to.have.status(200));\r",
-                  "pm.test(\"Match ended\", () => pm.expect(pm.response.json().matchEnded).to.eql(true));"
+                  "pm.test(\"Finished OK\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Finished true\", () => {\r",
+                  "    pm.expect(json.finished).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Match ended exists\", () => {\r",
+                  "    pm.expect(json).to.have.property(\"matchEnded\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -789,14 +1093,73 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/game/finish/{{lobbyId}}/{{guestId}}",
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/player-finished/{{guestId}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "game",
-                "finish",
+                "lobby",
                 "{{lobbyId}}",
+                "player-finished",
+                "{{guestId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Leave a lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Player left\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Leave message\", () => {\r",
+                  "    pm.expect(json.message).to.include(\"left\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/leave/{{guestId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "leave",
                 "{{guestId}}"
               ]
             }
@@ -1085,6 +1448,588 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Bot-Api",
+      "item": [
+        {
+          "name": "Create a lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"lobbyId\", json.lobbyId);\r",
+                  "pm.collectionVariables.set(\"inviteCode\", json.inviteCode);\r",
+                  "pm.collectionVariables.set(\"hostId\", json.playerId);\r",
+                  "\r",
+                  "pm.test(\"Lobby ID exists\", () => pm.expect(json.lobbyId).to.be.a(\"string\"));\r",
+                  "pm.test(\"Invite code exists\", () => pm.expect(json.inviteCode).to.be.a(\"string\"));\r",
+                  "pm.test(\"Host ID exists\", () => pm.expect(json.playerId).to.be.a(\"string\"));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Fatima\",\r\n  \"isHost\": true,\r\n  \"characterId\": \"ugglan\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add a bot player",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "// store bot id\r",
+                  "pm.collectionVariables.set(\"botId\", json.bot.id);\r",
+                  "\r",
+                  "pm.test(\"Bot created\", () => {\r",
+                  "    pm.expect(json.bot).to.have.property(\"id\");\r",
+                  "    pm.expect(json.bot.name).to.eql(\"Easy Bot\");\r",
+                  "    pm.expect(json.bot.isBot).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Bot is ready automatically\", () => {\r",
+                  "    pm.expect(json.bot.isReady).to.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/add-bot",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "add-bot"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get a lobby",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Lobby has 2 players\", () => {\r",
+                  "    pm.expect(json.players.length).to.eql(2);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Bot exists in lobby\", () => {\r",
+                  "    const bot = json.players.find(p => p.isBot === true);\r",
+                  "    pm.expect(bot).to.exist;\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add a bot to a full lobby should fail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Should fail when lobby is full\", () => {\r",
+                  "    pm.expect(pm.response.code).to.eql(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Error exists\", () => {\r",
+                  "    pm.expect(json.error).to.exist;\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/add-bot",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "add-bot"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Join a non existence lobby Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Arbaz\",\r\n  \"isHost\": false,\r\n  \"characterId\": \"björnen\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/BB1BC3/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "BB1BC3",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Empty player name Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"\",\r\n  \"isHost\": false,\r\n  \"characterId\": \"ugglan\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/join",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "join"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ready host Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Host ready OK\", () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/ready/{{hostId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "ready",
+                "{{hostId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Game (Host - Should Pass) Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Host can start the game\", function () {\r",
+                  "    pm.expect(pm.response.code).to.eql(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-Id",
+                "value": "{{hostId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/start/{{hostId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "start",
+                "{{hostId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Bot when lobby(Should fail) Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cannot add bot to full lobby\", () => {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-Id",
+                "value": "{{hostId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/add-bot",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "add-bot"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Categories not completed Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Should not finish\", () => {\r",
+                  "    pm.expect(pm.response.json().matchEnded).to.eql(false);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"categoriesCompleted\": false }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/player-finished/{{hostId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "player-finished",
+                "{{hostId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Restart before game ends Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Cannot restart before finish\", () => {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/restart?playerId={{hostId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "restart"
+              ],
+              "query": [
+                {
+                  "key": "playerId",
+                  "value": "{{hostId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Finish Host Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Finished OK\", () => pm.response.to.have.status(200));\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Finished true\", () => {\r",
+                  "    pm.expect(json.finished).to.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"categoriesCompleted\": true }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/lobby/{{lobbyId}}/player-finished/{{hostId}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lobby",
+                "{{lobbyId}}",
+                "player-finished",
+                "{{hostId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [
@@ -1110,6 +2055,10 @@
     },
     {
       "key": "guestId",
+      "value": ""
+    },
+    {
+      "key": "botId",
       "value": ""
     }
   ]

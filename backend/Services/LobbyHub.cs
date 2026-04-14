@@ -60,8 +60,26 @@ public class LobbyHub : Hub
   public async Task FinishGame(string lobbyId)
   {
     await Clients.Group(lobbyId).SendAsync("MatchEnded", lobbyId);
-    
+
     Console.WriteLine($"Lobby {lobbyId} has finished by a player.");
+  }
+
+  // A signalR to manage restart the game/ new round
+  public async Task LobbyReset(string lobbyId)
+  {
+    await Clients.Group(lobbyId).SendAsync("LobbyReset", lobbyId);
+  }
+
+  // A signalR to manage the lobby state when one player leavs the lobby
+  public async Task PlayerLeft(string lobbyId, string playerId)
+  {
+    await Clients.Group(lobbyId).SendAsync("PlayerLeft", playerId);
+  }
+
+  // A signalR to manage the new host it the previous one has left
+  public async Task HostChanged(string lobbyId, string newHostId)
+  {
+    await Clients.Group(lobbyId).SendAsync("HostChanged", newHostId);
   }
 
 }
