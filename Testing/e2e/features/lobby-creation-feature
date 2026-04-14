@@ -1,0 +1,12 @@
+Feature: Lobby Creation
+
+  Scenario: Create lobby successfully
+    Given I am on the home page
+    When I click the button to create a lobby
+    Then a new lobby is created
+    And I receive an invite link
+
+  Scenario: Lobby is in waiting state after creation
+    Given I have created a lobby
+    Then the lobby status is waiting
+    And I should see a waiting message

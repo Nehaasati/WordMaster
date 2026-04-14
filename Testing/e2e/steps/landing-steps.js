@@ -4,7 +4,9 @@ import GamePage from '../pages/game.page.js';
  
 const { Given, When, Then } = createBdd();
 Given('I open the landing page', async ({ page }) => {
-  const game = new GamePage(page);
+  const game1 = new GamePage(page);
+  const game2= new GamePage(page);// for two player
+  await game.goto();
   await game.goto();
 });
  
