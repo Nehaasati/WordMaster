@@ -21,3 +21,12 @@ const ShopPanel: React.FC<ShopProps> = ({ score, onBuyLetter, onBuyPowerup }) =>
   const [owned, setOwned] = useState<string[]>([])
   const [toast, setToast] = useState('')
   const [toastOk, setToastOk] = useState(true)
+const showToast = (msg: string, ok: boolean) => {
+    setToast(msg); setToastOk(ok)
+    setTimeout(() => setToast(''), 2000)
+  }
+const buyLetter = (id: string, cost: number) => {
+    if (score < cost) { showToast('Not enough 💰!', false); return }
+    onBuyLetter(id, cost)
+    showToast(`+${id} added!`, true)
+  }
