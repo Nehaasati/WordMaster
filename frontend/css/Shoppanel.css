@@ -38,3 +38,12 @@
     border-radius: 50px;
     padding: 6px 10px;
 }
+.shop-section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: rgba(200, 170, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+}
