@@ -113,6 +113,8 @@
 .gp-btn--freeze { background: #111; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
 .gp-btn--black  { background: #555; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 .gp-btn--mix    { background: #3b82f6; box-shadow: 0 4px 12px rgba(59,130,246,0.5); }
+.gp-btn--stop   { background: #d31f2e; box-shadow: 0 4px 15px rgba(211,31,46,0.5); font-weight: bold; letter-spacing: 0.05em; }
+.gp-btn--stop:hover { background: #b01020; box-shadow: 0 6px 20px rgba(211,31,46,0.7); }
  
 /* ── MAIN CONTENT ── */
 .gp-content {

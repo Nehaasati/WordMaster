@@ -65,12 +65,14 @@ const GamePage: React.FC = () => {
   const [characterId, setCharacterId] = useState<string>("");
   const [roundStartTime] = useState<number>(Date.now());
   const [showInk, setShowInk] = useState(false);
+  const [gameStopped, setGameStopped] = useState(false);
   const [inkActive, setInkActive] = useState(false);
   const [showFreeze, setShowFreeze] = useState(false);
   const [freezeActive, setFreezeActive] = useState(false);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const bonusRef = useRef<number>(0);
+  const scoreRef = useRef<number>(0);
   const myWordsRef = useRef<Record<string, string>>({});
   const opponentWordsRef = useRef<Record<string, Set<string>>>({});
   const [categoryPoints, setCategoryPoints] = useState<Record<string, number>>({});
@@ -90,6 +92,8 @@ useEffect(() => {
     .withUrl("http://127.0.0.1:5024/lobbyHub")
     .withAutomaticReconnect()
     .build();
+
+  let alreadyNavigating = false;
 
   connection.start().then(async () => {
     await connection.invoke("JoinLobbyGroup", lobbyId);
@@ -134,7 +138,25 @@ useEffect(() => {
         setTimeout(() => setToast(""), 3000);
       }
     });
+    connection.on("GameStopped", (lId: string, _stoppedByPlayerId: string, _stoppedScore: number) => {
+      if (alreadyNavigating) return;
+      alreadyNavigating = true;
+      setGameStopped(true);
+      setStopped(true);
 
+      const myId = localStorage.getItem("wordmaster-player-id") ?? "";
+      fetch(`http://127.0.0.1:5024/api/lobby/${lId}/save-score/${myId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score: scoreRef.current }),
+      })
+        .catch(() => {})
+        .finally(() => {
+          setTimeout(() => {
+            navigate(`/result/${lId}`, { state: { gameStopped: true } });
+          }, 2500);
+        });
+    });
     // HOST CHANGED
     connection.on("HostChanged", (newHostId: string) => {
       const myId = localStorage.getItem("wordmaster-player-id");
@@ -149,18 +171,23 @@ useEffect(() => {
 
     // MATCH ENDED
     connection.on("MatchEnded", (lId: string) => {
+      if (alreadyNavigating) return;
+      alreadyNavigating = true;
       setStopped(true);
 
-      setTimeout(() => {
-        navigate(`/lobby/${lId}`, {
-          state: {
-            playerName: localStorage.getItem("wordmaster-player-name"),
-            isHost: localStorage.getItem("isHost") === "true",
-          },
+      const myId = localStorage.getItem("wordmaster-player-id") ?? "";
+      fetch(`http://127.0.0.1:5024/api/lobby/${lId}/save-score/${myId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score: scoreRef.current }),
+      })
+        .catch(() => {})
+        .finally(() => {
+          setTimeout(() => {
+            navigate(`/result/${lId}`, { state: { gameStopped: false } });
+          }, 3000);
         });
-      }, 3000);
     });
-  });
   connection.on("WordSubmitted", (senderId, category, word) => {
       const myPlayerId = localStorage.getItem("wordmaster-player-id") ?? "";
       const isMine = senderId === myPlayerId;
@@ -180,7 +207,7 @@ useEffect(() => {
           return updated;
       });
   });
-
+});
   connectionRef.current = connection;
   return () => {
     connection.stop();
@@ -586,8 +613,10 @@ useEffect(() => {
         total += points;
         if (catData.word.length > 7) total += 5;
     }
-    setScore(total + bonusRef.current);
-    }, [categories, categoryPoints]);
+    const newScore = total + bonusRef.current;
+        setScore(newScore);
+        scoreRef.current = newScore;
+        }, [categories, categoryPoints]);
 
   const handleInputChange = (
     categoryId: string,
@@ -673,6 +702,22 @@ useEffect(() => {
       }
       return shuffled;
     });
+  };
+  const handleStopGame = async () => {
+    if (!lobbyId || !connectionRef.current) return;
+    const myPlayerId = localStorage.getItem("wordmaster-player-id") ?? "";
+    try {
+      await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}/save-score/${myPlayerId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score: Math.round(score) }),
+      });
+    } catch {
+      console.error("Failed to save score before stopping");
+    }
+    connectionRef.current
+      .invoke("StopGame", lobbyId, myPlayerId, Math.round(score))
+      .catch((err) => console.error("SignalR StopGame error:", err));
   };
 
   // The classic game
@@ -806,6 +851,15 @@ useEffect(() => {
         >
           Mix
         </button>
+        {lobbyId && !stopped && (
+          <button
+            className="gp-btn gp-btn--stop"
+            onClick={handleStopGame}
+            data-testid="btn-stop"
+          >
+            Stopp
+          </button>
+        )}
       </div>
 
       {/* Main content */}
@@ -902,7 +956,12 @@ useEffect(() => {
       {stopped && (
         <div className="gp-stopped-overlay" data-testid="stopped-overlay">
           <div className="gp-stopped-card">
-            <h2>Stopp!</h2>
+            <h2>{gameStopped ? "Spelet avbröts!" : "Stopp!"}</h2>
+            {gameStopped && (
+              <p style={{ color: "#ff8c00", fontWeight: "bold" }}>
+                En spelare tryckte på Stopp. Vidarebefordrar till resultatsidan...
+              </p>
+            )}
             <p>Din tid: {timeLeft} sekunder</p>
             <p>Din poäng: {score}</p>
 

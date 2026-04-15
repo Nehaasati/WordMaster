@@ -63,6 +63,11 @@ public class LobbyHub : Hub
 
     Console.WriteLine($"Lobby {lobbyId} has finished by a player.");
   }
+  public async Task StopGame(string lobbyId, string stoppedByPlayerId, int score)
+  {
+    await Clients.Group(lobbyId).SendAsync("GameStopped", lobbyId, stoppedByPlayerId, score);
+    Console.WriteLine($"Lobby {lobbyId}: Player {stoppedByPlayerId} stopped the game with score {score}.");
+  }
   public async Task SubmitWord(string lobbyId, string playerId, string category, string word)
   {
       await Clients.Group(lobbyId).SendAsync("WordSubmitted", playerId, category, word.Trim().ToUpperInvariant());
