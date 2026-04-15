@@ -54,5 +54,3 @@ export default class GamePage {
     await this.page.click(this.leaveGameBtn);
   }
 }
-
-module.exports = { GamePage };
