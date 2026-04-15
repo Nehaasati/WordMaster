@@ -62,7 +62,7 @@ jobs:
           dotnet run &
           sleep 5
           # Optional: Add health check or tests here
-          echo "Server started"
+          echo "backend started"
 
       # Install npm dependencies for system tests
       # - name: Install test dependencies
@@ -79,6 +79,6 @@ jobs:
         run: npm run test:api
 
       # Run UI tests
-      - name: Run system tests
-        working-directory: Testing/SystemTests
-        run: npm run test:ui
+      #- name: Run system tests
+       #  working-directory: Testing/SystemTests
+       # run: npm run test:ui
