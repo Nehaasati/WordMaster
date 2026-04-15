@@ -1,4 +1,4 @@
-// Player Join the lobby
+# Player Join the lobby
 
 Feature: Join Lobby
   As a guest player
