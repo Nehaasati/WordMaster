@@ -67,13 +67,13 @@ jobs:
           echo "backend started"
 
       # Install npm dependencies for system tests
-      # - name: Install test dependencies
-      #  working-directory: Testing/SystemTests
-      #  run: npm ci && npx playwright install
+      - name: Install test dependencies
+        working-directory: Testing/SystemTests
+        run: npm ci && npx playwright install
 
       # Run Unit tests
-      # - name: Run unit tests
-        # run: dotnet test
+      - name: Run unit tests
+        run: dotnet test
 
       # Run API tests
       - name: Run api tests
@@ -81,6 +81,6 @@ jobs:
         run: npm run test:api
 
       # Run UI tests
-      #- name: Run system tests
-       #  working-directory: Testing/SystemTests
-       # run: npm run test:ui
+      - name: Run system tests
+        working-directory: Testing/SystemTests
+        run: npm run test:ui
