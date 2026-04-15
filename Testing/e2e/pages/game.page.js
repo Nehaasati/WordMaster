@@ -1,5 +1,5 @@
 // game page
-export class GamePage {
+export default class GamePage {
   constructor(page) {
     this.page = page;
 
