@@ -54,11 +54,11 @@ const GamePage: React.FC = () => {
       return initial;
     },
   );
-  /*const [backendConnected, setBackendConnected] = useState<boolean | null>(
+  const [backendConnected, setBackendConnected] = useState<boolean | null>(
     null,
     
   );
-  */
+
   const [timeLeft, setTimeLeft] = useState(0);
   const [frozen, setFrozen] = useState(false);
   const [freezeMsg, setFreezeMsg] = useState("");
