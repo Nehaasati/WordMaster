@@ -4,7 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "test": "npm run test:api",
+    "test": "npm run test:api && npm run test:ui",
     "bdd:gen": "bddgen",
     "test:ui": "npm run bdd:gen && playwright test --project=ui",
     "test:headed": "npm run bdd:gen && playwright test --project=ui --headed",
