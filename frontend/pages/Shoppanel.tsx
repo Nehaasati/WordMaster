@@ -75,3 +75,9 @@ return (
           )
         })}
       </div>
+ {toast && <div className={`shop-toast ${toastOk ? '' : 'shop-toast--error'}`}>{toast}</div>}
+    </div>
+  )
+}
+
+export default ShopPanel
