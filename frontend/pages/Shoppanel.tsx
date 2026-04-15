@@ -56,3 +56,22 @@ return (
           </button>
         ))}
       </div>
+<div className="shop-section-title">Power-ups — 5💰 once</div>
+      <div className="shop-items">
+        {POWERUPS.map(item => {
+          const isOwned = owned.includes(item.id)
+          return (
+            <div className="shop-item" key={item.id}>
+              <span className="shop-item-label">{item.label}</span>
+              <button
+                className={`shop-buy-btn ${isOwned ? 'shop-buy-btn--owned' : ''}`}
+                disabled={isOwned || score < item.cost}
+                onClick={() => buyPowerup(item.id, item.cost)}
+                data-testid={`shop-buy-${item.id}`}
+              >
+                {isOwned ? '✓' : `${item.cost}💰`}
+              </button>
+            </div>
+          )
+        })}
+      </div>
