@@ -18,3 +18,13 @@
     color: white;
     font-family: 'Cinzel', serif;
 }
+.shop-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #ffd700;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    border-bottom: 1px solid rgba(160, 80, 255, 0.3);
+    padding-bottom: 8px;
+}
