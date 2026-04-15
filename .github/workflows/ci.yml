@@ -13,6 +13,8 @@ jobs:
   # Main build job that runs on Ubuntu and performs CI for both backend (.NET) and frontend (Node.js)
   build:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       # Check out the repository code
