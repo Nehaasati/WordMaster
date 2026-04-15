@@ -1,5 +1,10 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const uiTestDir = defineBddConfig({
   features: 'e2e/features/**/*.feature',
@@ -18,6 +23,12 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure'
+  },
+  webServer: {
+    command: 'npm run dev',
+    cwd: path.join(__dirname, '..', 'frontend'),
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI
   },
   projects: [
     {
