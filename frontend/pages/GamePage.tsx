@@ -327,6 +327,7 @@ useEffect(() => {
     fetchInitialLetters();
   }, [lobbyId]);
 
+  /*
   const addExtraLetters = async () => {
     try {
       const response = await fetch(
@@ -349,6 +350,7 @@ useEffect(() => {
       ]);
     }
   };
+  */
   const calculateAbilityBonus = async (word: string): Promise<number> => {
     if (!characterId) return 0;
     const secondsTaken = (Date.now() - roundStartTime) / 1000;
