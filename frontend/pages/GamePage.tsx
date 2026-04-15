@@ -725,10 +725,11 @@ useEffect(() => {
   };
 
   // The classic game
-  const handleFinishClassic = () => {
+  
+  /*const handleFinishClassic = () => {
     setStopped(true);
   };
-
+*/
   const allDone = CATEGORY_LIST.every((c) => categories[c.id].valid);
 
   //Send all done to backend
