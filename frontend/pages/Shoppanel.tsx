@@ -30,3 +30,9 @@ const buyLetter = (id: string, cost: number) => {
     onBuyLetter(id, cost)
     showToast(`+${id} added!`, true)
   }
+const buyPowerup = (id: string, cost: number) => {
+    if (score < cost) { showToast('Not enough 💰!', false); return }
+    setOwned(prev => [...prev, id])
+    onBuyPowerup(id, cost)
+    showToast(`${id} ready!`, true)
+  }
