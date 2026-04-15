@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from "react-router-dom";
-import type { Letter, CategoryData, StarData, Category } from '../interfaces/Gamepage';
+import type { Letter, CategoryData, StarData, Category } from '../interfaces/Gamepage.ts';
 import * as signalR from '@microsoft/signalr'
 import '../css/GamePage.css'
 ///Star annimation
