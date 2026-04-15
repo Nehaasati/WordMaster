@@ -17,3 +17,7 @@ const POWERUPS = [
   { id: 'black',  label: 'Bläck',  cost: 5 },
   { id: 'mix',    label: 'Svenska Alphabet',    cost: 100 },
 ]
+const ShopPanel: React.FC<ShopProps> = ({ score, onBuyLetter, onBuyPowerup }) => {
+  const [owned, setOwned] = useState<string[]>([])
+  const [toast, setToast] = useState('')
+  const [toastOk, setToastOk] = useState(true)
