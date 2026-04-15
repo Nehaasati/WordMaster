@@ -36,3 +36,23 @@ const buyPowerup = (id: string, cost: number) => {
     onBuyPowerup(id, cost)
     showToast(`${id} ready!`, true)
   }
+return (
+    <div className="shop-panel" data-testid="shop-panel">
+      <div className="shop-title">🏪 Shop</div>
+      <div className="shop-balance">💰 {score} kr</div>
+
+      <div className="shop-section-title">Swedish Vowels — 5💰</div>
+      <div className="shop-vowel-grid">
+        {VOWELS.map(item => (
+          <button
+            key={item.id}
+            className="shop-vowel-btn"
+            disabled={score < item.cost}
+            onClick={() => buyLetter(item.id, item.cost)}
+            data-testid={`shop-buy-${item.id}`}
+          >
+            <span className="shop-vowel-letter">{item.label}</span>
+            <span className="shop-vowel-cost">{item.cost}💰</span>
+          </button>
+        ))}
+      </div>
