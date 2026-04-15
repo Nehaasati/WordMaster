@@ -321,6 +321,7 @@ app.MapPost("/api/lobby/{lobbyId}/player-finished/{playerId}", async (
     if (player != null)
     {
         player.CategoriesCompleted = request.CategoriesCompleted;
+        player.Score = request.Score;
     }
     // Mark the player as finished in the game engine
     bool matchEnded = engine.PlayerFinished(lobbyId, playerId);
@@ -335,6 +336,19 @@ app.MapPost("/api/lobby/{lobbyId}/player-finished/{playerId}", async (
     }
 
     return Results.Ok(new { finished = true, matchEnded = false });
+});
+app.MapPost("/api/lobby/{lobbyId}/save-score/{playerId}", (
+    string lobbyId,
+    string playerId,
+    SaveScoreRequest request,
+    GameEngine engine
+) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    var player = lobby?.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null) return Results.NotFound();
+    player.Score = request.Score;
+    return Results.Ok(new { saved = true });
 });
 
 app.MapPost("/api/game/calculate-score", (
@@ -452,7 +466,8 @@ public record StartGameRequest(string GameMode);
 public record CategorySubmission(string Id, string Word, bool IsValid);
 public record CalculateScoreRequest(List<CategorySubmission> Categories);
 public record CreateLobbyRequest(string Name);
-public record FinishRequest(bool CategoriesCompleted);
+public record FinishRequest(bool CategoriesCompleted, int Score = 0);
+public record SaveScoreRequest(int Score); 
 
 // join this character with backend with thier ability
 public class JoinRequest

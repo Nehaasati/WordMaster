@@ -2030,8 +2030,253 @@
           "response": []
         }
       ]
-    }
-  ],
+    },
+    {
+      "name": "ScoreApi",
+      "item": [
+      {
+        "name": "Ett giltigt ord",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                "pm.test(\"Ett giltigt ord ger 10 poäng\", () => {",
+                "    pm.expect(pm.response.json().score).to.eql(60);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"categories\": [\n    { \"id\": \"Name\", \"word\": \"Anna\", \"isValid\": true }\n  ]\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/game/calculate-score",
+            "host": [
+              "{{base_url}}"
+            ],
+            "path": [
+              "game",
+              "calculate-score"
+            ]
+          }
+        }
+      },
+      {
+        "name": "Ogiltigt ord",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                "pm.test(\"Ogiltigt ord ger 0 poäng\", () => {",
+                "    pm.expect(pm.response.json().score).to.eql(0);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"categories\": [\n    { \"id\": \"Name\", \"word\": \"Anna\", \"isValid\": false }\n  ]\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/game/calculate-score",
+            "host": [
+              "{{base_url}}"
+            ],
+            "path": [
+              "game",
+              "calculate-score"
+            ]
+          }
+        }
+      },
+      {
+        "name": "Tomt ord",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                "pm.test(\"Tomt ord ger 0 poäng\", () => {",
+                "    pm.expect(pm.response.json().score).to.eql(0);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"categories\": [\n    { \"id\": \"Name\", \"word\": \"\", \"isValid\": true }\n  ]\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/game/calculate-score",
+            "host": [
+              "{{base_url}}"
+            ],
+            "path": [
+              "game",
+              "calculate-score"
+            ]
+          }
+        }
+      },
+      {
+        "name": "Ord med > 7 bokstäver",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                "pm.test(\"Långt ord (>7 bokstäver) ger 15 poäng\", () => {",
+                "    pm.expect(pm.response.json().score).to.eql(65);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"categories\": [\n    { \"id\": \"Name\", \"word\": \"Kristoffer\", \"isValid\": true }\n  ]\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/game/calculate-score",
+            "host": [
+              "{{base_url}}"
+            ],
+            "path": [
+              "game",
+              "calculate-score"
+            ]
+          }
+        }
+      },
+      {
+        "name": "Exakt 7 bokstäver(ingen bonus)",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                "pm.test(\"Ord med exakt 7 bokstäver ger inte bonus\", () => {",
+                "    pm.expect(pm.response.json().score).to.eql(60);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"categories\": [\n    { \"id\": \"Name\", \"word\": \"Abcdefg\", \"isValid\": true }\n  ]\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/game/calculate-score",
+            "host": [
+              "{{base_url}}"
+            ],
+            "path": [
+              "game",
+              "calculate-score"
+            ]
+          }
+        }
+      },
+      {
+        "name": "Alla kategorier",
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                "pm.test(\"7 giltiga ord ger 70 poäng (7 x 10p) => giltiga ord 70p + bonus 5p + 50p extra = 125p\", () => {",
+                "    pm.expect(pm.response.json().score).to.eql(125);",
+                "});"
+              ]
+            }
+          }
+        ],
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"categories\": [\n    { \"id\": \"Name\",   \"word\": \"Anna\",  \"isValid\": true },\n    { \"id\": \"Food\",   \"word\": \"Ägg\",   \"isValid\": true },\n    { \"id\": \"Job\",    \"word\": \"Artist\", \"isValid\": true },\n    { \"id\": \"Land\",   \"word\": \"Albanien\", \"isValid\": true },\n    { \"id\": \"Colour\", \"word\": \"Aqua\",  \"isValid\": true },\n    { \"id\": \"Animal\", \"word\": \"Älg\",   \"isValid\": true },\n    { \"id\": \"Object\", \"word\": \"Ask\",   \"isValid\": true }\n  ]\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}/game/calculate-score",
+            "host": [
+              "{{base_url}}"
+            ],
+            "path": [
+              "game",
+              "calculate-score"
+            ]
+          }
+        }
+      }
+    ]
+  }
+],
   "variable": [
     {
       "key": "lobbyId",
