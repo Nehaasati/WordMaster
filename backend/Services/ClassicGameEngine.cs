@@ -11,7 +11,7 @@ public class ClassicGameEngine
     private readonly List<string> _categoryList;
     private int _currentCategoryIndex = 0;
 
-    private static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
+    public static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
     private static readonly Dictionary<char, int> Weights = new()
     {
