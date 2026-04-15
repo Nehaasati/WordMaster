@@ -28,3 +28,13 @@
     border-bottom: 1px solid rgba(160, 80, 255, 0.3);
     padding-bottom: 8px;
 }
+.shop-balance {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: #ffd700;
+    text-align: center;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50px;
+    padding: 6px 10px;
+}
