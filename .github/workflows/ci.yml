@@ -49,7 +49,7 @@ jobs:
       # Install npm dependencies for the frontend project using clean install (package-lock.json enforced)
       - name: Restore npm dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       # Build the React frontend project (creates optimized production build)
       - name: Build npm
