@@ -661,7 +661,7 @@ export default function LobbyPage() {
                 const data = await response.json();
                 const joinedPlayer = data.player;
 
-                localStorage.setItem("wordmaster-player-id", joinedPlayer.id);
+                localStorage.setItem("playerId", joinedPlayer.id);
                 setPlayerId(joinedPlayer.id);
 
                 await fetch(

@@ -141,7 +141,7 @@ useEffect(() => {
     connection.on("PlayerLeft", (playerId: string) => {
       console.log("Player left:", playerId);
 
-      const myId = localStorage.getItem("wordmaster-player-id");
+      const myId = localStorage.getItem("playerId");
 
       if (playerId !== myId) {
         setToast("En spelare lämnade lobbyn");
@@ -151,7 +151,7 @@ useEffect(() => {
 
     // HOST CHANGED
     connection.on("HostChanged", (newHostId: string) => {
-      const myId = localStorage.getItem("wordmaster-player-id");
+      const myId = localStorage.getItem("playerId");
 
       if (myId === newHostId) {
         localStorage.setItem("isHost", "true");
@@ -246,7 +246,7 @@ useEffect(() => {
         const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
         if (res.ok) {
           const data = await res.json();
-          const storedPlayerId = localStorage.getItem("wordmaster-player-id");
+          const storedPlayerId = localStorage.getItem("playerId");
           const player =
             data.players?.find((p: any) => p.id === storedPlayerId) ??
             data.players?.[0];
@@ -464,7 +464,7 @@ useEffect(() => {
         // ── Character ability bonus ──────────────────
         const bonus = await calculateAbilityBonus(word);
         if (bonus > 0) {
-          bonusRef.current += bonus;    // ← store bonus in ref
+          ī.current += bonus;    // ← store bonus in ref
           console.log(`+${bonus} bonus from ${characterId}! Total bonus: ${bonusRef.current}`);
 
         }
@@ -694,7 +694,7 @@ useEffect(() => {
           connectionRef.current
             .invoke("FinishGame", lobbyId)
             .catch((err) => console.error("SignalR Finish Error:", err));
-          const playerId = localStorage.getItem("wordmaster-player-id");
+          const playerId = localStorage.getItem("playerId");
           if (playerId) {
             fetch(
               `http://127.0.0.1:5024/api/lobby/${lobbyId}/player-finished/${playerId}`,
@@ -719,7 +719,7 @@ useEffect(() => {
 
   // Handle restart
   const handleRestart = async () => {
-    const playerId = localStorage.getItem("wordmaster-player-id");
+    const playerId = localStorage.getItem("playerId");
 
     if (!lobbyId || !playerId) return;
 
@@ -742,7 +742,7 @@ useEffect(() => {
 
   // To leave the lobby
   const handleLeave = async () => {
-    const playerId = localStorage.getItem("wordmaster-player-id");
+    const playerId = localStorage.getItem("playerId");
 
     if (!lobbyId || !playerId) return;
 

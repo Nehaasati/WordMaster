@@ -45,7 +45,7 @@ const getActualState = (lobby) => {
 };
 
 Then('the lobby should be in state {string}', async ({ page }, stateText) => {
-  const lobbyId = getLobbyIdFromUrl(page.url()) || world.lobbyId;
+  const lobbyId = world.lobbyId || getLobbyIdFromUrl(page.url());
 
   let actualState = null;
 
@@ -64,7 +64,7 @@ Then('the lobby should be in state {string}', async ({ page }, stateText) => {
 });
 
 Then('the lobby should contain {int} players', async ({ page }, count) => {
-  const lobbyId = getLobbyIdFromUrl(page.url()) || world.lobbyId;
+  const lobbyId = world.lobbyId || getLobbyIdFromUrl(page.url());
 
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const lobby = await fetchLobby(page, lobbyId);

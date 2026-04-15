@@ -16,7 +16,8 @@ const getPlayerByName = (name) =>
 
 Given('a game is currently running with {int} players', async ({ page }, count) => {
   const createResponse = await page.request.post(`${apiUrl}/api/lobby`, {
-    data: { name: 'Fatima' },
+    headers: { 'Content-Type': 'application/json' },
+    data: JSON.stringify({ name: 'Fatima' }),
   });
   expect(createResponse.ok()).toBe(true);
   const createData = await createResponse.json();
@@ -32,11 +33,12 @@ Given('a game is currently running with {int} players', async ({ page }, count) 
     const joinResponse = await page.request.post(
       `${apiUrl}/api/lobby/${state.lobbyId}/join`,
       {
-        data: {
+        headers: { 'Content-Type': 'application/json' },
+        data: JSON.stringify({
           name: playerName,
           characterId: 'ugglan',
           isHost: false,
-        },
+        }),
       },
     );
 
@@ -53,13 +55,17 @@ Given('a game is currently running with {int} players', async ({ page }, count) 
   for (const player of state.players) {
     const readyResponse = await page.request.post(
       `${apiUrl}/api/lobby/${state.lobbyId}/ready/${player.id}`,
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
     );
     expect(readyResponse.ok()).toBe(true);
     player.isReady = true;
   }
 
   const startResponse = await page.request.post(`${apiUrl}/api/lobby/${state.lobbyId}/start`, {
-    data: { gameMode: 'standard' },
+    headers: { 'Content-Type': 'application/json' },
+    data: JSON.stringify({ gameMode: 'standard' }),
   });
   expect(startResponse.ok()).toBe(true);
 });
@@ -71,7 +77,8 @@ When('player {string} submits CategoriesCompleted = true', async ({ page }, play
   const response = await page.request.post(
     `${apiUrl}/api/lobby/${state.lobbyId}/player-finished/${player.id}`,
     {
-      data: { categoriesCompleted: true },
+      headers: { 'Content-Type': 'application/json' },
+      data: JSON.stringify({ categoriesCompleted: true }),
     },
   );
   expect(response.ok()).toBe(true);
