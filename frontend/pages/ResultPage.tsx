@@ -17,7 +17,7 @@ export default function ResultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const gameStopped: boolean = location.state?.gameStopped ?? false;
+  // const gameStopped: boolean = location.state?.gameStopped ?? false;
   const myPlayerId = localStorage.getItem("wordmaster-player-id") ?? "";
 
   useEffect(() => {
