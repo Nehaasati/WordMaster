@@ -151,3 +151,35 @@
     cursor: default;
     box-shadow: none;
 }
+.shop-toast {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: #22c55e;
+    text-align: center;
+    padding: 4px;
+    animation: toastFade 2s ease forwards;
+}
+
+@keyframes toastFade {
+    0% {
+        opacity: 1;
+    }
+
+    70% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.shop-toast--error {
+    color: #ff6b6b;
+}
+
+@media (max-width: 768px) {
+    .shop-panel {
+        display: none;
+    }
+}
