@@ -83,3 +83,34 @@
     font-size: 0.65rem;
     color: #ffd700;
 }
+/* ── POWERUPS ── */
+.shop-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shop-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(138, 86, 204, 0.35);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+
+.shop-item:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(160, 80, 255, 0.5);
+}
+
+.shop-item-label {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    flex: 1;
+}
