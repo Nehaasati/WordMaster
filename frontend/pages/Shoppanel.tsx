@@ -12,3 +12,8 @@ const VOWELS = [
   { id: 'Ä', label: 'Ä', cost: 5 },
   { id: 'Ö', label: 'Ö', cost: 5 },
 ]
+const POWERUPS = [
+  { id: 'freeze', label: 'Freeze', cost: 5 },
+  { id: 'black',  label: 'Bläck',  cost: 5 },
+  { id: 'mix',    label: 'Svenska Alphabet',    cost: 100 },
+]
