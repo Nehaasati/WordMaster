@@ -1,5 +1,6 @@
 import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
+import { world } from './world.js';
 
 const apiUrl = process.env.API_URL || 'http://127.0.0.1:5024';
 const { Given, When, Then } = createBdd();
@@ -21,6 +22,7 @@ Given('a game is currently running with {int} players', async ({ page }, count) 
   const createData = await createResponse.json();
 
   state.lobbyId = createData.lobbyId;
+  world.lobbyId = state.lobbyId;
   state.players = [
     { id: createData.playerId, name: 'Fatima', isHost: true, isReady: false },
   ];

@@ -2,6 +2,7 @@ import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import { LandingPage } from '../pages/landing.page.js';
 import { LobbyPage } from '../pages/lobby.page.js';
+import { world } from './world.js';
 
 const { Given, When, Then } = createBdd();
 
@@ -22,8 +23,9 @@ When('the host creates a lobby with name {string} and character {string}', async
   await state.landingPage.enterName(name);
   await state.landingPage.confirm();
 
-  await page.waitForURL('**/lobby/**');
+  await page.waitForURL('**/lobby/*');
   state.lobbyId = page.url().split('/').pop();
+  world.lobbyId = state.lobbyId;
 
   state.lobbyPage = new LobbyPage(page);
   await state.lobbyPage.waitForLobby();
@@ -59,8 +61,9 @@ Given('a lobby exists created by {string} with character {string}', async ({ bro
   await landing.enterName(name);
   await landing.confirm();
 
-  await page.waitForURL('**/lobby/**');
+  await page.waitForURL('**/lobby/*');
   state.lobbyId = page.url().split('/').pop();
+  world.lobbyId = state.lobbyId;
 
   state.lobbyPage = new LobbyPage(page);
   await state.lobbyPage.waitForLobby();

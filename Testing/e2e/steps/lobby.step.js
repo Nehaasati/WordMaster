@@ -1,8 +1,20 @@
 import { createBdd } from 'playwright-bdd';
 import { expect } from '@playwright/test';
+import { world } from './world.js';
 
 const apiUrl = process.env.API_URL || 'http://127.0.0.1:5024';
 const { Then } = createBdd();
+
+const getLobbyIdFromUrl = (url) => {
+  try {
+    const path = new URL(url).pathname;
+    const segments = path.split('/').filter(Boolean);
+    const lastSegment = segments[segments.length - 1] || '';
+    return lastSegment === 'lobby' ? '' : lastSegment;
+  } catch {
+    return '';
+  }
+};
 
 const stateMap = {
   0: 'WaitingForPlayers',
@@ -33,8 +45,7 @@ const getActualState = (lobby) => {
 };
 
 Then('the lobby should be in state {string}', async ({ page }, stateText) => {
-  const segment = page.url().split('/').pop();
-  const lobbyId = segment || '';
+  const lobbyId = getLobbyIdFromUrl(page.url()) || world.lobbyId;
 
   let actualState = null;
 
@@ -53,8 +64,7 @@ Then('the lobby should be in state {string}', async ({ page }, stateText) => {
 });
 
 Then('the lobby should contain {int} players', async ({ page }, count) => {
-  const segment = page.url().split('/').pop();
-  const lobbyId = segment || '';
+  const lobbyId = getLobbyIdFromUrl(page.url()) || world.lobbyId;
 
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const lobby = await fetchLobby(page, lobbyId);
