@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
 import * as signalR from '@microsoft/signalr'
 import '../css/GamePage.css'
+import ShopPanel from './ShopPanel'
 ///Star annimation
 const STATIC_STARS: StarData[] = Array.from({ length: 60 }).map((_, i) => ({
   id: i,
@@ -795,6 +796,26 @@ useEffect(() => {
       </div>
 
       {/* Main content */}
+      <ShopPanel
+  score={score}
+  onBuyLetter={(letter, cost) => {
+    setScore(prev => prev - cost)
+    setAllLetters(prev => [
+      ...prev,
+      {
+        id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),
+        char: letter,
+        used: false,
+        isExtra: true
+      }
+    ])
+  }}
+  onBuyPowerup={(powerupId, cost) => {
+    setScore(prev => prev - cost)
+    if (powerupId === 'freeze') handleFreeze()
+    if (powerupId === 'mix') handleMix()
+  }}
+/>
       <div className="gp-content">
         <div className="gp-left-spacer" />
 
