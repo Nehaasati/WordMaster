@@ -82,5 +82,5 @@ jobs:
 
       # Run UI tests
       - name: Run system tests
-        working-directory: Testing/SystemTests
+        working-directory: Testing/e2e
         run: npm run test:ui
