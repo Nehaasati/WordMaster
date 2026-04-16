@@ -1,8 +1,8 @@
-using WordMaster.Services;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
-using System.Linq;
-using System.Collections.Generic;
+using WordMaster.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +42,12 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// The backend root
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.MapFallbackToFile("index.html");
 
 app.UseCors("AllowAll");
 
