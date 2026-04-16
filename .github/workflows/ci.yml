@@ -51,7 +51,7 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # Build frontend (dist/)
+      # Build frontend 
       - name: Build frontend
         working-directory: frontend
         run: npm run build
@@ -67,12 +67,12 @@ jobs:
           name: app-publish
           path: out/
 
-      # Upload frontend dist (NOT backend/wwwroot)
+      # Upload frontend (NOT backend/wwwroot)
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-dist
-          path: frontend/dist/
+          name: frontend
+          path: frontend
 
       # Validate Docker build
       - name: Validate Docker build
@@ -93,8 +93,8 @@ jobs:
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
         with:
-          name: frontend-dist
-          path: frontend/dist/
+          name: frontend
+          path: frontend
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
