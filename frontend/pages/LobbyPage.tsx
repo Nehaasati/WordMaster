@@ -164,7 +164,7 @@ export default function LobbyPage() {
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5024/api/character");
+        const res = await fetch("/api/character");
         if (res.ok) {
           const data = await res.json();
           const withImages: Character[] = data.map(
@@ -244,7 +244,7 @@ export default function LobbyPage() {
     const fetchLobby = async () => {
       try {
         const res = await fetch(
-          `http://127.0.0.1:5024/api/lobby/${realLobbyId}`,
+          `/api/lobby/${realLobbyId}`,
         );
         if (!res.ok) return;
 
@@ -280,7 +280,7 @@ export default function LobbyPage() {
     if (!realLobbyId) return;
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl("http://127.0.0.1:5024/lobbyHub")
+      .withUrl("/lobbyHub")
       .withAutomaticReconnect()
       .build();
 
@@ -343,7 +343,7 @@ export default function LobbyPage() {
     // HOST => only send ready
     if (isHost) {
       await fetch(
-        `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${playerId}`,
+        `/api/lobby/${realLobbyId}/ready/${playerId}`,
         { method: "POST" },
       );
       setReady(true);
@@ -352,7 +352,7 @@ export default function LobbyPage() {
 
     // GUEST => always attempt join
     const joinRes = await fetch(
-      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+      `/api/lobby/${realLobbyId}/join`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -375,7 +375,7 @@ export default function LobbyPage() {
 
     // Send ready immediately after join
     await fetch(
-      `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${newId}`,
+      `/api/lobby/${realLobbyId}/ready/${newId}`,
       {
         method: "POST",
       },
@@ -509,7 +509,7 @@ export default function LobbyPage() {
               style={{ marginBottom: "12px" }}
               onClick={async () => {
                 const res = await fetch(
-                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/add-bot`,
+                  `/api/lobby/${realLobbyId}/add-bot`,
                   { method: "POST" },
                 );
                 if (!res.ok) {
@@ -563,7 +563,7 @@ export default function LobbyPage() {
 
                 // GUEST → join then ready
                 const response = await fetch(
-                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/join`,
+                  `/api/lobby/${realLobbyId}/join`,
                   {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -591,7 +591,7 @@ export default function LobbyPage() {
                 setPlayerId(joinedPlayer.id);
 
                 await fetch(
-                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/ready/${joinedPlayer.id}`,
+                  `/api/lobby/${realLobbyId}/ready/${joinedPlayer.id}`,
                   { method: "POST" },
                 );
 
@@ -607,7 +607,7 @@ export default function LobbyPage() {
                 }
 
                 const startResponse = await fetch(
-                  `http://127.0.0.1:5024/api/lobby/${realLobbyId}/start`,
+                  `/api/lobby/${realLobbyId}/start`,
                   {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

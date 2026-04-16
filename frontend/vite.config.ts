@@ -6,13 +6,14 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: path.resolve(__dirname, "../backend/wwwroot"), 
+    outDir: path.resolve(__dirname, "../backend/wwwroot"),
     emptyOutDir: true,
-    sourcemap: true
+    sourcemap: true,
   },
   server: {
-    port: 5173,
-    host: true,
-  }
-})
+    proxy: {
+      "/api": "http://127.0.0.1:5024"
+    },
+  },
+});
 
