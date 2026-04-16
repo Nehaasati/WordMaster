@@ -23,8 +23,7 @@ RUN cd backend && dotnet restore
 # Copy backend source
 COPY backend ./backend
 
-# Copy frontend build output into backend/wwwroot (folder auto-created)
-COPY --from=frontend-builder /app/frontend/dist ./backend/wwwroot
+
 
 # Publish backend
 RUN cd backend && dotnet publish -c Release -o /app/publish --no-restore
