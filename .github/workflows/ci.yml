@@ -5,9 +5,9 @@ name: .NET
 
 on:
   push:
-    branches: ["publish"]
+    branches: ["main"]
   pull_request:
-    branches: ["publish"]
+    branches: ["main"]
 
 jobs:
   # Main build job that runs on Ubuntu and performs CI for both backend (.NET) and frontend (Node.js)
