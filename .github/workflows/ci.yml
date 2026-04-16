@@ -71,8 +71,8 @@ jobs:
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-dist
-          path: frontend/dist/
+          name: frontend
+          path: frontend
 
       # Validate Docker build
       - name: Validate Docker build
