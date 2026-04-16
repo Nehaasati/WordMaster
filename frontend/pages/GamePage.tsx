@@ -88,7 +88,7 @@ useEffect(() => {
   if (!lobbyId) return;
 
   const connection = new signalR.HubConnectionBuilder()
-    .withUrl("http://127.0.0.1:5024/lobbyHub")
+    .withUrl("/lobbyHub")
     .withAutomaticReconnect()
     .build();
 
@@ -112,7 +112,7 @@ useEffect(() => {
       setCategories(initial);
 
       // fetch new letters
-      const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
+      const res = await fetch(`/api/lobby/${lobbyId}`);
       if (res.ok) {
         const data = await res.json();
         setAllLetters(
@@ -144,7 +144,7 @@ useEffect(() => {
       setStopped(true);
 
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-      fetch(`http://127.0.0.1:5024/api/lobby/${lId}/save-score/${myId}`, {
+      fetch(`/api/lobby/${lId}/save-score/${myId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ score: scoreRef.current }),
@@ -175,7 +175,7 @@ useEffect(() => {
       setStopped(true);
 
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-      fetch(`http://127.0.0.1:5024/api/lobby/${lId}/save-score/${myId}`, {
+      fetch(`/api/lobby/${lId}/save-score/${myId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ score: scoreRef.current }),
@@ -261,7 +261,7 @@ useEffect(() => {
     const fetchPlayerCharacter = async () => {
       if (!lobbyId) return;
       try {
-        const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
+        const res = await fetch(`/api/lobby/${lobbyId}`);
         if (res.ok) {
           const data = await res.json();
           const storedPlayerId = localStorage.getItem("wordmaster-player-id");
@@ -284,8 +284,8 @@ useEffect(() => {
     const fetchInitialLetters = async () => {
       try {
         const url = lobbyId
-          ? `http://127.0.0.1:5024/api/lobby/${lobbyId}`
-          : "http://127.0.0.1:5024/api/game/letters";
+          ? `/api/lobby/${lobbyId}`
+          : "/api/game/letters";
 
         const response = await fetch(url);
         if (response.ok) {
@@ -315,7 +315,7 @@ useEffect(() => {
   const addExtraLetters = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:5024/api/game/letters?count=5",
+        "/api/game/letters?count=5",
       );
       if (response.ok) {
         const letters: string[] = await response.json();
@@ -339,7 +339,7 @@ useEffect(() => {
     if (!characterId) return 0;
     const secondsTaken = (Date.now() - roundStartTime) / 1000;
     try {
-      const res = await fetch("http://127.0.0.1:5024/api/character/ability", {
+      const res = await fetch("/api/character/ability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ characterId, word, secondsTaken }),
@@ -450,7 +450,7 @@ useEffect(() => {
         if (index !== -1) availablePool.splice(index, 1);
       }
 
-      const url = "http://127.0.0.1:5024/api/word/validate";
+      const url = "/api/word/validate";
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -493,7 +493,7 @@ useEffect(() => {
         let newLetterChars: string[] = [];
         try {
           const resp = await fetch(
-            `http://127.0.0.1:5024/api/game/letters?count=${word.length}`,
+            `/api/game/letters?count=${word.length}`,
           );
           if (resp.ok) newLetterChars = await resp.json();
         } catch {
@@ -695,7 +695,7 @@ useEffect(() => {
     if (!lobbyId || !connectionRef.current) return;
     const myPlayerId = localStorage.getItem("wordmaster-player-id") ?? "";
     try {
-      await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}/save-score/${myPlayerId}`, {
+      await fetch(`/api/lobby/${lobbyId}/save-score/${myPlayerId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ score: Math.round(score) }),
@@ -727,7 +727,7 @@ useEffect(() => {
           const playerId = localStorage.getItem("wordmaster-player-id");
           if (playerId) {
             fetch(
-              `http://127.0.0.1:5024/api/lobby/${lobbyId}/player-finished/${playerId}`,
+              `/api/lobby/${lobbyId}/player-finished/${playerId}`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -753,7 +753,7 @@ useEffect(() => {
 
     if (!lobbyId || !playerId) return;
 
-    await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}/restart`, {
+    await fetch(`/api/lobby/${lobbyId}/restart`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerId }),
@@ -767,7 +767,7 @@ useEffect(() => {
     if (!lobbyId || !playerId) return;
 
     await fetch(
-      `http://127.0.0.1:5024/api/lobby/${lobbyId}/leave/${playerId}`,
+      `/api/lobby/${lobbyId}/leave/${playerId}`,
       { method: "POST" },
     );
 

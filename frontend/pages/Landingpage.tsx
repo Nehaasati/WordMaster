@@ -38,7 +38,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
     if (!trimmedName) return;
 
     try {
-      const response = await fetch("http://127.0.0.1:5024/api/lobby", {
+      const response = await fetch("/api/lobby", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

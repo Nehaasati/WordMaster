@@ -24,7 +24,7 @@ export default function ResultPage() {
     if (!lobbyId) return;
     const fetchResults = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:5024/api/lobby/${lobbyId}`);
+        const res = await fetch(`/api/lobby/${lobbyId}`);
         if (!res.ok) {
           setError("Kunde inte hämta resultat.");
           setLoading(false);

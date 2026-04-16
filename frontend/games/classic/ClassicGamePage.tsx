@@ -3,7 +3,7 @@ import type { GameState, SubmitResponse } from "./GameState";
 import "./gamepage.css";
 
 export default function ClassicGamePage() {
-  const API_BASE = "http://127.0.0.1:5024/api/classic";
+  const API_BASE = "/api/classic";
 
   const [gameState, setGameState] = useState<GameState>({
     currentCategory: "",
@@ -30,7 +30,7 @@ export default function ClassicGamePage() {
   // -----------------------------
   const checkBackend = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5024/api/health");
+      const res = await fetch("/api/health");
       setBackendConnected(res.ok);
     } catch {
       setBackendConnected(false);
