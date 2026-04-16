@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { Letter, CategoryData, StarData, Category } from '../interfaces/Gamepage';
 import * as signalR from '@microsoft/signalr'
 import '../css/GamePage.css'
-import type ShopPanel from './ShopPanel'
+import ShopPanel from './ShopPanel'
 ///Star annimation
 const STATIC_STARS: StarData[] = Array.from({ length: 60 }).map((_, i) => ({
   id: i,
