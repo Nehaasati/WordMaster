@@ -1,4 +1,4 @@
-// Only the host can start the game
+# Only the host can start the game
 
 Feature: Start Game
   As the host

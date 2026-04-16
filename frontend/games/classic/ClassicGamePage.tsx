@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { GameState, SubmitResponse } from "./GameState";
+import type { GameState, SubmitResponse } from "./GameState";
 import "./gamepage.css";
 
 export default function ClassicGamePage() {

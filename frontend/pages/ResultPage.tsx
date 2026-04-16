@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import "../css/ResultPage.css";
 
 interface PlayerResult {
@@ -12,12 +12,12 @@ interface PlayerResult {
 export default function ResultPage() {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
+  //const location = useLocation();
   const [players, setPlayers] = useState<PlayerResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const gameStopped: boolean = location.state?.gameStopped ?? false;
+  // const gameStopped: boolean = location.state?.gameStopped ?? false;
   const myPlayerId = localStorage.getItem("wordmaster-player-id") ?? "";
 
   useEffect(() => {

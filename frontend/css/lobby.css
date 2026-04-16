@@ -46,7 +46,7 @@
     min-width: 320px;
 }
 
-..ch-arrow {
+.ch-arrow {
     background: none;
     border: none;
     cursor: pointer;

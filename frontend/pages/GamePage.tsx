@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from "react-router-dom";
-import type { Letter,CategoryData, StarData, Category,ValidateResponse } from '../interfaces/GamePage'
+import type { Letter, CategoryData, StarData, Category } from '../interfaces/Gamepage';
 import * as signalR from '@microsoft/signalr'
 import '../css/GamePage.css'
 import ShopPanel from './ShopPanel'
@@ -55,9 +55,7 @@ const GamePage: React.FC = () => {
       return initial;
     },
   );
-  const [backendConnected, setBackendConnected] = useState<boolean | null>(
-    null,
-  );
+
   const [timeLeft, setTimeLeft] = useState(0);
   const [frozen, setFrozen] = useState(false);
   const [freezeMsg, setFreezeMsg] = useState("");
@@ -258,20 +256,7 @@ useEffect(() => {
     }
     return letters;
   };
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:5024/api/health");
-        setBackendConnected(response.ok);
-      } catch {
-        setBackendConnected(false);
-      }
-    };
 
-    checkBackend();
-    const interval = setInterval(checkBackend, 5000);
-    return () => clearInterval(interval);
-  }, []);
   useEffect(() => {
     const fetchPlayerCharacter = async () => {
       if (!lobbyId) return;
@@ -326,6 +311,7 @@ useEffect(() => {
     fetchInitialLetters();
   }, [lobbyId]);
 
+  /*
   const addExtraLetters = async () => {
     try {
       const response = await fetch(
@@ -348,6 +334,7 @@ useEffect(() => {
       ]);
     }
   };
+  */
   const calculateAbilityBonus = async (word: string): Promise<number> => {
     if (!characterId) return 0;
     const secondsTaken = (Date.now() - roundStartTime) / 1000;
@@ -722,10 +709,11 @@ useEffect(() => {
   };
 
   // The classic game
-  const handleFinishClassic = () => {
+  
+  /*const handleFinishClassic = () => {
     setStopped(true);
   };
-
+*/
   const allDone = CATEGORY_LIST.every((c) => categories[c.id].valid);
 
   //Send all done to backend
@@ -797,9 +785,7 @@ useEffect(() => {
         {isHost && <div className="gp-host">Värden</div>}
 
         {/* Leave the lobby */}
-        <button className='gp-leave'
-          onClick={handleLeave}
-        >
+        <button className="gp-leave" onClick={handleLeave}>
           Leave
         </button>
         <div className="gp-freeze-msg" data-testid="freeze-msg">
@@ -896,7 +882,9 @@ useEffect(() => {
               <div className="gp-cat-input-wrap">
                 <input
                   type="text"
-                  ref={(el) => (inputRefs.current[cat.id] = el)}
+                  ref={(el) => {
+                    if (el) inputRefs.current[cat.id] = el;
+                  }}
                   className={`gp-cat-input ${
                     categories[cat.id].valid ? "gp-cat-input--valid" : ""
                   }`}
@@ -907,10 +895,19 @@ useEffect(() => {
                 />
                 {categories[cat.id].valid && lobbyId && (
                   <span
-                      style={{ color: (categoryPoints[cat.id] ?? 10) === 5 ? "#ff8c00" : "#4caf50" }}
-                      title={(categoryPoints[cat.id] ?? 10) === 5 ? "Samma ord som motståndaren – 5p" : "Unikt ord – 10p"}
+                    style={{
+                      color:
+                        (categoryPoints[cat.id] ?? 10) === 5
+                          ? "#ff8c00"
+                          : "#4caf50",
+                    }}
+                    title={
+                      (categoryPoints[cat.id] ?? 10) === 5
+                        ? "Samma ord som motståndaren – 5p"
+                        : "Unikt ord – 10p"
+                    }
                   >
-                      {(categoryPoints[cat.id] ?? 10) === 5 ? "5p" : "10p"}
+                    {(categoryPoints[cat.id] ?? 10) === 5 ? "5p" : "10p"}
                   </span>
                 )}
 
@@ -980,7 +977,8 @@ useEffect(() => {
             <h2>{gameStopped ? "Spelet avbröts!" : "Stopp!"}</h2>
             {gameStopped && (
               <p style={{ color: "#ff8c00", fontWeight: "bold" }}>
-                En spelare tryckte på Stopp. Vidarebefordrar till resultatsidan...
+                En spelare tryckte på Stopp. Vidarebefordrar till
+                resultatsidan...
               </p>
             )}
             <p>Din tid: {timeLeft} sekunder</p>
@@ -1003,10 +1001,7 @@ useEffect(() => {
 
             {/* Classic mode */}
             {!lobbyId && (
-              <button
-                className="gp-btn"
-                onClick={() => navigate("/")}
-              >
+              <button className="gp-btn" onClick={() => navigate("/")}>
                 Tillbaka till menyn
               </button>
             )}

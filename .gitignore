@@ -154,3 +154,4 @@ playwright/.cache/
 *.xml
 
 Testing/.features-gen/
+MyNotes.md

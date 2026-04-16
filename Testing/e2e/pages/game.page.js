@@ -1,5 +1,5 @@
 // game page
-class GamePage {
+export default class GamePage {
   constructor(page) {
     this.page = page;
 
@@ -54,5 +54,3 @@ class GamePage {
     await this.page.click(this.leaveGameBtn);
   }
 }
-
-module.exports = { GamePage };

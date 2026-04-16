@@ -1,0 +1,86 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  # Main build job that runs on Ubuntu and performs CI for both backend (.NET) and frontend (Node.js)
+  build:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v4
+
+      # Install the .NET SDK (version 10.0.x) needed to build the backend
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # Download and restore all NuGet dependencies for the .NET project
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Compile the .NET solution (skip restore since dependencies were already downloaded)
+      - name: Build
+        run: dotnet build --no-restore
+
+      # Debug step to show current working directory and directory contents
+      - name: Debug working directory
+        run: |
+          pwd
+          ls -la
+
+      # Install Node.js runtime (version 24) needed to build the React frontend
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache-dependency-path: frontend/package-lock.json
+          cache: "npm"
+
+      # Install npm dependencies for the frontend project using clean install (package-lock.json enforced)
+      - name: Restore npm dependencies
+        working-directory: frontend
+        run: npm install
+
+      # Build the React frontend project (creates optimized production build)
+      - name: Build npm
+        working-directory: frontend
+        run: npm run build
+      # Run the dotnet server in the background for testing
+      - name: Run dotnet backend
+        working-directory: backend
+        run: |
+          dotnet run &
+          sleep 5
+          # Optional: Add health check or tests here
+          echo "backend started"
+
+      # Install npm dependencies for system tests
+      - name: Install test dependencies
+        working-directory: Testing/e2e
+        run: npm ci && npx playwright install
+
+      # Run Unit tests
+      - name: Run unit tests
+        run: dotnet test
+
+      # Run API tests
+      - name: Run api tests
+        working-directory: Testing/Postman
+        run: npm run test:api
+
+      # Run UI tests
+      #- name: Run system tests
+      #  working-directory: Testing/e2e
+      #  run: npm run test:ui

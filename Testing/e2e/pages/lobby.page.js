@@ -1,6 +1,6 @@
 // lobby page
 
-class LobbyPage {
+export default class LobbyPage {
   constructor(page) {
     this.page = page;
 
@@ -62,5 +62,3 @@ class LobbyPage {
     await this.page.click(this.startBtn);
   }
 }
-
-module.exports = { LobbyPage };
