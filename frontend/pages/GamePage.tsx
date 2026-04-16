@@ -1,9 +1,9 @@
-﻿import React, { useState, useEffect, useRef } from 'react'
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Letter, CategoryData, StarData, Category } from '../interfaces/Gamepage';
-import * as signalR from '@microsoft/signalr'
-import '../css/GamePage.css'
-import ShopPanel from './ShopPanel'
+import type { Letter, CategoryData, StarData, Category } from "../interfaces/Gamepage";
+import * as signalR from "@microsoft/signalr";
+import "../css/GamePage.css"
+import ShopPanel from "./Shoppanel";
 ///Star annimation
 const STATIC_STARS: StarData[] = Array.from({ length: 60 }).map((_, i) => ({
   id: i,
@@ -852,7 +852,7 @@ useEffect(() => {
       {/* Main content */}
       <ShopPanel
   score={score}
-  onBuyLetter={(letter, cost) => {
+  onBuyLetter={(letter: string, cost: number) => {
     setScore(prev => prev - cost)
     setAllLetters(prev => [
       ...prev,
@@ -864,7 +864,7 @@ useEffect(() => {
       }
     ])
   }}
-  onBuyPowerup={(powerupId, cost) => {
+  onBuyPowerup={(powerupId: string, cost: number) => {
     setScore(prev => prev - cost)
     if (powerupId === 'freeze') handleFreeze()
     if (powerupId === 'mix') handleMix()

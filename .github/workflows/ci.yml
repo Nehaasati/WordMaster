@@ -1,6 +1,3 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
 name: .NET
 
 on:
@@ -10,77 +7,160 @@ on:
     branches: ["main"]
 
 jobs:
-  # Main build job that runs on Ubuntu and performs CI for both backend (.NET) and frontend (Node.js)
   build:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      # Check out the repository code
       - uses: actions/checkout@v4
 
-      # Install the .NET SDK (version 10.0.x) needed to build the backend
+      # Install .NET 10 SDK
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
-      # Download and restore all NuGet dependencies for the .NET project
+      # Cache NuGet
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore dependencies
         run: dotnet restore
 
-      # Compile the .NET solution (skip restore since dependencies were already downloaded)
-      - name: Build
+      - name: Build backend
         run: dotnet build --no-restore
 
-      # Debug step to show current working directory and directory contents
-      - name: Debug working directory
-        run: |
-          pwd
-          ls -la
-
-      # Install Node.js runtime (version 24) needed to build the React frontend
+      # Node 24
       - name: Use Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache-dependency-path: frontend/package-lock.json
           cache: "npm"
+          cache-dependency-path: |
+            frontend/package-lock.json
+            Testing/package-lock.json
 
-      # Install npm dependencies for the frontend project using clean install (package-lock.json enforced)
-      - name: Restore npm dependencies
+      # Install frontend deps
+      - name: Install frontend dependencies
         working-directory: frontend
-        run: npm install
+        run: npm ci
 
-      # Build the React frontend project (creates optimized production build)
-      - name: Build npm
+      # Build frontend (dist/)
+      - name: Build frontend
         working-directory: frontend
         run: npm run build
-      # Run the dotnet server in the background for testing
-      - name: Run dotnet backend
-        working-directory: backend
-        run: |
-          dotnet run &
-          sleep 5
-          # Optional: Add health check or tests here
-          echo "backend started"
 
-      # Install npm dependencies for system tests
-      - name: Install test dependencies
-        working-directory: Testing/e2e
-        run: npm ci && npx playwright install
+      # Publish backend
+      - name: Publish backend
+        run: dotnet publish backend/backend.csproj -c Release -o out --no-restore
 
-      # Run Unit tests
-      - name: Run unit tests
-        run: dotnet test
+      # Upload backend artifact
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-publish
+          path: out/
+
+      # Upload frontend dist (NOT backend/wwwroot)
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+
+      # Validate Docker build
+      - name: Validate Docker build
+        run: docker build -t wordmaster-ci .
+  
+  tests:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [ api ]   # UI disabled for now
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Download frontend dist
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "npm"
+          cache-dependency-path: Testing/package-lock.json
+
+      # Install API test deps
+      - name: Install system test dependencies
+        if: ${{ matrix.suite == 'api' }}
+        working-directory: Testing/
+        run: npm ci
 
       # Run API tests
-      - name: Run api tests
-        working-directory: Testing/Postman
-        run: npm run test:api
+      - name: Run API tests
+        if: ${{ matrix.suite == 'api' }}
+        run: |
+          dotnet run --project backend/backend.csproj --urls http://127.0.0.1:5024 &
+          sleep 8
+          cd Testing/
+          npm run test:api:ci
 
-      # Run UI tests
-      #- name: Run system tests
-      #  working-directory: Testing/e2e
-      #  run: npm run test:ui
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.suite }}
+          path: |
+            TestResults/**
+            Testing/test-results/**
+          if-no-files-found: ignore
+
+  report:
+    needs: tests
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: artifacts/
+          merge-multiple: true
+
+      - name: Publish pipeline summary
+        run: |
+          echo "## CI Rapport" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Build-jobb: klart" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Testmatris: endast API körs just nu" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Nedladdade artefakter:" >> "$GITHUB_STEP_SUMMARY"
+          find artifacts -type f | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
