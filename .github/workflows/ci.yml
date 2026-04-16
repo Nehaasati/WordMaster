@@ -84,7 +84,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [ api ]   # UI disabled for now
+        suite: [ api,unit ]   # UI disabled for now
 
     steps:
       - uses: actions/checkout@v4
@@ -124,7 +124,14 @@ jobs:
         if: ${{ matrix.suite == 'api' }}
         working-directory: Testing/
         run: npm ci
+      
+      # unit test
+      - name: Run unit tests
 
+        if: ${{ matrix.suite == 'unit' }}
+
+        run: dotnet test --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults
+ 
       # Run API tests
       - name: Run API tests
         if: ${{ matrix.suite == 'api' }}
