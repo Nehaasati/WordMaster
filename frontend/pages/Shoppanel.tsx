@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import type { ShopProps } from '../interfaces/Shop'
-import "../css/ShopPanel.css";
+import React, { useState } from "react";
+import type { ShopProps } from "../interfaces/Shop";
+import "../css/Shoppanel.css";
 const VOWELS = [
   { id: 'A', label: 'A', cost: 5 },
   { id: 'E', label: 'E', cost: 5 },
