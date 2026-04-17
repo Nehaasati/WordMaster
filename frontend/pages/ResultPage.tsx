@@ -102,14 +102,13 @@ export default function ResultPage() {
         <div className="rp-actions">
           <button
             className="rp-btn rp-btn--primary"
-            onClick={() =>
-              navigate(`/lobby/${lobbyId}`, {
-                state: {
-                  playerName: localStorage.getItem("wordmaster-player-name"),
-                  isHost: localStorage.getItem("isHost") === "true",
-                },
-              })
-            }
+            onClick={async () => {
+              const playerId = localStorage.getItem("wordmaster-player-id");
+              if (!playerId) return;
+              await fetch(`/api/lobby/${lobbyId}/restart/${playerId}`, {
+                method: "POST",
+              });
+            }}
           >
             Spela igen
           </button>
