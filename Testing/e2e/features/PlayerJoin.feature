@@ -1,5 +1,3 @@
-# Player Join the lobby
-
 Feature: Join Lobby
   As a guest player
   I want to join an existing lobby

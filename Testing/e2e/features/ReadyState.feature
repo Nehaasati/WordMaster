@@ -1,5 +1,3 @@
-# If both players are ready
-
 Feature: Player Ready State
   As two players
   I want to mark myself as ready
