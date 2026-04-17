@@ -276,62 +276,77 @@ export default function LobbyPage() {
   /*
      SignalR connection
  */
-  useEffect(() => {
-    if (!realLobbyId) return;
+useEffect(() => {
+  if (!realLobbyId) return;
 
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl("/lobbyHub")
-      .withAutomaticReconnect()
-      .build();
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/lobbyHub")
+    .withAutomaticReconnect()
+    .build();
 
-    connection
-      .start()
-      .then(async () => {
-        await connection.invoke("JoinLobbyGroup", realLobbyId);
+  connection
+    .start()
+    .then(async () => {
+      await connection.invoke("JoinLobbyGroup", realLobbyId);
 
-        // When a player joins the lobby
-        connection.on("PlayerJoined", (player: Player) => {
-          console.log("Player joined:", player);
+      // When a player joins the lobby
+      connection.on("PlayerJoined", (player: Player) => {
+        console.log("Player joined:", player);
 
-          setPlayers((prevPlayers) => {
-            // prevent duplicate players
-            if (prevPlayers.some((p) => p.id === player.id)) {
-              return prevPlayers;
-            }
-            // prevent adding more than 2 players
-            if (prevPlayers.length >= 2) {
-              return prevPlayers;
-            }
-
-            return [...prevPlayers, player];
-          });
-        });
-
-        // When a player becomes ready
-        connection.on("PlayerReady", (playerId: string) => {
-          setPlayers((prevPlayers) =>
-            prevPlayers.map((p) =>
-              p.id === playerId ? { ...p, isReady: true } : p,
-            ),
-          );
-        });
-
-        // When the host starts the game
-        connection.on("GameStarted", (lobbyId: string, mode: string) => {
-          if (mode === "blitz") {
-            navigate("/classic-game");
-          } else {
-            navigate(`/game/${lobbyId}`);
+        setPlayers((prevPlayers) => {
+          // prevent duplicate players
+          if (prevPlayers.some((p) => p.id === player.id)) {
+            return prevPlayers;
           }
-        });
-      })
-      .catch((err) => console.error("SignalR error:", err));
+          // prevent adding more than 2 players
+          if (prevPlayers.length >= 2) {
+            return prevPlayers;
+          }
 
-    // Cleanup when component unmounts
-    return () => {
-      connection.stop();
-    };
-  }, [realLobbyId, navigate]);
+          return [...prevPlayers, player];
+        });
+      });
+
+      // When a player becomes ready
+      connection.on("PlayerReady", (playerId: string) => {
+        setPlayers((prevPlayers) =>
+          prevPlayers.map((p) =>
+            p.id === playerId ? { ...p, isReady: true } : p,
+          ),
+        );
+      });
+
+      // When the host starts the game
+      connection.on("GameStarted", (lobbyId: string, mode: string) => {
+        if (mode === "blitz") {
+          navigate("/classic-game");
+        } else {
+          navigate(`/game/${lobbyId}`);
+        }
+      });
+
+      // When the lobby is reset for a new round
+      connection.on("LobbyReset", (resetLobbyId: string) => {
+        if (resetLobbyId === realLobbyId) {
+          console.log("Lobby reset received");
+
+          // Reset frontend state
+          setReady(false);
+          setPlayers([]);
+          setMessage(null);
+
+          // Navigate back to lobby page (Ready screen)
+          navigate(`/lobby/${realLobbyId}`);
+        }
+      });
+    })
+    .catch((err) => console.error("SignalR error:", err));
+
+  // Cleanup when component unmounts
+  return () => {
+    connection.stop();
+  };
+}, [realLobbyId, navigate]);
 
   /*
      Handle Ready:
