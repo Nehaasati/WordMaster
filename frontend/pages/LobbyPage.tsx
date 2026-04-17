@@ -4,6 +4,9 @@ import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
 import * as signalR from "@microsoft/signalr";
+import { useSignalR } from "../interfaces/SignalRContext";
+
+const connection = useSignalR();
 
 /*
    Name Modal — supports 3 entry modes:
@@ -275,74 +278,20 @@ export default function LobbyPage() {
      SignalR connection
  */
   useEffect(() => {
-    if (!realLobbyId) return;
+  if (!connection || !realLobbyId) return;
 
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl("/lobbyHub")
-      .withAutomaticReconnect()
-      .build();
+  connection.invoke("JoinLobbyGroup", realLobbyId);
 
-    connection
-      .start()
-      .then(async () => {
-        // 1- Get the real connectionId from SignalR
-        const realConnectionId = connection.connectionId;
+  connection.on("PlayerJoined", ...);
+  connection.on("PlayerReady", ...);
+  connection.on("GameStarted", ...);
 
-        // 2- Register it in backend
-        await fetch(`/api/lobby/${realLobbyId}/register-connection`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            playerId: localStorage.getItem("wordmaster-player-id"),
-            connectionId: realConnectionId,
-          }),
-        });
-
-        // 3- Join the SignalR group (VERY IMPORTANT)
-        await connection.invoke("JoinLobbyGroup", realLobbyId);
-
-        // 4- Now register all listeners
-        connection.on("PlayerJoined", (player: Player) => {
-          console.log("Player joined:", player);
-
-          setPlayers((prevPlayers) => {
-            if (prevPlayers.some((p) => p.id === player.id)) return prevPlayers;
-            if (prevPlayers.length >= 2) return prevPlayers;
-            return [...prevPlayers, player];
-          });
-        });
-
-        connection.on("PlayerReady", (playerId: string) => {
-          setPlayers((prevPlayers) =>
-            prevPlayers.map((p) =>
-              p.id === playerId ? { ...p, isReady: true } : p,
-            ),
-          );
-        });
-
-        connection.on("GameStarted", (lobbyId: string, mode: string) => {
-          if (mode === "blitz") navigate("/classic-game");
-          else navigate(`/game/${lobbyId}`);
-        });
-
-        connection.on("LobbyReset", (resetLobbyId: string) => {
-          if (resetLobbyId === realLobbyId) {
-            console.log("Lobby reset received");
-
-            setReady(false);
-            setPlayers([]);
-            setMessage(null);
-
-            navigate(`/lobby/${realLobbyId}`);
-          }
-        });
-      })
-      .catch((err) => console.error("SignalR error:", err));
-
-    return () => {
-      connection.stop();
-    };
-  }, [realLobbyId, navigate]);
+  return () => {
+    connection.off("PlayerJoined");
+    connection.off("PlayerReady");
+    connection.off("GameStarted");
+  };
+}, [connection, realLobbyId]);
 
   /*
      Handle Ready:
