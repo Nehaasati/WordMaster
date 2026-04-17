@@ -3,10 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
-import * as signalR from "@microsoft/signalr";
 import { useSignalR } from "../interfaces/SignalRContext";
-
-const connection = useSignalR();
 
 /*
    Name Modal — supports 3 entry modes:
@@ -277,21 +274,63 @@ export default function LobbyPage() {
   /*
      SignalR connection
  */
-  useEffect(() => {
-  if (!connection || !realLobbyId) return;
+ const connection = useSignalR();
 
-  connection.invoke("JoinLobbyGroup", realLobbyId);
+ useEffect(() => {
+   if (!connection || !realLobbyId || !playerId) return;
 
-  connection.on("PlayerJoined", ...);
-  connection.on("PlayerReady", ...);
-  connection.on("GameStarted", ...);
+   console.log("LobbyPage using connection:", connection.connectionId);
 
-  return () => {
-    connection.off("PlayerJoined");
-    connection.off("PlayerReady");
-    connection.off("GameStarted");
-  };
-}, [connection, realLobbyId]);
+   // 1) Register connection in backend
+   fetch(`/api/lobby/${realLobbyId}/register-connection`, {
+     method: "POST",
+     headers: { "Content-Type": "application/json" },
+     body: JSON.stringify({
+       playerId,
+       connectionId: connection.connectionId,
+     }),
+   });
+
+   // 2) Join group
+   connection.invoke("JoinLobbyGroup", realLobbyId);
+
+   // 3) Listeners
+   connection.on("PlayerJoined", (player: Player) => {
+     setPlayers((prev) => {
+       if (prev.some((p) => p.id === player.id)) return prev;
+       return [...prev, player];
+     });
+   });
+
+   connection.on("PlayerReady", (id: string) => {
+     setPlayers((prev) =>
+       prev.map((p) => (p.id === id ? { ...p, isReady: true } : p)),
+     );
+   });
+
+   connection.on("GameStarted", (lobbyId: string, mode: string) => {
+     if (mode === "blitz") navigate("/classic-game");
+     else navigate(`/game/${lobbyId}`);
+   });
+
+   connection.on("LobbyReset", (resetLobbyId: string) => {
+     if (resetLobbyId !== realLobbyId) return;
+
+     setReady(false);
+     setPlayers([]);
+     setMessage(null);
+
+     navigate(`/lobby/${realLobbyId}`);
+   });
+
+   // Cleanup
+   return () => {
+     connection.off("PlayerJoined");
+     connection.off("PlayerReady");
+     connection.off("GameStarted");
+     connection.off("LobbyReset");
+   };
+ }, [connection, realLobbyId, navigate , playerId]);
 
   /*
      Handle Ready:
