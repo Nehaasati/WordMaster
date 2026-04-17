@@ -1,13 +1,12 @@
 // game page
-export default class GamePage {
+
+export class GamePage {
   constructor(page) {
     this.page = page;
 
-    // Score & timer
     this.scoreLabel = 'text=POÄNG';
     this.timerLabel = 'text=TID';
 
-    // Category inputs
     this.categoryInputs = {
       NAMN: 'input[placeholder="NAMN"]',
       MAT: 'input[placeholder="MAT"]',
@@ -18,7 +17,6 @@ export default class GamePage {
       SAK: 'input[placeholder="SAK"]'
     };
 
-    // Buttons
     this.freezeBtn = 'text=Freeze';
     this.inkBtn = 'text=Bläck';
     this.mixBtn = 'text=Mix';
