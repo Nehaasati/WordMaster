@@ -47,8 +47,6 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapFallbackToFile("index.html");
-
 app.UseCors("AllowAll");
 
 if (app.Environment.IsDevelopment())
@@ -479,6 +477,8 @@ app.MapPost("/api/classic/game/skip", (ClassicGameEngine engine) =>
 
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
+
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
