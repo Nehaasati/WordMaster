@@ -177,39 +177,6 @@ app.MapPost("/api/lobby/{lobbyId}/register-connection", (
 });
 
 // Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
-app.MapPost("/api/lobby/{lobbyId}/start", async (
-    string lobbyId,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub,
-    HttpRequest httpRequest
-) =>
-{
-    // Check if the lobby exists and if the game can be started
-    var lobby = engine.GetLobby(lobbyId);
-
-    if (lobby == null)
-        return Results.NotFound();
-
-    // Read body manually since we don't have StartGameRequest any more
-    var body = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(httpRequest.Body);
-    if (body == null || !body.TryGetValue("playerId", out var playerId))
-        return Results.BadRequest("Missing playerId");
-
-    // Check readiness
-    if (!engine.CanStartGame(lobbyId))
-        return Results.BadRequest("Players not ready");
-
-    // Start the multiplayer game (only host)
-    if (!engine.StartGame(lobbyId, playerId))
-        return Results.BadRequest("Failed to start game");
-
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("GameStarted", lobbyId, "standard");
-
-    return Results.Ok();
-});
-
-// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
 app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
     string lobbyId,
     string playerId,

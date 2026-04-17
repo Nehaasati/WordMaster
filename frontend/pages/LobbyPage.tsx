@@ -611,7 +611,10 @@ export default function LobbyPage() {
                   {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ gameMode }),
+                    body: JSON.stringify({
+                      playerId: playerId,
+                      gameMode: gameMode
+                    }),
                   },
                 );
 
