@@ -104,7 +104,7 @@ public class GameEngine
     }
 
     // OSKAR's new method in order to fix the conflict // fatima
-    public bool StartGame(string lobbyId)
+    public bool StartClassicGame(string lobbyId)
     {
         // Classic mode start (teammate’s logic)
         var lobby = GetLobby(lobbyId);
