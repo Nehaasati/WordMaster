@@ -12,15 +12,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": {
-        target: "http://127.0.0.1:5024",
-        changeOrigin: true
-      },
-      "lobbyHub": {
+      "/api": "http://127.0.0.1:5024",
+      "/lobbyHub": {
         target: "http://127.0.0.1:5024",
         ws: true,
-        changeOrigin: true
-      }
+      },
     },
   },
 });
