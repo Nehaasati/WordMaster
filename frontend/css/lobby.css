@@ -39,7 +39,6 @@
 
 .character-carousel {
     display: flex;
-    position: relative;
     align-items: center;
     justify-content: center;
     gap: 16px;
@@ -53,10 +52,8 @@
     cursor: pointer;
     padding: 0;
     transition: transform .15s;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
+    flex-shrink: 0;
+
 }
 
 .ch-arrow:first-child {
