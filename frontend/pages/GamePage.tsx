@@ -82,7 +82,7 @@ const GamePage: React.FC = () => {
 
   const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
-  // SignalR
+// SignalR
   
 useEffect(() => {
   if (!lobbyId) return;
@@ -97,33 +97,24 @@ useEffect(() => {
   connection.start().then(async () => {
     await connection.invoke("JoinLobbyGroup", lobbyId);
 
-    // NEW ROUND
-    connection.on("LobbyReset", async () => {
-      console.log("Lobby reset → new round");
+    // Lobby restart
+    connection.on("LobbyReset", () => {
+      console.log("Lobby reset received → returning to lobby");
 
+      // Clean up game state
       setStopped(false);
       setTimeLeft(0);
+      setCategories({});
+      setAllLetters([]);
+      setScore(0);
+      setFreezeMsg("");
+      setShowInk(false);
+      setInkActive(false);
+      setShowFreeze(false);
+      setFreezeActive(false);
 
-      // reset categories
-      const initial: Record<string, CategoryData> = {};
-      CATEGORY_LIST.forEach((cat) => {
-        initial[cat.id] = { word: "", valid: false, feedback: "" };
-      });
-      setCategories(initial);
-
-      // fetch new letters
-      const res = await fetch(`/api/lobby/${lobbyId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setAllLetters(
-          data.letters.map((char: string) => ({
-            id: Math.random().toString(36),
-            char,
-            used: false,
-            isExtra: false,
-          })),
-        );
-      }
+      // Navigate back to lobby (Ready screen)
+      navigate(`/lobby/${lobbyId}`);
     });
 
     // PLAYER LEFT
