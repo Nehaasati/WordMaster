@@ -125,7 +125,7 @@ app.MapPost("/api/lobby/{lobbyId}/join", async (
     if (engine.TryJoinLobby(lobbyId, player, out var error))
     {
         // Add the player's connection to the SignalR group for the lobby so they can receive real-time updates about the lobby
-        //await hubContext.Groups.AddToGroupAsync(player.ConnectionId, lobbyId);
+        await hubContext.Groups.AddToGroupAsync(player.ConnectionId, lobbyId);
 
         await hubContext.Clients.Group(lobbyId)
             .SendAsync("PlayerJoined", player);
@@ -162,6 +162,19 @@ app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
     await hub.Clients.Group(lobbyId)
         .SendAsync("PlayerReady", playerId);
 
+    return Results.Ok();
+});
+app.MapPost("/api/lobby/{lobbyId}/register-connection", (
+    string lobbyId,
+    RegisterConnectionRequest req,
+    GameEngine engine
+) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    var player = lobby?.Players.FirstOrDefault(p => p.Id == req.PlayerId);
+    if (player == null) return Results.NotFound();
+
+    player.ConnectionId = req.ConnectionId;
     return Results.Ok();
 });
 
@@ -494,3 +507,5 @@ public record RoundStatusResponse(
     int PlayersSubmitted,
     int TotalPlayers
 );
+
+public record RegisterConnectionRequest(string PlayerId, string ConnectionId);
