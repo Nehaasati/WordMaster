@@ -44,7 +44,7 @@ const getActualState = (lobby) => {
     : lobby.state;
 };
 
-Then('the lobby should be in state {string}', async ({ page }, stateText) => {
+const assertLobbyState = async (page, stateText) => {
   const lobbyId = world.lobbyId || getLobbyIdFromUrl(page.url());
 
   let actualState = null;
@@ -61,6 +61,14 @@ Then('the lobby should be in state {string}', async ({ page }, stateText) => {
   throw new Error(
     `Expected lobby state to be ${stateText} but got ${actualState ?? 'unavailable'}`,
   );
+};
+
+Then('the lobby should be in state {string}', async ({ page }, stateText) => {
+  await assertLobbyState(page, stateText);
+});
+
+Then('the lobby state should be {string}', async ({ page }, stateText) => {
+  await assertLobbyState(page, stateText);
 });
 
 Then('the lobby should contain {int} players', async ({ page }, count) => {
