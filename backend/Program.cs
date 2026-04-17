@@ -29,6 +29,7 @@ builder.Services.AddSingleton(categories);
 builder.Services.AddSingleton<WordValidator>();
 builder.Services.AddSingleton<GameEngine>();
 builder.Services.AddSingleton<ClassicGameEngine>();
+builder.Services.AddSingleton<JokerService>();
 
 builder.Services.AddCors(options =>
 {
@@ -459,13 +460,98 @@ app.MapPost("/api/lobby/{lobbyId}/leave/{playerId}", async (
         hostChanged
     });
 });
-
+ 
+ 
+// POST /api/lobby/{lobbyId}/joker/{playerId}/activate
+// Activates a Joker Card for a player. Costs 10 points.
+// Returns the gold letter assigned as the joker.
+app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/activate", (
+    string lobbyId,
+    string playerId,
+    JokerService jokerService,
+    GameEngine engine) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    if (lobby == null)
+        return Results.NotFound(new { error = "Lobby not found" });
+ 
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.NotFound(new { error = "Player not found" });
+ 
+    // Cost: 10 points
+    const int cost = 10;
+    if (player.Score < cost)
+        return Results.BadRequest(new { error = "Not enough points. Joker costs 10 points." });
+ 
+    var joker = jokerService.ActivateJoker(lobbyId, playerId);
+    if (joker == null)
+        return Results.BadRequest(new { error = "You already have an active Joker." });
+ 
+    // Deduct cost
+    player.Score -= cost;
+ 
+    Console.WriteLine($"Player {player.Name} activated Joker: {joker.JokerLetter}");
+ 
+    return Results.Ok(new
+    {
+        jokerLetter = joker.JokerLetter,
+        cost        = cost,
+        newScore    = player.Score,
+        message     = $"Bokstaven {joker.JokerLetter} är nu din Joker! Ord med denna bokstav ger dubbla poäng."
+    });
+});
+ 
+ 
+// GET /api/lobby/{lobbyId}/joker/{playerId}
+// Returns the current active joker for a player (or null if none).
+app.MapGet("/api/lobby/{lobbyId}/joker/{playerId}", (
+    string lobbyId,
+    string playerId,
+    JokerService jokerService) =>
+{
+    var joker = jokerService.GetActiveJoker(lobbyId, playerId);
+    if (joker == null)
+        return Results.Ok(new { hasJoker = false, jokerLetter = (string?)null });
+ 
+    return Results.Ok(new
+    {
+        hasJoker    = true,
+        jokerLetter = joker.JokerLetter,
+        isUsed      = joker.IsUsed
+    });
+});
+ 
+ 
+// POST /api/lobby/{lobbyId}/joker/{playerId}/apply
+// Called after a word is validated as correct.
+// Returns the score multiplier (1 = no bonus, 2 = double).
+app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/apply", (
+    string lobbyId,
+    string playerId,
+    ApplyJokerRequest request,
+    JokerService jokerService) =>
+{
+    var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word);
+    bool triggered = multiplier > 1;
+ 
+    return Results.Ok(new
+    {
+        multiplier    = multiplier,
+        jokerTriggered = triggered,
+        word          = request.Word,
+        message       = triggered
+            ? $"🃏 JOKER! Dubbla poäng för \"{request.Word}\"!"
+            : "No joker bonus."
+    });
+});
 
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 
 app.Run();
 
+public record ApplyJokerRequest(string Word);
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record SubmitWordRequest(string Word);
 public record StartGameRequest(string GameMode);
