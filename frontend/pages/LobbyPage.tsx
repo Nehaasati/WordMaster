@@ -298,7 +298,7 @@ export default function LobbyPage() {
           }),
         });
 
-        // ⭐ 3- Join the SignalR group (VERY IMPORTANT)
+        // 3- Join the SignalR group (VERY IMPORTANT)
         await connection.invoke("JoinLobbyGroup", realLobbyId);
 
         // 4- Now register all listeners
@@ -607,15 +607,10 @@ export default function LobbyPage() {
                 }
 
                 const startResponse = await fetch(
-                  `/api/lobby/${realLobbyId}/start`,
+                  `/api/lobby/${realLobbyId}/start/${playerId}`,
                   {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      playerId: playerId,
-                      gameMode: gameMode
-                    }),
-                  },
+                  }
                 );
 
                 if (!startResponse.ok) {
