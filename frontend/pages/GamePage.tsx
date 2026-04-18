@@ -146,30 +146,39 @@ const GamePage: React.FC = () => {
       navigate(`/result/${lId}`);
     },
     onWordSubmitted: (senderId: string, category: string, word: string) => {
-      // Handle opponent word submission
-      if (!opponentWordsRef.current[category]) {
-        opponentWordsRef.current[category] = new Set();
-      }
-      opponentWordsRef.current[category].add(word.toUpperCase());
+      // Update opponent words for scoring
+      const myId = localStorage.getItem("wordmaster-player-id") ?? "";
 
-      const myPlayerId = localStorage.getItem("wordmaster-player-id");
-      const isMine = senderId === myPlayerId;
+      // Update opponent words for scoring
+      const isMine = senderId === myId;
+      // Save words
       if (isMine) {
-        myWordsRef.current[category] = word;
+        // Save my word for scoring
+        myWordsRef.current[category] = word.toUpperCase();
       } else {
-        if (!opponentWordsRef.current[category])
+        if (!opponentWordsRef.current[category]) {
           opponentWordsRef.current[category] = new Set();
-        opponentWordsRef.current[category].add(word);
-      }
-      setCategoryPoints((prev) => {
-        const updated = { ...prev };
-        for (const cat of Object.keys(myWordsRef.current)) {
-          const myWord = myWordsRef.current[cat];
-          const opponentSet = opponentWordsRef.current[cat] ?? new Set();
-          updated[cat] = opponentSet.has(myWord) ? 5 : 10;
         }
-        return updated;
-      });
+        // Save opponent word for scoring
+        opponentWordsRef.current[category].add(word.toUpperCase());
+      }
+
+      // Recalculate points EVERY TIME a word is submitted
+      const myWord = myWordsRef.current[category];
+      const opponentSet = opponentWordsRef.current[category] ?? new Set();
+      let points = 0;
+      if (!myWord || myWord.length < 2) {
+        points = 0; // invalid or empty
+      } else if (opponentSet.has(myWord)) {
+        points = 5; // same word as opponent -- // duplicate -- 5p
+      } else {
+        points = 10; // unique word
+      }
+
+      setCategoryPoints(prev => ({
+        ...prev,
+        [category]: points,
+      }));
     },
   });
 
