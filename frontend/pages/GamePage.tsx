@@ -5,7 +5,6 @@ import { useGameEngine } from "../hooks/useGameEngine";
 import { useSignalRGame } from "../hooks/useSignalRGame";
 import { useSignalR } from "../hooks/SignalRContext";
 import {
-  stopGame,
   handleRestart,
   handleLeave,
   handleFreeze,
@@ -115,7 +114,8 @@ const GamePage: React.FC = () => {
         setTimeout(() => setToast(""), 3000);
       }
     },
-    onGameStopped: (lId: string, _1: string, _2: number) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    onGameStopped: (lId: string, _stoppedBy: string, _score: number) => {
       setGameStopped(true);
       setStopped(true);
 
@@ -194,97 +194,6 @@ const GamePage: React.FC = () => {
     opponentWordsRef,
     validateWord,
   } = useGameEngine(lobbyId, submitWord);
-  useSignalRGame(lobbyId, {
-    onLobbyReset: async () => {
-      console.log("Lobby reset → new round");
-
-      resetRound();
-
-      // reset categories
-
-      resetCategories();
-
-      // fetch new letters
-      const res = await fetch(`/api/lobby/${lobbyId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setAllLetters(
-          data.letters.map((char: string) => ({
-            id: Math.random().toString(36),
-            char,
-            used: false,
-            isExtra: false,
-          })),
-        );
-      }
-    },
-    onPlayerLeft: (playerId: string) => {
-      console.log("Player left:", playerId);
-
-      const myId = localStorage.getItem("wordmaster-player-id");
-
-      if (playerId !== myId) {
-        setToast("En spelare lämnade lobbyn");
-        setTimeout(() => setToast(""), 3000);
-      }
-    },
-    onGameStopped: (lId: string, _1: string, _2: number) => {
-      setGameStopped(true);
-      setStopped(true);
-
-      const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-      fetch(`/api/lobby/${lId}/save-score/${myId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ score: scoreRef.current }),
-      })
-        .catch(() => {})
-        .finally(() => {
-          setTimeout(() => {
-            navigate(`/result/${lId}`, { state: { gameStopped: true } });
-          }, 2500);
-        });
-    },
-    onHostChanged: (newHostId: string) => {
-      const myId = localStorage.getItem("wordmaster-player-id");
-
-      if (myId === newHostId) {
-        localStorage.setItem("isHost", "true");
-        setIsHost(true);
-      } else {
-        setIsHost(false);
-      }
-    },
-    onMatchEnded: (lId: string) => {
-      navigate(`/result/${lId}`);
-    },
-    onWordSubmitted: (senderId: string, category: string, word: string) => {
-      // Handle opponent word submission
-      if (!opponentWordsRef.current[category]) {
-        opponentWordsRef.current[category] = new Set();
-      }
-      opponentWordsRef.current[category].add(word.toUpperCase());
-
-      const myPlayerId = localStorage.getItem("wordmaster-player-id");
-      const isMine = senderId === myPlayerId;
-      if (isMine) {
-        myWordsRef.current[category] = word;
-      } else {
-        if (!opponentWordsRef.current[category])
-          opponentWordsRef.current[category] = new Set();
-        opponentWordsRef.current[category].add(word);
-      }
-      setCategoryPoints((prev) => {
-        const updated = { ...prev };
-        for (const cat of Object.keys(myWordsRef.current)) {
-          const myWord = myWordsRef.current[cat];
-          const opponentSet = opponentWordsRef.current[cat] ?? new Set();
-          updated[cat] = opponentSet.has(myWord) ? 5 : 10;
-        }
-        return updated;
-      });
-    },
-  });
 
   // Automatic focus shift to next category when one is completed
   const validStates = CATEGORY_LIST.map(
@@ -300,8 +209,11 @@ const GamePage: React.FC = () => {
 
   useEffect(() => {
     updateUsedLetters(categories, setAllLetters);
-  }, [categories]);
+  }, [categories, setAllLetters]);
 
+  // Calculate score whenever categories, categoryPoints, or bonus changes
+  // Note: refs are intentionally excluded from dependencies as they don't trigger re-renders
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let total = 0;
     for (const cat of CATEGORY_LIST) {
@@ -362,10 +274,6 @@ const GamePage: React.FC = () => {
     setStopped(true);
   };
 */
-  useEffect(() => {
-    updateUsedLetters(categories, setAllLetters);
-  }, [categories]);
-
   const allDone = CATEGORY_LIST.every((c) => categories[c.id]?.valid);
 
   //Send all done to backend
@@ -394,7 +302,7 @@ const GamePage: React.FC = () => {
     };
 
     notifyFinished();
-  }, [allDone, lobbyId, stopped]);
+  }, [allDone, lobbyId, stopped, connection, score, setStopped]);
 
   return (
     <div className="gp-scene" data-testid="game-page">
