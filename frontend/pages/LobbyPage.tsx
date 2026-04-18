@@ -506,7 +506,7 @@ export default function LobbyPage() {
           {isHost && !ready && players.length < 2 && (
             <button
               className="wm-modal-btn wm-modal-btn--cancel"
-              style={{ marginBottom: "12px" }}
+              style={{ marginTop: "50px", background: "rgba(0, 0, 0, 0.45)" }}
               onClick={async () => {
                 const res = await fetch(
                   `/api/lobby/${realLobbyId}/add-bot`,
