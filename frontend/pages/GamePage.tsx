@@ -192,7 +192,7 @@ const GamePage: React.FC = () => {
       setTimeout(() => {
         setShowInk(false);
         setInkActive(false);
-      }, 3000);
+      }, 10000); // 10 seconds duration heeej
     },
   });
 
