@@ -1,6 +1,6 @@
 .page {
     position: relative;
-    height: 100vh;
+    height: 110vh;
 }
 
 .container {
@@ -19,7 +19,7 @@
     flex-direction: column;
     height: 100vh;
     justify-content: center;
-    gap: 2px;
+    gap: 0px;
     padding: 6px 0;
     box-sizing: border-box;
 }
@@ -86,13 +86,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 260px;
+  width: 360px;
 height: 400px;
 }
 
 .characters img {
-  width: auto;
-  height: 325px;
+  width: 320px;
+  height: 310px;
   display: block;
   margin: 0 auto;
 }
@@ -112,7 +112,7 @@ height: 400px;
 }
 .ready-btn--host {
     background-color: rgb(0, 200, 0);
-    margin-top: 1px;
+    margin-top: 15px;
 }
 
 .ready-btn--guest {
