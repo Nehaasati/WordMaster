@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type Player from "../src/interfaces/Player";
+import { checkWordWithLetters } from "../services/wordValidator";
 import type {
   Letter,
   CategoryData,
@@ -14,14 +15,54 @@ export function useGameEngine(lobbyId?: string) {
   // -----------------------------
   // STATE
   // -----------------------------
+  const createInitialCategories = (): Record<string, CategoryData> => ({
+    Name: { id: "Name", label: "Namn", word: "", valid: false, feedback: "" },
+    Food: { id: "Food", label: "Mat", word: "", valid: false, feedback: "" },
+    Job: { id: "Job", label: "Jobb", word: "", valid: false, feedback: "" },
+    Land: { id: "Land", label: "Land", word: "", valid: false, feedback: "" },
+    Colour: {
+      id: "Colour",
+      label: "Färg",
+      word: "",
+      valid: false,
+      feedback: "",
+    },
+    Animal: {
+      id: "Animal",
+      label: "Djur",
+      word: "",
+      valid: false,
+      feedback: "",
+    },
+    Object: {
+      id: "Object",
+      label: "Sak",
+      word: "",
+      valid: false,
+      feedback: "",
+    },
+  });
+
   const [categories, setCategories] = useState<Record<string, CategoryData>>(
-    {},
+    createInitialCategories(),
   );
+  const resetCategories = () => {
+    setCategories(createInitialCategories());
+  };
+  const resetRound = () => {
+    setStopped(false);
+    setTimeLeft(0);
+    setCategories(createInitialCategories());
+  };
+
   const [allLetters, setAllLetters] = useState<Letter[]>([]);
   const [characterId, setCharacterId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [stopped, setStopped] = useState(false);
   const [score, setScore] = useState(0);
+  const [categoryPoints, setCategoryPoints] = useState<Record<string, number>>(
+    {},
+  );
 
   const scoreRef = useRef(0);
   const bonusRef = useRef(0);
@@ -153,22 +194,14 @@ export function useGameEngine(lobbyId?: string) {
       const response = await fetch("/api/game/letters?count=5");
       if (response.ok) {
         const letters: string[] = await response.json();
-        const newLetters = letters.map((char) => ({
+        const newLetters: Letter[] = letters.map((char) => ({
           id: crypto.randomUUID(),
           char,
           used: false,
           isExtra: true,
           source: "extra",
         }));
-        setAllLetters(
-          letters.map((char) => ({
-            id: crypto.randomUUID(),
-            char,
-            used: false,
-            isExtra: false,
-            source: "initial",
-          })),
-        );
+        setAllLetters((prev) => [...prev, ...newLetters]);
         return;
       }
     } catch {
@@ -181,31 +214,20 @@ export function useGameEngine(lobbyId?: string) {
   // -----------------------------
   // CHECK WORD WITH LETTERS
   // -----------------------------
-  const checkWordWithLetters = (word: string, categoryId: string) => {
-    const wordUpper = word.toUpperCase();
-
-    let otherUsedWord = "";
-    for (const catId in categories) {
-      if (catId !== categoryId && !categories[catId].valid) {
-        otherUsedWord += categories[catId].word;
-      }
-    }
-    otherUsedWord = otherUsedWord.toUpperCase();
-
+  const getAvailableLetters = (categoryId: string) => {
     const pool = allLetters.map((l) => l.char);
 
-    for (const char of otherUsedWord) {
-      const index = pool.indexOf(char);
-      if (index !== -1) pool.splice(index, 1);
+    for (const catId in categories) {
+      if (catId !== categoryId && categories[catId]?.valid) {
+        const otherWord = categories[catId].word.toUpperCase();
+        for (const char of otherWord) {
+          const index = pool.indexOf(char);
+          if (index !== -1) pool.splice(index, 1);
+        }
+      }
     }
 
-    for (const char of wordUpper) {
-      const index = pool.indexOf(char);
-      if (index === -1) return false;
-      pool.splice(index, 1);
-    }
-
-    return true;
+    return pool;
   };
 
   // -----------------------------
@@ -262,7 +284,7 @@ export function useGameEngine(lobbyId?: string) {
       return;
     }
 
-    if (!checkWordWithLetters(word, categoryId)) {
+    if (!checkWordWithLetters(word, categoryId, categories, allLetters)) {
       setCategories((prev) => ({
         ...prev,
         [categoryId]: { ...prev[categoryId], valid: false, word },
@@ -273,12 +295,10 @@ export function useGameEngine(lobbyId?: string) {
     try {
       const storedId = localStorage.getItem("wordmaster-player-id") ?? "";
 
-      const availablePool = allLetters.map((l) => l.char);
-
       const request: ValidateRequest = {
         word: word.trim(),
         categoryId,
-        letters: availablePool,
+        letters: getAvailableLetters(categoryId),
         lobbyId: lobbyId!,
         playerId: storedId,
       };
@@ -367,14 +387,23 @@ export function useGameEngine(lobbyId?: string) {
     timeLeft,
     score,
     stopped,
+    characterId,
+    roundStartTime,
+    categoryPoints,
     validateWord,
     addExtraLetters,
     resetGameState,
+    resetCategories,
+    resetRound,
     setCategories,
     setAllLetters,
     setStopped,
     setScore,
+    setTimeLeft,
+    setCharacterId,
+    setCategoryPoints,
     scoreRef,
+    bonusRef,
     myWordsRef,
     opponentWordsRef,
     calculateAbilityBonus,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSignalR } from "../hooks/SignalRContext.ts";
 import "../css/ResultPage.css";
 
 interface PlayerResult {
@@ -16,6 +17,9 @@ export default function ResultPage() {
   const [players, setPlayers] = useState<PlayerResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [restartVotes, setRestartVotes] = useState<string[]>([]);
+
+  const connection = useSignalR();
 
   // const gameStopped: boolean = location.state?.gameStopped ?? false;
   const myPlayerId = localStorage.getItem("wordmaster-player-id") ?? "";
@@ -47,6 +51,35 @@ export default function ResultPage() {
     };
     fetchResults();
   }, [lobbyId]);
+
+  // SignalR connection handling
+  useEffect(() => {
+    if (!connection || !lobbyId) return;
+
+    const handleLobbyReset = (resetLobbyId: string) => {
+      if (resetLobbyId === lobbyId) {
+        // Navigate back to lobby when reset occurs
+        navigate(`/lobby/${lobbyId}`);
+      }
+    };
+
+    const handlePlayerRestartVote = (playerId: string) => {
+      setRestartVotes((prev) => {
+        if (!prev.includes(playerId)) {
+          return [...prev, playerId];
+        }
+        return prev;
+      });
+    };
+
+    connection.on("LobbyReset", handleLobbyReset);
+    connection.on("PlayerRestartVote", handlePlayerRestartVote);
+
+    return () => {
+      connection.off("LobbyReset", handleLobbyReset);
+      connection.off("PlayerRestartVote", handlePlayerRestartVote);
+    };
+  }, [connection, lobbyId, navigate]);
 
   const winner = players[0] ?? null;
   const isWinner = winner?.id === myPlayerId;
@@ -100,6 +133,11 @@ export default function ResultPage() {
         )}
 
         <div className="rp-actions">
+          {restartVotes.length > 0 && (
+            <p className="rp-restart-status">
+              {restartVotes.length} av {players.length} spelare vill spela igen
+            </p>
+          )}
           <button
             className="rp-btn rp-btn--primary"
             onClick={async () => {
@@ -109,8 +147,11 @@ export default function ResultPage() {
                 method: "POST",
               });
             }}
+            disabled={restartVotes.includes(myPlayerId)}
           >
-            Spela igen
+            {restartVotes.includes(myPlayerId)
+              ? "Väntar på andra spelare..."
+              : "Spela igen"}
           </button>
           <button
             className="rp-btn rp-btn--secondary"

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSignalR } from "../interfaces/SignalRContext";
+import { useSignalR } from "./SignalRContext";
 
 export function useSignalRGame(
   lobbyId: string | undefined,
@@ -21,69 +21,102 @@ export function useSignalRGame(
   const navigate = useNavigate();
 
   const handlersRef = useRef(handlers);
+  const navigatingRef = useRef(false);
 
+  // keep latest handlers without re-binding events
   useEffect(() => {
     handlersRef.current = handlers;
   }, [handlers]);
-
-  const navigatingRef = useRef(false);
 
   useEffect(() => {
     if (!connection || !lobbyId) return;
 
     console.log("useSignalRGame → using connection:", connection.connectionId);
 
-    // Join group
-    connection.invoke("JoinLobbyGroup", lobbyId);
+    // -------------------------
+    // JOIN GROUP
+    // -------------------------
+    const joinLobbyGroup = async () => {
+      try {
+        await connection.invoke("JoinLobbyGroup", lobbyId);
+      } catch (err) {
+        console.error("JoinLobbyGroup error:", err);
+      }
+    };
+
+    joinLobbyGroup();
+
+    connection.onreconnected(() => {
+      console.log("Reconnected → rejoining group:", lobbyId);
+      joinLobbyGroup();
+    });
 
     // -------------------------
-    // EVENTS
+    // HANDLERS (stable references)
     // -------------------------
 
-    connection.on("LobbyReset", () => {
+    const handleLobbyReset = () => {
       if (navigatingRef.current) return;
       navigatingRef.current = true;
 
       handlersRef.current.onLobbyReset?.();
       navigate(`/lobby/${lobbyId}`);
-    });
+    };
 
-    connection.on("PlayerLeft", (playerId: string) => {
+    const handlePlayerLeft = (playerId: string) => {
       handlersRef.current.onPlayerLeft?.(playerId);
-    });
+    };
 
-    connection.on("GameStopped", (lId, stoppedBy, score) => {
+    const handleGameStopped = (
+      lId: string,
+      stoppedBy: string,
+      score: number,
+    ) => {
       if (navigatingRef.current) return;
       navigatingRef.current = true;
 
       handlersRef.current.onGameStopped?.(lId, stoppedBy, score);
-    });
+    };
 
-    connection.on("HostChanged", (newHostId: string) => {
+    const handleHostChanged = (newHostId: string) => {
       handlersRef.current.onHostChanged?.(newHostId);
-    });
+    };
 
-    connection.on("MatchEnded", (lId: string) => {
+    const handleMatchEnded = (lId: string) => {
       if (navigatingRef.current) return;
       navigatingRef.current = true;
 
       handlersRef.current.onMatchEnded?.(lId);
-    });
+    };
 
-    connection.on("WordSubmitted", (senderId, category, word) => {
+    const handleWordSubmitted = (
+      senderId: string,
+      category: string,
+      word: string,
+    ) => {
       handlersRef.current.onWordSubmitted?.(senderId, category, word);
-    });
+    };
 
     // -------------------------
-    // CLEANUP
+    // REGISTER EVENTS
+    // -------------------------
+    connection.on("LobbyReset", handleLobbyReset);
+    connection.on("PlayerLeft", handlePlayerLeft);
+    connection.on("GameStopped", handleGameStopped);
+    connection.on("HostChanged", handleHostChanged);
+    connection.on("MatchEnded", handleMatchEnded);
+    connection.on("WordSubmitted", handleWordSubmitted);
+
+    // -------------------------
+    // CLEANUP (IMPORTANT)
     // -------------------------
     return () => {
-      connection.off("LobbyReset");
-      connection.off("PlayerLeft");
-      connection.off("GameStopped");
-      connection.off("HostChanged");
-      connection.off("MatchEnded");
-      connection.off("WordSubmitted");
+      connection.off("LobbyReset", handleLobbyReset);
+      connection.off("PlayerLeft", handlePlayerLeft);
+      connection.off("GameStopped", handleGameStopped);
+      connection.off("HostChanged", handleHostChanged);
+      connection.off("MatchEnded", handleMatchEnded);
+      connection.off("WordSubmitted", handleWordSubmitted);
     };
   }, [connection, lobbyId, navigate]);
 
@@ -101,5 +134,15 @@ export function useSignalRGame(
       .catch((err) => console.error("SubmitWord error:", err));
   };
 
-  return { submitWord };
+  const stopGame = (score: number) => {
+    if (!connection || !lobbyId) return;
+
+    const playerId = localStorage.getItem("wordmaster-player-id") ?? "";
+
+    connection
+      .invoke("StopGame", lobbyId, playerId, Math.round(score))
+      .catch((err) => console.error("StopGame error:", err));
+  };
+
+  return { submitWord, stopGame };
 }

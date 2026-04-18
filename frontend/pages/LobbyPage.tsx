@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
-import { useSignalR } from "../interfaces/SignalRContext";
+import { useSignalR } from "../hooks/SignalRContext.ts";
 
 /*
    Name Modal — supports 3 entry modes:
@@ -65,14 +65,14 @@ const NameModal: React.FC<{
       </div>
     </div>
   );
-  };
+};
 
 // Map backend character ID → local image path
 const CHARACTER_IMAGES: Record<string, string> = {
-  ugglan:   "/images/owl.png",
-  leopard:  "/images/leo.png",
-  musen:    "/images/mouse.png",
-  björnen:  "/images/bear.png",
+  ugglan: "/images/owl.png",
+  leopard: "/images/leo.png",
+  musen: "/images/mouse.png",
+  björnen: "/images/bear.png",
 };
 
 /*
@@ -274,63 +274,63 @@ export default function LobbyPage() {
   /*
      SignalR connection
  */
- const connection = useSignalR();
+  const connection = useSignalR();
 
- useEffect(() => {
-   if (!connection || !realLobbyId || !playerId) return;
+  useEffect(() => {
+    if (!connection || !realLobbyId || !playerId) return;
 
-   console.log("LobbyPage using connection:", connection.connectionId);
+    console.log("LobbyPage using connection:", connection.connectionId);
 
-   // 1) Register connection in backend
-   fetch(`/api/lobby/${realLobbyId}/register-connection`, {
-     method: "POST",
-     headers: { "Content-Type": "application/json" },
-     body: JSON.stringify({
-       playerId,
-       connectionId: connection.connectionId,
-     }),
-   });
+    // 1) Register connection in backend
+    fetch(`/api/lobby/${realLobbyId}/register-connection`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        playerId,
+        connectionId: connection.connectionId,
+      }),
+    });
 
-   // 2) Join group
-   connection.invoke("JoinLobbyGroup", realLobbyId);
+    // 2) Join group
+    connection.invoke("JoinLobbyGroup", realLobbyId);
 
-   // 3) Listeners
-   connection.on("PlayerJoined", (player: Player) => {
-     setPlayers((prev) => {
-       if (prev.some((p) => p.id === player.id)) return prev;
-       return [...prev, player];
-     });
-   });
+    // 3) Listeners
+    connection.on("PlayerJoined", (player: Player) => {
+      setPlayers((prev) => {
+        if (prev.some((p) => p.id === player.id)) return prev;
+        return [...prev, player];
+      });
+    });
 
-   connection.on("PlayerReady", (id: string) => {
-     setPlayers((prev) =>
-       prev.map((p) => (p.id === id ? { ...p, isReady: true } : p)),
-     );
-   });
+    connection.on("PlayerReady", (id: string) => {
+      setPlayers((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, isReady: true } : p)),
+      );
+    });
 
-   connection.on("GameStarted", (lobbyId: string, mode: string) => {
-     if (mode === "blitz") navigate("/classic-game");
-     else navigate(`/game/${lobbyId}`);
-   });
+    connection.on("GameStarted", (lobbyId: string, mode: string) => {
+      if (mode === "blitz") navigate("/classic-game");
+      else navigate(`/game/${lobbyId}`);
+    });
 
-   connection.on("LobbyReset", (resetLobbyId: string) => {
-     if (resetLobbyId !== realLobbyId) return;
+    connection.on("LobbyReset", (resetLobbyId: string) => {
+      if (resetLobbyId !== realLobbyId) return;
 
-     setReady(false);
-     setPlayers([]);
-     setMessage(null);
+      setReady(false);
+      setPlayers([]);
+      setMessage(null);
 
-     navigate(`/lobby/${realLobbyId}`);
-   });
+      navigate(`/lobby/${realLobbyId}`);
+    });
 
-   // Cleanup
-   return () => {
-     connection.off("PlayerJoined");
-     connection.off("PlayerReady");
-     connection.off("GameStarted");
-     connection.off("LobbyReset");
-   };
- }, [connection, realLobbyId, navigate , playerId]);
+    // Cleanup
+    return () => {
+      connection.off("PlayerJoined");
+      connection.off("PlayerReady");
+      connection.off("GameStarted");
+      connection.off("LobbyReset");
+    };
+  }, [connection, realLobbyId, navigate, playerId]);
 
   /*
      Handle Ready:
@@ -598,7 +598,7 @@ export default function LobbyPage() {
                   `/api/lobby/${realLobbyId}/start/${playerId}`,
                   {
                     method: "POST",
-                  }
+                  },
                 );
 
                 if (!startResponse.ok) {
