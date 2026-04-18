@@ -140,9 +140,8 @@ height: 280px;
 
 }
 
-
 .lobby-message {
-    position: absolute;
+    position: fixed;
     bottom: 140px;
     /* فوق زر Ready */
     left: 50%;
@@ -241,20 +240,21 @@ height: 280px;
 }
 
 .lobby-info {
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 02px;
   align-items: center;
   background: rgba(0, 0, 0, 0.45);
-  padding: 10px 0px;
+  padding: 6px 16px;
   border-radius: 16px;
   backdrop-filter: blur(8px);
   border: 1px solid rgba(160, 80, 255, 0.25);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   max-width: 420px;
   width: min(40%, 420px);
+  margin-top: 02px;
 }
 
 .lobby-info .wm-modal-label {
