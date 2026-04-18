@@ -9,9 +9,12 @@ import type {
   LobbyResponse,
 } from "../interfaces/Gamepage";
 
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
-export function useGameEngine(lobbyId?: string) {
+export function useGameEngine(
+  lobbyId?: string,
+  submitWord?: (category: string, word: string) => void,
+) {
   // -----------------------------
   // STATE
   // -----------------------------
@@ -296,12 +299,21 @@ export function useGameEngine(lobbyId?: string) {
       const storedId = localStorage.getItem("wordmaster-player-id") ?? "";
 
       const request: ValidateRequest = {
-        word: word.trim(),
+        word: word.trim().toUpperCase(),
         categoryId,
         letters: getAvailableLetters(categoryId),
         lobbyId: lobbyId!,
         playerId: storedId,
       };
+
+      // For debugging: log the validation request details
+      console.log(" VALIDATION REQUEST", {
+        word: word,
+        normalizedWord: word.trim().toUpperCase(),
+        categoryId,
+        letters: getAvailableLetters(categoryId),
+        categories,
+      });
 
       const response = await fetch("/api/word/validate", {
         method: "POST",
@@ -311,6 +323,9 @@ export function useGameEngine(lobbyId?: string) {
         },
         body: JSON.stringify(request),
       });
+
+      // For debugging: log the raw response before parsing
+      console.log("RAW VALIDATION RESPONSE", response);
 
       if (!response.ok) {
         setCategories((prev) => ({
@@ -331,6 +346,8 @@ export function useGameEngine(lobbyId?: string) {
         const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
         bonusRef.current += bonus;
 
+        // For debugging: log the validation response details
+        console.log("VALIDATION RESPONSE", data);
         setCategories((prev) => ({
           ...prev,
           [categoryId]: {
@@ -340,6 +357,7 @@ export function useGameEngine(lobbyId?: string) {
             word,
           },
         }));
+        submitWord?.(categoryId, word);
       } else {
         setCategories((prev) => ({
           ...prev,

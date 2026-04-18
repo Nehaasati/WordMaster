@@ -63,29 +63,6 @@ const GamePage: React.FC = () => {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
 
-  // Use the game engine hook for state management
-  const {
-    categories,
-    setCategories,
-    resetCategories,
-    resetRound,
-    allLetters,
-    setAllLetters,
-    timeLeft,
-    setTimeLeft,
-    score,
-    setScore,
-    stopped,
-    setStopped,
-    categoryPoints,
-    setCategoryPoints,
-    bonusRef,
-    scoreRef,
-    myWordsRef,
-    opponentWordsRef,
-    validateWord,
-  } = useGameEngine(lobbyId);
-
   // Get the shared SignalR connection
   const connection = useSignalR();
 
@@ -104,6 +81,119 @@ const GamePage: React.FC = () => {
   );
 
   // Use SignalR hook for real-time events
+  const { submitWord, stopGame } = useSignalRGame(lobbyId, {
+    onLobbyReset: async () => {
+      console.log("Lobby reset → new round");
+
+      resetRound();
+
+      // reset categories
+
+      resetCategories();
+
+      // fetch new letters
+      const res = await fetch(`/api/lobby/${lobbyId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAllLetters(
+          data.letters.map((char: string) => ({
+            id: Math.random().toString(36),
+            char,
+            used: false,
+            isExtra: false,
+          })),
+        );
+      }
+    },
+    onPlayerLeft: (playerId: string) => {
+      console.log("Player left:", playerId);
+
+      const myId = localStorage.getItem("wordmaster-player-id");
+
+      if (playerId !== myId) {
+        setToast("En spelare lämnade lobbyn");
+        setTimeout(() => setToast(""), 3000);
+      }
+    },
+    onGameStopped: (lId: string, _1: string, _2: number) => {
+      setGameStopped(true);
+      setStopped(true);
+
+      const myId = localStorage.getItem("wordmaster-player-id") ?? "";
+      fetch(`/api/lobby/${lId}/save-score/${myId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score: scoreRef.current }),
+      })
+        .catch(() => {})
+        .finally(() => {
+          setTimeout(() => {
+            navigate(`/result/${lId}`, { state: { gameStopped: true } });
+          }, 2500);
+        });
+    },
+    onHostChanged: (newHostId: string) => {
+      const myId = localStorage.getItem("wordmaster-player-id");
+
+      if (myId === newHostId) {
+        localStorage.setItem("isHost", "true");
+        setIsHost(true);
+      } else {
+        setIsHost(false);
+      }
+    },
+    onMatchEnded: (lId: string) => {
+      navigate(`/result/${lId}`);
+    },
+    onWordSubmitted: (senderId: string, category: string, word: string) => {
+      // Handle opponent word submission
+      if (!opponentWordsRef.current[category]) {
+        opponentWordsRef.current[category] = new Set();
+      }
+      opponentWordsRef.current[category].add(word.toUpperCase());
+
+      const myPlayerId = localStorage.getItem("wordmaster-player-id");
+      const isMine = senderId === myPlayerId;
+      if (isMine) {
+        myWordsRef.current[category] = word;
+      } else {
+        if (!opponentWordsRef.current[category])
+          opponentWordsRef.current[category] = new Set();
+        opponentWordsRef.current[category].add(word);
+      }
+      setCategoryPoints((prev) => {
+        const updated = { ...prev };
+        for (const cat of Object.keys(myWordsRef.current)) {
+          const myWord = myWordsRef.current[cat];
+          const opponentSet = opponentWordsRef.current[cat] ?? new Set();
+          updated[cat] = opponentSet.has(myWord) ? 5 : 10;
+        }
+        return updated;
+      });
+    },
+  });
+
+  // Use the game engine hook for state management
+  const {
+    categories,
+    setCategories,
+    resetCategories,
+    resetRound,
+    allLetters,
+    setAllLetters,
+    timeLeft,
+    score,
+    setScore,
+    stopped,
+    setStopped,
+    categoryPoints,
+    setCategoryPoints,
+    bonusRef,
+    scoreRef,
+    myWordsRef,
+    opponentWordsRef,
+    validateWord,
+  } = useGameEngine(lobbyId, submitWord);
   useSignalRGame(lobbyId, {
     onLobbyReset: async () => {
       console.log("Lobby reset → new round");
@@ -111,7 +201,7 @@ const GamePage: React.FC = () => {
       resetRound();
 
       // reset categories
-    
+
       resetCategories();
 
       // fetch new letters
@@ -200,7 +290,7 @@ const GamePage: React.FC = () => {
   const validStates = CATEGORY_LIST.map(
     (cat) => categories[cat.id]?.valid,
   ).join(",");
-  
+
   useEffect(() => {
     const nextCat = CATEGORY_LIST.find((cat) => !categories[cat.id]?.valid);
     if (nextCat) {
@@ -219,7 +309,6 @@ const GamePage: React.FC = () => {
       if (!catData.valid) continue;
       const points = categoryPoints[cat.id] ?? 10;
       total += points;
-      if (catData.word.length > 7) total += 5;
     }
     const newScore = total + bonusRef.current;
     setScore(newScore);
@@ -242,32 +331,6 @@ const GamePage: React.FC = () => {
       }));
     }
 
-    if (val.length > categories[categoryId].word.length) {
-      const addedChar = val[val.length - 1];
-
-      // Check if we have this letter available (not used by other NON-VALID categories).
-      let otherUsedWord = "";
-      for (const catId in categories) {
-        if (catId !== categoryId && !categories[catId].valid) {
-          otherUsedWord += categories[catId].word;
-        }
-      }
-      otherUsedWord = otherUsedWord.toUpperCase();
-
-      const pool = allLetters.map((l) => l.char);
-      for (const char of otherUsedWord) {
-        const index = pool.indexOf(char);
-        if (index !== -1) pool.splice(index, 1);
-      }
-
-      const charCountInWord = val
-        .split("")
-        .filter((c) => c === addedChar).length;
-      const charCountInPool = pool.filter((c) => c === addedChar).length;
-
-      if (charCountInPool < charCountInWord) return;
-    }
-
     validateWord(val, categoryId);
   };
   const handleFreezeLocal = () => {
@@ -283,7 +346,10 @@ const GamePage: React.FC = () => {
   };
 
   const handleStopGameLocal = async () => {
-    await handleStopGame(lobbyId, () => stopGame(connection, lobbyId));
+    await handleStopGame(lobbyId, () => {
+      stopGame(scoreRef.current);
+      return Promise.resolve();
+    });
   };
 
   const handleRestartLocal = async () => {
