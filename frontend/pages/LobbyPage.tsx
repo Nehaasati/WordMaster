@@ -443,7 +443,7 @@ export default function LobbyPage() {
             ))}
           </div>
 
-          {realLobbyId && (
+          {realLobbyId &&(
             <div className="lobby-info">
               <p className="wm-modal-label">
                 LOBBY ID:{" "}
@@ -551,7 +551,7 @@ export default function LobbyPage() {
 
           {/* Ready / Start button */}
           <button
-            className={`ready-btn ${ready ? "isReady-btn" : ""}`}
+            className={`ready-btn ${ready ? "isReady-btn" : ""}${isHost ? "ready-btn--host" : "ready-btn--guest"}`}
             onClick={async () => {
               // FIRST CLICK → not ready yet
               if (!ready) {
