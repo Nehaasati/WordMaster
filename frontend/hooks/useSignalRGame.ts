@@ -97,6 +97,14 @@ export function useSignalRGame(
       handlersRef.current.onWordSubmitted?.(senderId, category, word);
     };
 
+    // Added handlers for abilities (freeze and ink)
+    const handleFreezeReceived = () => {
+      handlersRef.current.onFreezeReceived?.();
+    };
+
+    const handleInkReceived = () => {
+      handlersRef.current.onInkReceived?.();
+    };
     // -------------------------
     // REGISTER EVENTS
     // -------------------------
@@ -106,6 +114,8 @@ export function useSignalRGame(
     connection.on("HostChanged", handleHostChanged);
     connection.on("MatchEnded", handleMatchEnded);
     connection.on("WordSubmitted", handleWordSubmitted);
+    connection.on("Freeze", handleFreezeReceived);
+    connection.on("Ink", handleInkReceived);
 
     // -------------------------
     // CLEANUP (IMPORTANT)
@@ -117,6 +127,8 @@ export function useSignalRGame(
       connection.off("HostChanged", handleHostChanged);
       connection.off("MatchEnded", handleMatchEnded);
       connection.off("WordSubmitted", handleWordSubmitted);
+      connection.off("Freeze", handleFreezeReceived);
+      connection.off("Ink", handleInkReceived);
     };
   }, [connection, lobbyId, navigate]);
 
