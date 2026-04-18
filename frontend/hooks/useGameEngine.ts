@@ -1,22 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import type Player from "../src/interfaces/Player";
 import { checkWordWithLetters } from "../services/wordValidator";
 import type {
   Letter,
   CategoryData,
-  ValidateRequest,
   ValidateResponse,
-  LobbyResponse,
 } from "../interfaces/Gamepage";
-
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
 
 export function useGameEngine(
   lobbyId?: string,
   submitWord?: (category: string, word: string) => void,
 ) {
   // -----------------------------
-  // STATE
+  // INITIAL CATEGORY SETUP
   // -----------------------------
   const createInitialCategories = (): Record<string, CategoryData> => ({
     Name: { id: "Name", label: "Namn", word: "", valid: false, feedback: "" },
@@ -46,33 +41,32 @@ export function useGameEngine(
     },
   });
 
-  const [categories, setCategories] = useState<Record<string, CategoryData>>(
-    createInitialCategories(),
-  );
-  const resetCategories = () => {
-    setCategories(createInitialCategories());
-  };
-  const resetRound = () => {
-    setStopped(false);
-    setTimeLeft(0);
-    setCategories(createInitialCategories());
-  };
-
+  // -----------------------------
+  // STATE
+  // -----------------------------
+  const [categories, setCategories] = useState(createInitialCategories());
   const [allLetters, setAllLetters] = useState<Letter[]>([]);
-  const [characterId, setCharacterId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [stopped, setStopped] = useState(false);
+
+  // Scoring state (needed by GamePage)
   const [score, setScore] = useState(0);
   const [categoryPoints, setCategoryPoints] = useState<Record<string, number>>(
     {},
   );
 
+  // Refs for scoring + abilities
   const scoreRef = useRef(0);
   const bonusRef = useRef(0);
+
+  // Track words for scoring
   const myWordsRef = useRef<Record<string, string>>({});
   const opponentWordsRef = useRef<Record<string, Set<string>>>({});
 
+  // Track round start time (for abilities)
   const roundStartTime = useRef(0);
+
+  // set initial round start time after first render
   useEffect(() => {
     roundStartTime.current = Date.now();
   }, []);
@@ -82,348 +76,208 @@ export function useGameEngine(
   // -----------------------------
   useEffect(() => {
     if (stopped) return;
-    const t = setInterval(() => setTimeLeft((prev) => prev + 1), 1000);
+    const t = setInterval(() => setTimeLeft((p) => p + 1), 1000);
     return () => clearInterval(t);
   }, [stopped]);
 
   // -----------------------------
-  // FETCH PLAYER CHARACTER
+  // FETCH LETTERS
   // -----------------------------
   useEffect(() => {
-    if (!lobbyId) return;
-
-    const fetchPlayerCharacter = async () => {
-      try {
-        const res = await fetch(`/api/lobby/${lobbyId}`);
-        if (res.ok) {
-          const data: LobbyResponse = await res.json();
-          const storedId = localStorage.getItem("wordmaster-player-id");
-
-          const player =
-            data.players?.find((p: Player) => p.id === storedId) ??
-            data.players?.[0];
-
-          if (player?.characterId) {
-            setCharacterId(player.characterId);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch character:", err);
-      }
-    };
-
-    fetchPlayerCharacter();
-  }, [lobbyId]);
-
-  // -----------------------------
-  // ORIGINAL LETTER GENERATOR (from GamePage)
-  // -----------------------------
-  const generateRandomLetters = (
-    count: number,
-    currentLetters: Letter[] = [],
-    isExtra: boolean = false,
-  ): Letter[] => {
-    const letters: Letter[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const pool = [...currentLetters, ...letters].map((l) => l.char);
-      const frequencies: Record<string, number> = {};
-
-      for (const char of pool) {
-        frequencies[char] = (frequencies[char] || 0) + 1;
-      }
-
-      let availableChars = ALPHABET.split("").filter(
-        (char) => (frequencies[char] || 0) < 2,
-      );
-
-      if (availableChars.length === 0) availableChars = ALPHABET.split("");
-
-      const randomChar =
-        availableChars[Math.floor(Math.random() * availableChars.length)];
-
-      letters.push({
-        id: crypto.randomUUID(),
-        char: randomChar,
-        used: false,
-        isExtra,
-        source: isExtra ? "extra" : "replacement",
-      });
-    }
-
-    return letters;
-  };
-
-  // -----------------------------
-  // FETCH INITIAL LETTERS
-  // -----------------------------
-  useEffect(() => {
-    const fetchInitialLetters = async () => {
+    const fetchLetters = async () => {
       try {
         const url = lobbyId ? `/api/lobby/${lobbyId}` : "/api/game/letters";
-        const response = await fetch(url);
 
-        if (response.ok) {
-          const data = await response.json();
-          const letters = lobbyId
-            ? (data as LobbyResponse).letters
-            : (data as string[]);
+        const res = await fetch(url);
+
+        if (res.ok) {
+          const data = await res.json();
+          const letters = lobbyId ? data.letters : data;
 
           setAllLetters(
-            letters.map((char) => ({
+            letters.map((char: string) => ({
               id: crypto.randomUUID(),
               char,
               used: false,
               isExtra: false,
-              source: "initial",
             })),
           );
-        } else {
-          setAllLetters(generateRandomLetters(15));
+
+          roundStartTime.current = Date.now();
         }
       } catch {
-        setAllLetters(generateRandomLetters(15));
+        console.error("Failed to fetch letters");
       }
     };
 
-    fetchInitialLetters();
+    fetchLetters();
   }, [lobbyId]);
 
   // -----------------------------
-  // ADD EXTRA LETTERS
+  // BUILD AVAILABLE LETTER POOL
   // -----------------------------
-  const addExtraLetters = async () => {
-    try {
-      const response = await fetch("/api/game/letters?count=5");
-      if (response.ok) {
-        const letters: string[] = await response.json();
-        const newLetters: Letter[] = letters.map((char) => ({
-          id: crypto.randomUUID(),
-          char,
-          used: false,
-          isExtra: true,
-          source: "extra",
-        }));
-        setAllLetters((prev) => [...prev, ...newLetters]);
-        return;
-      }
-    } catch {
-      // fallback
-    }
-
-    setAllLetters((prev) => [...prev, ...generateRandomLetters(5, prev, true)]);
-  };
-
-  // -----------------------------
-  // CHECK WORD WITH LETTERS
-  // -----------------------------
-  const getAvailableLetters = (categoryId: string) => {
-    const pool = allLetters.map((l) => l.char);
+  const buildAvailablePool = (categoryId: string): string[] => {
+    let otherUsedWord = "";
 
     for (const catId in categories) {
-      if (catId !== categoryId && categories[catId]?.valid) {
-        const otherWord = categories[catId].word.toUpperCase();
-        for (const char of otherWord) {
-          const index = pool.indexOf(char);
-          if (index !== -1) pool.splice(index, 1);
-        }
+      if (catId !== categoryId && !categories[catId].valid) {
+        otherUsedWord += categories[catId].word;
       }
+    }
+
+    const pool = allLetters.map((l) => l.char);
+
+    for (const char of otherUsedWord.toUpperCase()) {
+      const index = pool.indexOf(char);
+      if (index !== -1) pool.splice(index, 1);
     }
 
     return pool;
   };
 
   // -----------------------------
-  // ABILITY BONUS
+  // CHARACTER ABILITY BONUS
   // -----------------------------
   const calculateAbilityBonus = async (word: string): Promise<number> => {
-    if (!characterId) return 0;
-
-    const secondsTaken = (Date.now() - roundStartTime.current) / 1000;
-
     try {
+      const secondsTaken = (Date.now() - roundStartTime.current) / 1000;
+
       const res = await fetch("/api/character/ability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ characterId, word, secondsTaken }),
+        body: JSON.stringify({
+          characterId: localStorage.getItem("characterId"),
+          word,
+          secondsTaken,
+        }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        return data.bonusPoints ?? 0;
-      }
-    } catch (err) {
-      console.error("Error calculating ability bonus:", err);
-    }
+      if (!res.ok) return 0;
 
-    return 0;
+      const data = await res.json();
+      return data.bonusPoints ?? 0;
+    } catch {
+      return 0;
+    }
   };
 
   // -----------------------------
-  // WORD VALIDATION
+  // VALIDATE WORD
   // -----------------------------
   const validateWord = async (word: string, categoryId: string) => {
-    const category = categories[categoryId];
-    if (!category) return;
-
-    if (word.length === 0) {
-      setCategories((prev) => ({
-        ...prev,
-        [categoryId]: { ...prev[categoryId], feedback: "", valid: false, word },
-      }));
-      return;
-    }
-
-    if (word.length < 2) {
-      setCategories((prev) => ({
-        ...prev,
-        [categoryId]: {
-          ...prev[categoryId],
-          feedback: "Too short",
-          valid: false,
-          word,
-        },
-      }));
-      return;
-    }
+    if (word.length < 2) return;
 
     if (!checkWordWithLetters(word, categoryId, categories, allLetters)) {
-      setCategories((prev) => ({
-        ...prev,
-        [categoryId]: { ...prev[categoryId], valid: false, word },
-      }));
       return;
     }
 
+    const availablePool = buildAvailablePool(categoryId);
+
     try {
-      const storedId = localStorage.getItem("wordmaster-player-id") ?? "";
-
-      const request: ValidateRequest = {
-        word: word.trim().toUpperCase(),
-        categoryId,
-        letters: getAvailableLetters(categoryId),
-        lobbyId: lobbyId!,
-        playerId: storedId,
-      };
-
-      // For debugging: log the validation request details
-      console.log(" VALIDATION REQUEST", {
-        word: word,
-        normalizedWord: word.trim().toUpperCase(),
-        categoryId,
-        letters: getAvailableLetters(categoryId),
-        categories,
-      });
-
-      const response = await fetch("/api/word/validate", {
+      const res = await fetch("/api/word/validate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({
+          Word: word.trim(),
+          Category: categoryId,
+          Letters: availablePool,
+        }),
       });
 
-      // For debugging: log the raw response before parsing
-      console.log("RAW VALIDATION RESPONSE", response);
+      const raw = await res.text();
+      let data: ValidateResponse;
 
-      if (!response.ok) {
-        setCategories((prev) => ({
-          ...prev,
-          [categoryId]: {
-            ...prev[categoryId],
-            feedback: "Error fetching",
-            valid: false,
-            word,
-          },
-        }));
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        console.error("Invalid JSON");
         return;
       }
 
-      const data: ValidateResponse = await response.json();
-
       if (data.isValid) {
+
+        // Ability bonus
         const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
         bonusRef.current += bonus;
 
-        // For debugging: log the validation response details
-        console.log("VALIDATION RESPONSE", data);
+        // Update category
         setCategories((prev) => ({
           ...prev,
           [categoryId]: {
             ...prev[categoryId],
-            feedback: "",
             valid: true,
             word,
+            feedback: "",
           },
         }));
+
+        // Submit to SignalR
         submitWord?.(categoryId, word);
       } else {
         setCategories((prev) => ({
           ...prev,
           [categoryId]: {
             ...prev[categoryId],
-            feedback: data.message || "Word not found",
             valid: false,
             word,
+            feedback: data.message || "Invalid",
           },
         }));
       }
     } catch (err) {
       console.error("Validation error:", err);
-
-      setCategories((prev) => ({
-        ...prev,
-        [categoryId]: {
-          ...prev[categoryId],
-          feedback: "Error fetching",
-          valid: false,
-          word,
-        },
-      }));
     }
   };
 
   // -----------------------------
-  // RESET GAME STATE
+  // RESET FUNCTIONS
   // -----------------------------
-  const resetGameState = () => {
-    setStopped(false);
-    setTimeLeft(0);
-    setCategories({});
-    setAllLetters([]);
-    setScore(0);
+  const resetCategories = () => {
+    setCategories(createInitialCategories());
+  };
+
+  const resetRound = () => {
     scoreRef.current = 0;
     bonusRef.current = 0;
+    setScore(0);
+    setStopped(false);
+    setTimeLeft(0);
+    setCategoryPoints({});
     myWordsRef.current = {};
     opponentWordsRef.current = {};
   };
 
+  // -----------------------------
+  // RETURN API FOR GAMEPAGE
+  // -----------------------------
   return {
     categories,
-    allLetters,
-    timeLeft,
-    score,
-    stopped,
-    characterId,
-    roundStartTime,
-    categoryPoints,
-    validateWord,
-    addExtraLetters,
-    resetGameState,
+    setCategories,
     resetCategories,
     resetRound,
-    setCategories,
+
+    allLetters,
     setAllLetters,
+
+    timeLeft,
+    stopped,
     setStopped,
+
+    score,
     setScore,
-    setTimeLeft,
-    setCharacterId,
-    setCategoryPoints,
     scoreRef,
     bonusRef,
+
+    categoryPoints,
+    setCategoryPoints,
+
     myWordsRef,
     opponentWordsRef,
-    calculateAbilityBonus,
+
+    validateWord,
+    buildAvailablePool,
   };
 }

@@ -193,6 +193,7 @@ const GamePage: React.FC = () => {
     myWordsRef,
     opponentWordsRef,
     validateWord,
+    buildAvailablePool,
   } = useGameEngine(lobbyId, submitWord);
 
   // Automatic focus shift to next category when one is completed
@@ -227,24 +228,49 @@ const GamePage: React.FC = () => {
     scoreRef.current = newScore;
   }, [categories, categoryPoints]);
 
-  const handleInputChange = (
-    categoryId: string,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    if (frozen || stopped) return;
-    const val = e.target.value.toUpperCase();
+ const handleInputChange = (
+   categoryId: string,
+   e: React.ChangeEvent<HTMLInputElement>,
+ ) => {
+   if (frozen || stopped) return;
 
-    // If it was valid, typing in it again (if allowed) should reset valid
-    // But it's disabled when valid, so this only happens if we programmatically reset it.
-    if (categories[categoryId].valid) {
-      setCategories((prev) => ({
-        ...prev,
-        [categoryId]: { ...prev[categoryId], valid: false },
-      }));
-    }
+   const raw = e.target.value.toUpperCase();
 
-    validateWord(val, categoryId);
-  };
+   // Build available pool BEFORE updating state
+   const pool = buildAvailablePool(categoryId);
+
+   // Filter out letters not in pool
+   let filtered = "";
+   const tempPool = [...pool];
+
+   for (const char of raw) {
+     const index = tempPool.indexOf(char);
+     if (index !== -1) {
+       filtered += char;
+       tempPool.splice(index, 1); // remove used letter
+     }
+   }
+
+   // Update UI immediately with filtered value
+   setCategories((prev) => {
+     const updated = {
+       ...prev,
+       [categoryId]: {
+         ...prev[categoryId],
+         word: filtered,
+         valid: false,
+         feedback: "",
+       },
+     };
+
+     // ⭐ Validate AFTER state update
+     setTimeout(() => {
+       validateWord(filtered, categoryId);
+     }, 0);
+
+     return updated;
+   });
+ };
   const handleFreezeLocal = () => {
     handleFreeze(setFrozen, setFreezeActive, setShowFreeze, setFreezeMsg);
   };
