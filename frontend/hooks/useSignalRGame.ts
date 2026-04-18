@@ -15,6 +15,8 @@ export function useSignalRGame(
       category: string,
       word: string,
     ) => void;
+    onFreezeReceived?: () => void;
+    onInkReceived?: () => void;
   },
 ) {
   const connection = useSignalR();
@@ -114,8 +116,8 @@ export function useSignalRGame(
     connection.on("HostChanged", handleHostChanged);
     connection.on("MatchEnded", handleMatchEnded);
     connection.on("WordSubmitted", handleWordSubmitted);
-    connection.on("Freeze", handleFreezeReceived);
-    connection.on("Ink", handleInkReceived);
+    connection.on("FreezeReceived", handleFreezeReceived);
+    connection.on("InkReceived", handleInkReceived);
 
     // -------------------------
     // CLEANUP (IMPORTANT)
@@ -127,8 +129,8 @@ export function useSignalRGame(
       connection.off("HostChanged", handleHostChanged);
       connection.off("MatchEnded", handleMatchEnded);
       connection.off("WordSubmitted", handleWordSubmitted);
-      connection.off("Freeze", handleFreezeReceived);
-      connection.off("Ink", handleInkReceived);
+      connection.off("FreezeReceived", handleFreezeReceived);
+      connection.off("InkReceived", handleInkReceived);
     };
   }, [connection, lobbyId, navigate]);
 

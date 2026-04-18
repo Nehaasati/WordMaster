@@ -175,10 +175,24 @@ const GamePage: React.FC = () => {
         points = 10; // unique word
       }
 
-      setCategoryPoints(prev => ({
+      setCategoryPoints((prev) => ({
         ...prev,
         [category]: points,
       }));
+    },
+    // Added handlers for abilities (freeze and ink)
+    onFreezeReceived: () => {
+      handleFreezeLocal(); // your existing freeze UI logic
+    },
+
+    onInkReceived: () => {
+      setShowInk(true);
+      setInkActive(true);
+
+      setTimeout(() => {
+        setShowInk(false);
+        setInkActive(false);
+      }, 3000);
     },
   });
 
