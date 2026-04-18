@@ -341,7 +341,7 @@ height: 280px;
 }
 
 .game-mode-btn.active {
-  background: rgba(130, 50, 220, 0.55);
+  background: rgba(0, 0, 0, 0.45);
   border-color: rgba(180, 100, 255, 0.9);
   color: #f0e0ff;
   box-shadow: 0 0 18px rgba(160, 80, 255, 0.5);
