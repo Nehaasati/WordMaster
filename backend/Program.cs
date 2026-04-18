@@ -314,12 +314,31 @@ app.MapPost("/api/lobby/{lobbyId}/restart", async (
     if (!lobby.MatchEnded)
         return Results.BadRequest("Game not finished yet");
 
-    engine.ResetLobbyForNewRound(lobbyId);
+    // Add player's restart vote
+    if (!lobby.RestartVotes.Contains(playerId))
+    {
+        lobby.RestartVotes.Add(playerId);
+    }
 
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("LobbyReset", lobbyId);
+    // Check if all players have voted to restart
+    if (lobby.RestartVotes.Count >= lobby.Players.Count)
+    {
+        // All players have voted, reset the lobby
+        engine.ResetLobbyForNewRound(lobbyId);
 
-    return Results.Ok(new { message = "Lobby reset for new round" });
+        await hub.Clients.Group(lobbyId)
+            .SendAsync("LobbyReset", lobbyId);
+
+        return Results.Ok(new { message = "Lobby reset for new round" });
+    }
+    else
+    {
+        // Not all players have voted yet, notify others
+        await hub.Clients.Group(lobbyId)
+            .SendAsync("PlayerRestartVote", playerId);
+
+        return Results.Ok(new { message = "Restart vote recorded", votes = lobby.RestartVotes.Count, totalPlayers = lobby.Players.Count });
+    }
 });
 
 // An endpoint to allow new player to join the lobby if one if the lobby's previous players has left

@@ -280,6 +280,9 @@ public class GameEngine
             p.HasSubmitted = false;
         }
 
+        // Clear restart votes
+        lobby.RestartVotes.Clear();
+
         return true;
     }
 
@@ -370,6 +373,9 @@ public class Lobby
 
     // Indicates if the match has ended
     public bool MatchEnded { get; set; }
+
+    // Track which players have voted to restart the game
+    public List<string> RestartVotes { get; set; } = new();
 }
 
 // Player class to represent a player in the lobby. This can be expanded with more properties as needed.
