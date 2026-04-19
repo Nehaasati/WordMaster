@@ -30,6 +30,7 @@ const NameModal: React.FC<{
 
         <p className="wm-modal-label">Välj ett namn</p>
         <input
+          data-testid="name-input"
           className="wm-modal-input"
           placeholder="Skriv ditt namn ..."
           value={playerName}
@@ -40,6 +41,7 @@ const NameModal: React.FC<{
         {/* Only show lobby code field for "join" mode */}
         {showCodeField && (
           <input
+            data-testid="join-code-input"
             className="wm-modal-input"
             placeholder="Enter lobby code..."
             value={code}
@@ -49,7 +51,9 @@ const NameModal: React.FC<{
         )}
 
         <div className="wm-modal-btns">
+          {/* a button to confirm the selection */}
           <button
+            data-testid="btn-join-lobby"
             className="wm-modal-btn wm-modal-btn--confirm"
             disabled={!playerName.trim() || (showCodeField && !code.trim())}
             onClick={() =>
