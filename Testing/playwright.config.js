@@ -1,9 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  timeout: 30_000,
+  timeout: 30000,
   expect: {
-    timeout: 10_000
+    timeout: 10000
   },
   reporter: [['list']],
   use: {
