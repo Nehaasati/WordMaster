@@ -430,20 +430,20 @@ export default function LobbyPage() {
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
           <div className="player-box" style={{ marginBottom: "20px" }}>
-            <p>Dit namn: {playerName}</p>
+            <p style={{ color: "#e6e315", fontWeight: "800",fontFamily: "Inter, sans-serif", textShadow: "0 0 9px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>Dit namn: {playerName}</p>
           </div>
 
           <div className="players-list">
             {players.map((p, index) => (
               <div key={p.id} className="player-box">
-                <p>
+                <p  style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 8px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>
                   Spelare {index + 1}: {p.name} {p.isReady ? "Ja" : ""}
                 </p>
               </div>
             ))}
           </div>
 
-          {realLobbyId && (
+          {realLobbyId && isHost &&(
             <div className="lobby-info">
               <p className="wm-modal-label">
                 LOBBY ID:{" "}
@@ -506,7 +506,7 @@ export default function LobbyPage() {
           {isHost && !ready && players.length < 2 && (
             <button
               className="wm-modal-btn wm-modal-btn--cancel"
-              style={{ marginBottom: "12px" }}
+              style={{ marginTop: "1px", background: "rgba(0, 0, 0, 0.45)" }}
               onClick={async () => {
                 const res = await fetch(
                   `/api/lobby/${realLobbyId}/add-bot`,
@@ -551,7 +551,7 @@ export default function LobbyPage() {
 
           {/* Ready / Start button */}
           <button
-            className={`ready-btn ${ready ? "isReady-btn" : ""}`}
+            className={`ready-btn ${ready ? "isReady-btn" : ""} ${isHost ? "ready-btn--host" : "ready-btn--guest"}`}
             onClick={async () => {
               // FIRST CLICK → not ready yet
               if (!ready) {
