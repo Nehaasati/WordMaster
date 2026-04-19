@@ -246,11 +246,11 @@ public class GameEngine
         var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
         if (player == null)
             return false;
-        if (!player.CategoriesCompleted)
-            return false;
+
+        // Mark the player as finished
         player.HasFinished = true;
 
-        // If one of the players is done => End the match
+        // the first player finish => end the match
         lobby.MatchEnded = true;
         lobby.State = GameState.WaitingForReady;
 

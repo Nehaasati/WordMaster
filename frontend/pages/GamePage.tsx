@@ -337,7 +337,7 @@ const GamePage: React.FC = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            categoriesCompleted: CATEGORY_LIST.length, // 7 categories
+            categoriesCompleted: true, //
             score: scoreRef.current,
           }),
         }).catch((err) => console.error("API Finish Error:", err));
@@ -346,7 +346,7 @@ const GamePage: React.FC = () => {
         setStopped(true);
       }
     };
-
+    
     notifyFinished();
   }, [allDone, stopped, lobbyId, scoreRef]);
 
@@ -562,7 +562,7 @@ const GamePage: React.FC = () => {
             <p>Din tid: {timeLeft} sekunder</p>
             <p>Din poäng: {score}</p>
 
-            {/* 🆕 Restart button (ONLY HOST) */}
+            {/* Restart button (ONLY HOST) */}
             {lobbyId && localStorage.getItem("isHost") === "true" && (
               <button
                 className="gp-btn"
