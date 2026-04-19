@@ -89,45 +89,56 @@ export default function ResultPage() {
   const isTie = players.length === 2 && players[0]?.score === players[1]?.score;
 
   return (
-    <div className="rp-scene">
+    <div className="rp-scene" data-testid="result-page">
       <div className="rp-bg" />
 
       <div className="rp-content">
-        <h1 className="rp-title">Resultat</h1>
+        <h1 className="rp-title" data-testid="result-title">
+          Resultat
+        </h1>
 
-        {loading && <p className="rp-loading">Hämtar resultat...</p>}
-        {error && <p className="rp-error">{error}</p>}
+        {loading && <p className="rp-loading" data-testid="loading">
+          Hämtar resultat...
+        </p>}
+        {error && <p className="rp-error" data-testid="error">
+          {error}
+        </p>}
 
         {!loading && !error && players.length > 0 && (
           <>
-            <div className="rp-winner-box">
+            <div className="rp-winner-box" data-testid="winner-box">
               {isTie ? (
                 <>
-                  <p className="rp-winner-text">Oavgjort!</p>
+                  <p className="rp-winner-text" data-testid="tie-result">
+                    Oavgjort!
+                  </p>
                 </>
               ) : (
                 <>
-                  <p className="rp-winner-text">
+                  <p className="rp-winner-text" data-testid="winner-text">
                     {isWinner ? "Du vann! Grattis!" : `${winner.name} vann!`}
                   </p>
                 </>
               )}
             </div>
 
-            <div className="rp-scoreboard">
+            <div className="rp-scoreboard" data-testid="scoreboard">
               {players.map((p, index) => {
                 const isMe = p.id === myPlayerId;
                 const isFirst = index === 0 && !isTie;
                 return (
                   <div
+                    data-testid={`player-row-${p.id}`}
                     key={p.id}
                     className={`rp-player-row ${isFirst ? "rp-player-row--winner" : ""} ${isMe ? "rp-player-row--me" : ""}`}
                   >
-                    <span className="rp-player-name">
+                    <span className="rp-player-name" data-testid={`player-name-${p.id}`}>
                       {p.name}
-                      {isMe && <span className="rp-you-badge"> (du)</span>}
+                      {isMe && <span className="rp-you-badge" data-testid="player-me"> (du)</span>}
                     </span>
-                    <span className="rp-player-score">{p.score} p</span>
+                    <span className="rp-player-score" data-testid={`player-score-${p.id}`}>
+                      {p.score} p
+                    </span>
                   </div>
                 );
               })}
@@ -137,11 +148,12 @@ export default function ResultPage() {
 
         <div className="rp-actions">
           {restartVotes.length > 0 && (
-            <p className="rp-restart-status">
+            <p className="rp-restart-status" data-testid="restart-status">
               {restartVotes.length} av {players.length} spelare vill spela igen
             </p>
           )}
           <button
+            data-testid="btn-restart-vote"
             className="rp-btn rp-btn--primary"
             onClick={async () => {
               const playerId = localStorage.getItem("wordmaster-player-id");
@@ -160,6 +172,7 @@ export default function ResultPage() {
               : "Spela igen"}
           </button>
           <button
+            data-testid="btn-back-menu"
             className="rp-btn rp-btn--secondary"
             onClick={() => navigate("/")}
           >
