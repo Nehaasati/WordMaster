@@ -4,13 +4,15 @@ public static class ScoreCalculator
 {
     public sealed record CategorySubmission(string Word, bool IsValid);
 
-    public static Dictionary<string, int> CalculateScores (IDictionary<string, Dictionary<string, CategorySubmission>> submissions)
+    public static Dictionary<string, int> CalculateScores (IDictionary<string, Dictionary<string, CategorySubmission>> submissions, Dictionary<string, int> characterBonuses = null)
     {
+        characterBonuses ??= new Dictionary<string, int>();
+        
         var scores = new Dictionary<string, int>();
 
         foreach (var player in submissions.Keys)
         {
-            scores[player] = 0;
+            scores[player] = characterBonuses.ContainsKey(player) ? characterBonuses[player] : 0;
         }
 
                                                         // en Dictionary har en KEY och en Value

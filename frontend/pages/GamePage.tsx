@@ -4,6 +4,8 @@ import type { Letter, CategoryData, StarData, Category } from "../interfaces/Gam
 import * as signalR from "@microsoft/signalr";
 import "../css/GamePage.css"
 import ShopPanel from "./Shoppanel";
+import { useJoker } from '../interfaces/JokerCard';
+import JokerButton from './JokerCard';
 ///Star annimation
 const STATIC_STARS: StarData[] = Array.from({ length: 60 }).map((_, i) => ({
   id: i,
@@ -71,6 +73,13 @@ const GamePage: React.FC = () => {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const bonusRef = useRef<number>(0);
+  const storedPlayerId = localStorage.getItem('wordmaster-player-id') ?? '';
+  const { joker, jokerMsg, activateJoker, applyJoker } = useJoker(
+  lobbyId,
+  storedPlayerId,
+  score,
+  setScore
+  );
   const scoreRef = useRef<number>(0);
   const myWordsRef = useRef<Record<string, string>>({});
   const opponentWordsRef = useRef<Record<string, Set<string>>>({});
@@ -488,6 +497,11 @@ useEffect(() => {
           console.log(`+${bonus} bonus from ${characterId}! Total bonus: ${bonusRef.current}`);
 
         }
+        const multiplier = await applyJoker(word);
+        if (multiplier > 1) {
+          bonusRef.current += 10;
+          console.log(`🃏 Joker doubled score for "${word}"!`);
+        }
         // ────────────────────────────────────────────
         // Fetch replacement letters from backend
         let newLetterChars: string[] = [];
@@ -838,6 +852,17 @@ useEffect(() => {
         >
           Mix
         </button>
+
+        {lobbyId && (
+          <JokerButton
+            isActive={joker.isActive}
+            jokerLetter={joker.jokerLetter}
+            score={score}
+            stopped={stopped}
+            onActivate={activateJoker}
+          />
+        )}
+
         {lobbyId && !stopped && (
           <button
             className="gp-btn gp-btn--stop"
@@ -849,12 +874,18 @@ useEffect(() => {
         )}
       </div>
 
+      {/* Joker message */}
+      {jokerMsg && (
+        <div className="gp-joker-msg" data-testid="joker-msg">
+          {jokerMsg}
+        </div>
+      )}
       {/* Main content */}
       <ShopPanel
-  score={score}
-  onBuyLetter={(letter: string, cost: number) => {
-    setScore(prev => prev - cost)
-    setAllLetters(prev => [
+      score={score}
+      onBuyLetter={(letter: string, cost: number) => {
+      setScore(prev => prev - cost)
+        setAllLetters(prev => [
       ...prev,
       {
         id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36),

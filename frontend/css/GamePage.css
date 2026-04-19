@@ -92,6 +92,7 @@
   position: relative;
   z-index: 2;
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 0 20px 10px;
   justify-content: center;
@@ -115,7 +116,35 @@
 .gp-btn--mix    { background: #3b82f6; box-shadow: 0 4px 12px rgba(59,130,246,0.5); }
 .gp-btn--stop   { background: #d31f2e; box-shadow: 0 4px 15px rgba(211,31,46,0.5); font-weight: bold; letter-spacing: 0.05em; }
 .gp-btn--stop:hover { background: #b01020; box-shadow: 0 6px 20px rgba(211,31,46,0.7); }
- 
+
+.gp-btn--joker {
+  background: #8b5cf6;
+  box-shadow: 0 4px 12px rgba(139,92,246,0.5);
+}
+.gp-btn--joker-active {
+  background: #f59e0b;
+  box-shadow: 0 4px 14px rgba(245,158,11,0.6);
+}
+.gp-btn--disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.gp-joker-msg {
+  position: relative;
+  z-index: 2;
+  margin: 0 auto 16px;
+  max-width: 760px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+
 /* ── MAIN CONTENT ── */
 .gp-content {
   position: relative;
