@@ -47,8 +47,6 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapFallbackToFile("index.html");
-
 app.UseCors("AllowAll");
 
 if (app.Environment.IsDevelopment())
@@ -56,7 +54,9 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapControllers(); 
+app.MapControllers();
+
+/* -------------------------- VALIDATION - endpoints ------------------------------------------------*/
 app.MapPost("/api/word/validate", (
     ValidateRequest request, 
     GameEngine engine) =>
@@ -65,6 +65,7 @@ app.MapPost("/api/word/validate", (
     return Results.Ok(new { isValid, message });
 });
 
+/* -------------------------- LOBBY - endpoints -------------------------------------------------------*/
 // Create the lobby with the player as the host and return the lobby ID, invite code, and player ID. This endpoint is called when a player creates a new game lobby.
 app.MapPost("/api/lobby", (
     CreateLobbyRequest request,
@@ -80,7 +81,6 @@ app.MapPost("/api/lobby", (
 
     // Log the player creating for debugging purposes
     Console.WriteLine($"{host.Name} created lobby {lobby.Id}");
-    
     return Results.Ok(new
     {
         lobbyId = lobby.Id,
@@ -99,6 +99,283 @@ app.MapGet("/api/game/letters", (GameEngine engine, int count = 25) =>
 {
     var letters = engine.GenerateLetters(count);
     return Results.Ok(letters);
+});
+// New endpoint to join a lobby using either lobby ID or invite code
+// This endpoint allows a player to join a lobby and notifies other players in the lobby via SignalR. and choose character
+app.MapPost("/api/lobby/{lobbyId}/join", async (
+    string lobbyId,
+    JoinRequest request,
+    GameEngine engine,
+    IHubContext<LobbyHub> hubContext) =>
+{
+    var player = new Player
+    {
+        Name = request.Name,
+        IsHost = request.IsHost,
+        CharacterId = request.CharacterId,   // ← now stored
+        ConnectionId = Guid.NewGuid().ToString()
+    };
+        // assign connection id
+    //player.ConnectionId = Guid.NewGuid().ToString();
+    if (player == null || string.IsNullOrEmpty(player.Name))
+        return Results.BadRequest("Invalid player");
+
+    if (engine.TryJoinLobby(lobbyId, player, out var error))
+    {
+        // Add the player's connection to the SignalR group for the lobby so they can receive real-time updates about the lobby
+        await hubContext.Groups.AddToGroupAsync(player.ConnectionId, lobbyId);
+
+        await hubContext.Clients.Group(lobbyId)
+            .SendAsync("PlayerJoined", player);
+
+        // Log the player joining for debugging purposes
+        Console.WriteLine($"Player {player.Name} joined lobby {lobbyId}");
+
+        // Return a success response with the lobby ID and player info
+        return Results.Ok(new
+        {
+            message = "Player joined successfully",
+            lobbyId = lobbyId,
+            player = player
+        });
+    }
+
+    // If joining the lobby failed, return a bad request with the error message
+    return Results.BadRequest(new { error });
+});
+
+// Endpoint to set a player as ready in the lobby. This can be called from the client when a player clicks a "Ready" button, and it notifies other players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
+    string lobbyId,
+    string playerId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    engine.SetPlayerReady(lobbyId, playerId);
+
+    // log ready
+    Console.WriteLine($"Player {playerId} is ready in lobby {lobbyId}");
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("PlayerReady", playerId);
+
+    return Results.Ok();
+});
+app.MapPost("/api/lobby/{lobbyId}/register-connection", (
+    string lobbyId,
+    RegisterConnectionRequest req,
+    GameEngine engine
+) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    var player = lobby?.Players.FirstOrDefault(p => p.Id == req.PlayerId);
+    if (player == null) return Results.NotFound();
+
+    player.ConnectionId = req.ConnectionId;
+    return Results.Ok();
+});
+
+// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
+    string lobbyId,
+    string playerId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    // Check if the lobby exists and if the game can be started
+    var lobby = engine.GetLobby(lobbyId);
+
+    if (lobby == null)
+        return Results.NotFound();
+
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.BadRequest("Invalid player");
+
+    if (!player.IsHost)
+        return Results.BadRequest("Only host can start the game");
+
+    // Start the game in the engine in order to set the lobby state, initialize rounds.
+    if (!engine.CanStartGame(lobbyId))
+        return Results.BadRequest("Players not ready");
+
+    if (!engine.StartGame(lobbyId, playerId))
+        return Results.BadRequest("Failed to start game");
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("GameStarted", lobbyId);
+
+    return Results.Ok();
+});
+
+//Finish the game for a player. This is called when a player finishes submitting their words for the final round, and it checks if the match has ended (all players finished). If the match has ended, it notifies all players in the lobby via SignalR.
+app.MapPost("/api/lobby/{lobbyId}/player-finished/{playerId}", async (
+    string lobbyId,
+    string playerId,
+    FinishRequest request,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    var player = lobby?.Players.FirstOrDefault(p => p.Id == playerId);
+    var finished = false;
+
+    if (player != null)
+    {
+        player.CategoriesCompleted = request.CategoriesCompleted;
+        player.Score = request.Score;
+    }
+    // Mark the player as finished in the game engine
+    bool matchEnded = engine.PlayerFinished(lobbyId, playerId);
+    finished = player?.HasFinished == true;
+
+    if (matchEnded)
+    {
+        // Notify all players in the lobby that the match has ended
+        await hub.Clients.Group(lobbyId)
+            .SendAsync("MatchEnded", lobbyId);
+
+        return Results.Ok(new { finished, matchEnded = true });
+    }
+
+    return Results.Ok(new { finished, matchEnded = false });
+});
+app.MapPost("/api/lobby/{lobbyId}/save-score/{playerId}", (
+    string lobbyId,
+    string playerId,
+    SaveScoreRequest request,
+    GameEngine engine
+) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    var player = lobby?.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null) return Results.NotFound();
+    player.Score = request.Score;
+    return Results.Ok(new { saved = true });
+});
+
+app.MapPost("/api/game/calculate-score", (
+    CalculateScoreRequest request) =>
+{
+    var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>();
+    submissions["player"] = new Dictionary<string, ScoreCalculator.CategorySubmission>();
+    foreach (var category in request.Categories)
+    {
+        submissions["player"][category.Id] = new ScoreCalculator.CategorySubmission(category.Word, category.IsValid);
+    }
+    var scores = ScoreCalculator.CalculateScores(submissions);
+    return Results.Ok(new { score = scores["player"] });
+});
+
+app.MapPost("/api/lobby/{lobbyId}/add-bot", async (
+    string lobbyId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub) =>
+{
+    var bot = engine.AddBot(lobbyId);
+    if (bot == null)
+        return Results.BadRequest(new { error = "Cannot add bot to this lobby" });
+
+    await hub.Clients.Group(lobbyId).SendAsync("PlayerJoined", bot);
+    await hub.Clients.Group(lobbyId).SendAsync("PlayerReady", bot.Id);
+
+    return Results.Ok(new { bot });
+});
+
+app.MapGet("/api/bot/word", (string category, Dictionary<string, List<string>> categories) =>
+{
+    if (!categories.TryGetValue(category, out var words) || words.Count == 0)
+        return Results.NotFound();
+
+    var rng = new Random();
+    var word = words[rng.Next(words.Count)];
+    return Results.Ok(new { word = word.ToUpper() });
+});
+
+// An endpoint to allow players to start a new round/game on the same lobby 
+app.MapPost("/api/lobby/{lobbyId}/restart", async (
+    string lobbyId,
+    string playerId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    if (lobby == null)
+        return Results.NotFound();
+
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.BadRequest("Invalid player");
+
+    // Allow any player to restart, as long as match ended
+
+    if (!lobby.MatchEnded)
+        return Results.BadRequest("Game not finished yet");
+
+    // Add player's restart vote
+    if (!lobby.RestartVotes.Contains(playerId))
+    {
+        lobby.RestartVotes.Add(playerId);
+    }
+
+    // Check if all players have voted to restart
+    if (lobby.RestartVotes.Count >= lobby.Players.Count)
+    {
+        // All players have voted, reset the lobby
+        engine.ResetLobbyForNewRound(lobbyId);
+
+        await hub.Clients.Group(lobbyId)
+            .SendAsync("LobbyReset", lobbyId);
+
+        return Results.Ok(new { message = "Lobby reset for new round" });
+    }
+    else
+    {
+        // Not all players have voted yet, notify others
+        await hub.Clients.Group(lobbyId)
+            .SendAsync("PlayerRestartVote", playerId);
+
+        return Results.Ok(new { message = "Restart vote recorded", votes = lobby.RestartVotes.Count, totalPlayers = lobby.Players.Count });
+    }
+});
+
+// An endpoint to allow new player to join the lobby if one if the lobby's previous players has left
+app.MapPost("/api/lobby/{lobbyId}/leave/{playerId}", async (
+    string lobbyId,
+    string playerId,
+    GameEngine engine,
+    IHubContext<LobbyHub> hub
+) =>
+{
+    var success = engine.RemovePlayer(lobbyId, playerId, out var hostChanged);
+
+    if (!success)
+        return Results.NotFound();
+
+    await hub.Clients.Group(lobbyId)
+        .SendAsync("PlayerLeft", playerId);
+
+    if (hostChanged)
+    {
+        var lobby = engine.GetLobby(lobbyId);
+        var newHost = lobby?.Players.FirstOrDefault(p => p.IsHost);
+
+        if (newHost != null)
+        {
+            await hub.Clients.Group(lobbyId)
+                .SendAsync("HostChanged", newHost.Id);
+        }
+    }
+
+    return Results.Ok(new
+    {
+        message = "Player left lobby",
+        hostChanged
+    });
 });
 
 app.MapGet("/api/health", () => Results.Ok("OK"));
@@ -186,283 +463,10 @@ app.MapPost("/api/classic/game/skip", (ClassicGameEngine engine) =>
     });
 });
 
-// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
-app.MapPost("/api/lobby/{lobbyId}/start", async (
-    string lobbyId,
-    StartGameRequest? request,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub
-) =>
-{
-    // Check if the lobby exists and if the game can be started
-    var lobby = engine.GetLobby(lobbyId);
-
-    if (lobby == null)
-        return Results.NotFound();
-
-    if (!engine.CanStartGame(lobbyId))
-        return Results.BadRequest("Players not ready");
-
-    // Start the game in the engine in order to set the lobby state, initialize rounds, etc.
-    if (!engine.StartGame(lobbyId))
-        return Results.BadRequest("Failed to start game");
-
-    var gameMode = request?.GameMode ?? "standard";
-
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("GameStarted", lobbyId, gameMode);
-
-    return Results.Ok();
-});
-
-// New endpoint to join a lobby using either lobby ID or invite code
-// This endpoint allows a player to join a lobby and notifies other players in the lobby via SignalR. and choose character
-app.MapPost("/api/lobby/{lobbyId}/join", async (
-    string lobbyId,
-    JoinRequest request,
-    GameEngine engine,
-    IHubContext<LobbyHub> hubContext) =>
-{
-    var player = new Player
-    {
-        Name = request.Name,
-        IsHost = request.IsHost,
-        CharacterId = request.CharacterId,   // ← now stored
-        ConnectionId = Guid.NewGuid().ToString()
-    };
-        // assign connection id
-    //player.ConnectionId = Guid.NewGuid().ToString();
-    if (player == null || string.IsNullOrEmpty(player.Name))
-        return Results.BadRequest("Invalid player");
-
-    if (engine.TryJoinLobby(lobbyId, player, out var error))
-    {
-        // Add the player's connection to the SignalR group for the lobby so they can receive real-time updates about the lobby
-        //await hubContext.Groups.AddToGroupAsync(player.ConnectionId, lobbyId);
-
-        await hubContext.Clients.Group(lobbyId)
-            .SendAsync("PlayerJoined", player);
-
-        // Log the player joining for debugging purposes
-        Console.WriteLine($"Player {player.Name} joined lobby {lobbyId}");
-
-        // Return a success response with the lobby ID and player info
-        return Results.Ok(new
-        {
-            message = "Player joined successfully",
-            lobbyId = lobbyId,
-            player = player
-        });
-    }
-
-    // If joining the lobby failed, return a bad request with the error message
-    return Results.BadRequest(new { error });
-});
-
-// Endpoint to set a player as ready in the lobby. This can be called from the client when a player clicks a "Ready" button, and it notifies other players in the lobby via SignalR.
-app.MapPost("/api/lobby/{lobbyId}/ready/{playerId}", async (
-    string lobbyId,
-    string playerId,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub
-) =>
-{
-    engine.SetPlayerReady(lobbyId, playerId);
-
-    // log ready
-    Console.WriteLine($"Player {playerId} is ready in lobby {lobbyId}");
-
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("PlayerReady", playerId);
-
-    return Results.Ok();
-});
-
-// Endpoint to start the game in a lobby. This checks if the game can be started (enough players) and then notifies all players in the lobby via SignalR.
-app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
-    string lobbyId,
-    string playerId,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub
-) =>
-{
-    // Check if the lobby exists and if the game can be started
-    var lobby = engine.GetLobby(lobbyId);
-
-    if (lobby == null)
-        return Results.NotFound();
-
-    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
-    if (player == null)
-        return Results.BadRequest("Invalid player");
-
-    if (!player.IsHost)
-        return Results.BadRequest("Only host can start the game");
-
-    // Start the game in the engine in order to set the lobby state, initialize rounds.
-    if (!engine.CanStartGame(lobbyId))
-        return Results.BadRequest("Players not ready");
-
-    if (!engine.StartGame(lobbyId, playerId))
-        return Results.BadRequest("Failed to start game");
-
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("GameStarted", lobbyId);
-
-    return Results.Ok();
-});
-
-//Finish the game for a player. This is called when a player finishes submitting their words for the final round, and it checks if the match has ended (all players finished). If the match has ended, it notifies all players in the lobby via SignalR.
-app.MapPost("/api/lobby/{lobbyId}/player-finished/{playerId}", async (
-    string lobbyId,
-    string playerId,
-    FinishRequest request,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub
-) =>
-{
-    var lobby = engine.GetLobby(lobbyId);
-    var player = lobby?.Players.FirstOrDefault(p => p.Id == playerId);
-
-    if (player != null)
-    {
-        player.CategoriesCompleted = request.CategoriesCompleted;
-        player.Score = request.Score;
-    }
-    // Mark the player as finished in the game engine
-    bool matchEnded = engine.PlayerFinished(lobbyId, playerId);
-
-    if (matchEnded)
-    {
-        // Notify all players in the lobby that the match has ended
-        await hub.Clients.Group(lobbyId)
-            .SendAsync("MatchEnded", lobbyId);
-
-        return Results.Ok(new { finished = true, matchEnded = true });
-    }
-
-    return Results.Ok(new { finished = true, matchEnded = false });
-});
-app.MapPost("/api/lobby/{lobbyId}/save-score/{playerId}", (
-    string lobbyId,
-    string playerId,
-    SaveScoreRequest request,
-    GameEngine engine
-) =>
-{
-    var lobby = engine.GetLobby(lobbyId);
-    var player = lobby?.Players.FirstOrDefault(p => p.Id == playerId);
-    if (player == null) return Results.NotFound();
-    player.Score = request.Score;
-    return Results.Ok(new { saved = true });
-});
-
-app.MapPost("/api/game/calculate-score", (
-    CalculateScoreRequest request) =>
-{
-    var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>();
-    submissions["player"] = new Dictionary<string, ScoreCalculator.CategorySubmission>();
-    foreach (var category in request.Categories)
-    {
-        submissions["player"][category.Id] = new ScoreCalculator.CategorySubmission(category.Word, category.IsValid);
-    }
-    var scores = ScoreCalculator.CalculateScores(submissions);
-    return Results.Ok(new { score = scores["player"] });
-});
-
-app.MapPost("/api/lobby/{lobbyId}/add-bot", async (
-    string lobbyId,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub) =>
-{
-    var bot = engine.AddBot(lobbyId);
-    if (bot == null)
-        return Results.BadRequest(new { error = "Cannot add bot to this lobby" });
-
-    await hub.Clients.Group(lobbyId).SendAsync("PlayerJoined", bot);
-    await hub.Clients.Group(lobbyId).SendAsync("PlayerReady", bot.Id);
-
-    return Results.Ok(new { bot });
-});
-
-app.MapGet("/api/bot/word", (string category, Dictionary<string, List<string>> categories) =>
-{
-    if (!categories.TryGetValue(category, out var words) || words.Count == 0)
-        return Results.NotFound();
-
-    var rng = new Random();
-    var word = words[rng.Next(words.Count)];
-    return Results.Ok(new { word = word.ToUpper() });
-});
-
-// An endpoint to allow players to start a new round/game on the same lobby 
-app.MapPost("/api/lobby/{lobbyId}/restart", async (
-    string lobbyId,
-    string playerId,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub
-) =>
-{
-    var lobby = engine.GetLobby(lobbyId);
-    if (lobby == null)
-        return Results.NotFound();
-
-    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
-    if (player == null)
-        return Results.BadRequest("Invalid player");
-
-    if (!player.IsHost)
-        return Results.BadRequest("Only host can restart");
-
-    if (!lobby.MatchEnded)
-        return Results.BadRequest("Game not finished yet");
-
-    engine.ResetLobbyForNewRound(lobbyId);
-
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("LobbyReset", lobbyId);
-
-    return Results.Ok(new { message = "Lobby reset for new round" });
-});
-
-// An endpoint to allow new player to join the lobby if one if the lobby's previouse players has left
-app.MapPost("/api/lobby/{lobbyId}/leave/{playerId}", async (
-    string lobbyId,
-    string playerId,
-    GameEngine engine,
-    IHubContext<LobbyHub> hub
-) =>
-{
-    var success = engine.RemovePlayer(lobbyId, playerId, out var hostChanged);
-
-    if (!success)
-        return Results.NotFound();
-
-    await hub.Clients.Group(lobbyId)
-        .SendAsync("PlayerLeft", playerId);
-
-    if (hostChanged)
-    {
-        var lobby = engine.GetLobby(lobbyId);
-        var newHost = lobby?.Players.FirstOrDefault(p => p.IsHost);
-
-        if (newHost != null)
-        {
-            await hub.Clients.Group(lobbyId)
-                .SendAsync("HostChanged", newHost.Id);
-        }
-    }
-
-    return Results.Ok(new
-    {
-        message = "Player left lobby",
-        hostChanged
-    });
-});
-
-
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
+
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
@@ -491,3 +495,5 @@ public record RoundStatusResponse(
     int PlayersSubmitted,
     int TotalPlayers
 );
+
+public record RegisterConnectionRequest(string PlayerId, string ConnectionId);

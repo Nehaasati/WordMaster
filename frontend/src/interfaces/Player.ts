@@ -3,4 +3,5 @@ export default interface Player {
   name: string;
   isHost: boolean;
   isReady?: boolean;
+  characterId?: string;
 }

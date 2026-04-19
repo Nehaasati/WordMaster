@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { Character } from "../src/interfaces/interface.tsx";
 import type Player from "../src/interfaces/Player.ts";
 import "../css/lobby.css";
-import * as signalR from "@microsoft/signalr";
+import { useSignalR } from "../hooks/SignalRContext.ts";
 
 /*
    Name Modal — supports 3 entry modes:
@@ -65,14 +65,14 @@ const NameModal: React.FC<{
       </div>
     </div>
   );
-  };
+};
 
 // Map backend character ID → local image path
 const CHARACTER_IMAGES: Record<string, string> = {
-  ugglan:   "/images/owl.png",
-  leopard:  "/images/leo.png",
-  musen:    "/images/mouse.png",
-  björnen:  "/images/bear.png",
+  ugglan: "/images/owl.png",
+  leopard: "/images/leo.png",
+  musen: "/images/mouse.png",
+  björnen: "/images/bear.png",
 };
 
 /*
@@ -89,14 +89,16 @@ export default function LobbyPage() {
      - join: came from JoinModal
      - invite: direct URL access
  */
-  const entryMode: "host" | "join" | "invite" =
-    location.state?.isHost === true
+  // If coming from ResultPage
+  const fromResult = location.state?.fromResult === true;
+
+  const entryMode: "host" | "join" | "invite" = fromResult
+    ? "join" // returning players should NOT be treated as invite
+    : location.state?.isHost === true
       ? "host"
       : location.state?.isHost === false
         ? "join"
-        : lobbyId
-          ? "invite"
-          : "invite";
+        : "invite";
 
   const selectedPlayerName =
     location.state?.playerName?.trim() ||
@@ -131,17 +133,19 @@ export default function LobbyPage() {
       setRealLobbyId(lobbyId);
     }
   }, [lobbyId]);
-  
+
   /*
      Clean old playerId when entering via invite link
      (prevents incorrect host/guest behavior)
  */
   useEffect(() => {
-    if (entryMode === "invite") {
+    
+    if (entryMode === "invite" && !fromResult) {
       localStorage.removeItem("playerId");
       localStorage.removeItem("isHost");
     }
-  }, [entryMode]);
+    
+  }, [entryMode, fromResult]);
 
   // Player name handling
   // Determine initial name depending on entry mode
@@ -243,9 +247,7 @@ export default function LobbyPage() {
 
     const fetchLobby = async () => {
       try {
-        const res = await fetch(
-          `/api/lobby/${realLobbyId}`,
-        );
+        const res = await fetch(`/api/lobby/${realLobbyId}`);
         if (!res.ok) return;
 
         const data = await res.json();
@@ -276,62 +278,63 @@ export default function LobbyPage() {
   /*
      SignalR connection
  */
+  const connection = useSignalR();
+
   useEffect(() => {
-    if (!realLobbyId) return;
+    if (!connection || !realLobbyId || !playerId) return;
 
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl("/lobbyHub")
-      .withAutomaticReconnect()
-      .build();
+    console.log("LobbyPage using connection:", connection.connectionId);
 
-    connection
-      .start()
-      .then(async () => {
-        await connection.invoke("JoinLobbyGroup", realLobbyId);
+    // 1) Register connection in backend
+    fetch(`/api/lobby/${realLobbyId}/register-connection`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        playerId,
+        connectionId: connection.connectionId,
+      }),
+    });
 
-        // When a player joins the lobby
-        connection.on("PlayerJoined", (player: Player) => {
-          console.log("Player joined:", player);
+    // 2) Join group
+    connection.invoke("JoinLobbyGroup", realLobbyId);
 
-          setPlayers((prevPlayers) => {
-            // prevent duplicate players
-            if (prevPlayers.some((p) => p.id === player.id)) {
-              return prevPlayers;
-            }
-            // prevent adding more than 2 players
-            if (prevPlayers.length >= 2) {
-              return prevPlayers;
-            }
+    // 3) Listeners
+    connection.on("PlayerJoined", (player: Player) => {
+      setPlayers((prev) => {
+        if (prev.some((p) => p.id === player.id)) return prev;
+        return [...prev, player];
+      });
+    });
 
-            return [...prevPlayers, player];
-          });
-        });
+    connection.on("PlayerReady", (id: string) => {
+      setPlayers((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, isReady: true } : p)),
+      );
+    });
 
-        // When a player becomes ready
-        connection.on("PlayerReady", (playerId: string) => {
-          setPlayers((prevPlayers) =>
-            prevPlayers.map((p) =>
-              p.id === playerId ? { ...p, isReady: true } : p,
-            ),
-          );
-        });
+    connection.on("GameStarted", (lobbyId: string, mode: string) => {
+      if (mode === "blitz") navigate("/classic-game");
+      else navigate(`/game/${lobbyId}`);
+    });
 
-        // When the host starts the game
-        connection.on("GameStarted", (lobbyId: string, mode: string) => {
-          if (mode === "blitz") {
-            navigate("/classic-game");
-          } else {
-            navigate(`/game/${lobbyId}`);
-          }
-        });
-      })
-      .catch((err) => console.error("SignalR error:", err));
+    connection.on("LobbyReset", (resetLobbyId: string) => {
+      if (resetLobbyId !== realLobbyId) return;
 
-    // Cleanup when component unmounts
+      setReady(false);
+      setPlayers([]);
+      setMessage(null);
+
+      navigate(`/lobby/${realLobbyId}`);
+    });
+
+    // Cleanup
     return () => {
-      connection.stop();
+      connection.off("PlayerJoined");
+      connection.off("PlayerReady");
+      connection.off("GameStarted");
+      connection.off("LobbyReset");
     };
-  }, [realLobbyId, navigate]);
+  }, [connection, realLobbyId, navigate, playerId]);
 
   /*
      Handle Ready:
@@ -340,25 +343,36 @@ export default function LobbyPage() {
        (backend will reuse existing player if already joined)
  */
   const handleReady = async () => {
+    // Save selected character ID for abilities
+    if (character) {
+      localStorage.setItem("characterId", character.id);
+    }
+
     // HOST => only send ready
     if (isHost) {
-      await fetch(
-        `/api/lobby/${realLobbyId}/ready/${playerId}`,
-        { method: "POST" },
-      );
+      await fetch(`/api/lobby/${realLobbyId}/ready/${playerId}`, {
+        method: "POST",
+      });
       setReady(true);
       return;
     }
 
-    // GUEST => always attempt join
-    const joinRes = await fetch(
-      `/api/lobby/${realLobbyId}/join`,
-      {
+    // GUEST
+    // FIX: If player already exists, DO NOT join again
+    if (playerId) {
+      await fetch(`/api/lobby/${realLobbyId}/ready/${playerId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: playerName }),
-      },
-    );
+      });
+      setReady(true);
+      return;
+    }
+
+    // First-time join (only happens once in the entire lifetime of the player)
+    const joinRes = await fetch(`/api/lobby/${realLobbyId}/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: playerName }),
+    });
 
     const data = await joinRes.json();
 
@@ -374,12 +388,9 @@ export default function LobbyPage() {
     localStorage.setItem("playerId", newId);
 
     // Send ready immediately after join
-    await fetch(
-      `/api/lobby/${realLobbyId}/ready/${newId}`,
-      {
-        method: "POST",
-      },
-    );
+    await fetch(`/api/lobby/${realLobbyId}/ready/${newId}`, {
+      method: "POST",
+    });
 
     setReady(true);
   };
@@ -508,10 +519,9 @@ export default function LobbyPage() {
               className="wm-modal-btn wm-modal-btn--cancel"
               style={{ marginTop: "1px", background: "rgba(0, 0, 0, 0.45)" }}
               onClick={async () => {
-                const res = await fetch(
-                  `/api/lobby/${realLobbyId}/add-bot`,
-                  { method: "POST" },
-                );
+                const res = await fetch(`/api/lobby/${realLobbyId}/add-bot`, {
+                  method: "POST",
+                });
                 if (!res.ok) {
                   const data = await res.json();
                   setMessage(data.error || "Kunde inte lägga till bot.");
@@ -562,18 +572,15 @@ export default function LobbyPage() {
                 }
 
                 // GUEST → join then ready
-                const response = await fetch(
-                  `/api/lobby/${realLobbyId}/join`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      name: selectedPlayerName || character.name,
-                      characterId: character.id,
-                      isHost: false,
-                    }),
-                  },
-                );
+                const response = await fetch(`/api/lobby/${realLobbyId}/join`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    name: selectedPlayerName || character.name,
+                    characterId: character.id,
+                    isHost: false,
+                  }),
+                });
 
                 if (!response.ok) {
                   const data = await response.json();
@@ -607,11 +614,9 @@ export default function LobbyPage() {
                 }
 
                 const startResponse = await fetch(
-                  `/api/lobby/${realLobbyId}/start`,
+                  `/api/lobby/${realLobbyId}/start/${playerId}`,
                   {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ gameMode }),
                   },
                 );
 
