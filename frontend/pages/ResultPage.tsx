@@ -59,7 +59,7 @@ export default function ResultPage() {
     const handleLobbyReset = (resetLobbyId: string) => {
       if (resetLobbyId === lobbyId) {
         // Navigate back to lobby when reset occurs
-        navigate(`/lobby/${lobbyId}`);
+        navigate(`/lobby/${lobbyId}`, { state: { fromResult: true } });
       }
     };
 

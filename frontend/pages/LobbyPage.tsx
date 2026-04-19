@@ -89,14 +89,16 @@ export default function LobbyPage() {
      - join: came from JoinModal
      - invite: direct URL access
  */
-  const entryMode: "host" | "join" | "invite" =
-    location.state?.isHost === true
+  // If coming from ResultPage
+  const fromResult = location.state?.fromResult === true;
+
+  const entryMode: "host" | "join" | "invite" = fromResult
+    ? "join" // returning players should NOT be treated as invite
+    : location.state?.isHost === true
       ? "host"
       : location.state?.isHost === false
         ? "join"
-        : lobbyId
-          ? "invite"
-          : "invite";
+        : "invite";
 
   const selectedPlayerName =
     location.state?.playerName?.trim() ||
@@ -137,11 +139,13 @@ export default function LobbyPage() {
      (prevents incorrect host/guest behavior)
  */
   useEffect(() => {
-    if (entryMode === "invite") {
+    
+    if (entryMode === "invite" && !fromResult) {
       localStorage.removeItem("playerId");
       localStorage.removeItem("isHost");
     }
-  }, [entryMode]);
+    
+  }, [entryMode, fromResult]);
 
   // Player name handling
   // Determine initial name depending on entry mode
@@ -343,6 +347,7 @@ export default function LobbyPage() {
     if (character) {
       localStorage.setItem("characterId", character.id);
     }
+
     // HOST => only send ready
     if (isHost) {
       await fetch(`/api/lobby/${realLobbyId}/ready/${playerId}`, {
@@ -352,7 +357,17 @@ export default function LobbyPage() {
       return;
     }
 
-    // GUEST => always attempt join
+    // GUEST
+    // FIX: If player already exists, DO NOT join again
+    if (playerId) {
+      await fetch(`/api/lobby/${realLobbyId}/ready/${playerId}`, {
+        method: "POST",
+      });
+      setReady(true);
+      return;
+    }
+
+    // First-time join (only happens once in the entire lifetime of the player)
     const joinRes = await fetch(`/api/lobby/${realLobbyId}/join`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
