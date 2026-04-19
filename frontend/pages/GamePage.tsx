@@ -414,15 +414,6 @@ const GamePage: React.FC = () => {
         >
           Mix
         </button>
-        {lobbyId && !stopped && (
-          <button
-            className="gp-btn gp-btn--stop"
-            onClick={handleStopGameLocal}
-            data-testid="btn-stop"
-          >
-            Stopp
-          </button>
-        )}
       </div>
 
       {/* Main content */}
