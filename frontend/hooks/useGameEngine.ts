@@ -140,23 +140,50 @@ export function useGameEngine(
   // -----------------------------
   const calculateAbilityBonus = async (word: string): Promise<number> => {
     try {
+      // Time taken for this word
       const secondsTaken = (Date.now() - roundStartTime.current) / 1000;
 
+      // Get characterId from localStorage
+      const characterId = localStorage.getItem("characterId");
+
+      // Debug logs for ability calculation
+      console.log("Ability Debug => characterId:", characterId);
+      console.log("Ability Debug => word:", word);
+      console.log("Ability Debug => secondsTaken:", secondsTaken);
+
+      // If missing => ability cannot work
+      if (!characterId) {
+        console.warn("No characterId found in localStorage. Ability disabled.");
+        return 0;
+      }
+
+      // Send ability request to backend
       const res = await fetch("/api/character/ability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          characterId: localStorage.getItem("characterId"),
+          characterId, // MUST be the backend ID: "ugglan", "björnen", etc.
           word,
           secondsTaken,
         }),
       });
 
-      if (!res.ok) return 0;
+      // Debug log for response status
+       console.log("Ability Debug → response status:", res.status);
 
+      // Backend returns 404 → character not found → ability = 0
+      if (!res.ok) {
+        console.warn("Ability request failed:", res.status);
+        return 0;
+      }
+
+      // Extract bonus
       const data = await res.json();
+      // Debug log for backend response
+       console.log("Ability Debug ==> backend response:", data);
       return data.bonusPoints ?? 0;
-    } catch {
+    } catch (err) {
+      console.error("Ability bonus error:", err);
       return 0;
     }
   };
@@ -198,7 +225,6 @@ export function useGameEngine(
       }
 
       if (data.isValid) {
-
         // Ability bonus
         const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
         bonusRef.current += bonus;

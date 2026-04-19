@@ -339,6 +339,10 @@ export default function LobbyPage() {
        (backend will reuse existing player if already joined)
  */
   const handleReady = async () => {
+    // Save selected character ID for abilities
+    if (character) {
+      localStorage.setItem("characterId", character.id);
+    }
     // HOST => only send ready
     if (isHost) {
       await fetch(`/api/lobby/${realLobbyId}/ready/${playerId}`, {
