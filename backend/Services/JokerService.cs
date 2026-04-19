@@ -68,7 +68,7 @@ public class JokerService
     /// If yes — marks the joker as used and returns the multiplier (2).
     /// If no  — returns multiplier 1.
     /// </summary>
-    public int ApplyJoker(string lobbyId, string playerId, string word)
+    public int ApplyJoker(string lobbyId, string playerId, string word, bool usedWildcard = false)
     {
         var joker = GetActiveJoker(lobbyId, playerId);
         if (joker == null) return 1;
@@ -77,7 +77,7 @@ public class JokerService
             .ToUpperInvariant()
             .Contains(joker.JokerLetter.ToUpperInvariant());
  
-        if (!wordUsesJoker) return 1;
+        if (!wordUsesJoker && !usedWildcard) return 1;
  
         // Consume the joker
         joker.IsUsed = true;

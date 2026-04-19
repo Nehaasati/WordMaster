@@ -13,7 +13,7 @@ interface UseJokerReturn {
   joker: JokerState;
   jokerMsg: string;
   activateJoker: () => Promise<void>;
-  applyJoker: (word: string) => Promise<number>;
+  applyJoker: (word: string, usedWildcard?: boolean) => Promise<number>;
   clearMsg: () => void;
 }
  
@@ -38,35 +38,45 @@ export function useJoker(
   // ── Activate ──────────────────────────────────────────────
   const activateJoker = useCallback(async () => {
     if (!lobbyId || !playerId) return;
- 
+
     if (joker.isActive) {
       showMsg('Du har redan en aktiv Joker!');
       return;
     }
- 
+
+    console.log(`[Joker] Checking score: ${score} (need 10+)`);
     if (score < 10) {
-      showMsg('Inte tillräckligt med poäng! Joker kostar 10 poäng.');
+      showMsg(`Inte tillräckligt med poäng! Du har ${score} poäng, Joker kostar 10.`);
       return;
     }
- 
+
     try {
       const res = await fetch(
         `${BASE_API}/lobby/${lobbyId}/joker/${playerId}/activate`,
-        { method: 'POST' }
+        { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentScore: score })
+        }
       );
- 
+
+      console.log(`[Joker API] Response status: ${res.status}`);
+      
       if (!res.ok) {
         const err = await res.json();
+        console.log(`[Joker API] Error:`, err);
         showMsg(err.error || 'Kunde inte aktivera Joker.');
         return;
       }
- 
+
       const data = await res.json();
+      console.log(`[Joker API] Success:`, data);
       setScore(data.newScore);
       setJoker({ jokerLetter: data.jokerLetter, isActive: true, isUsed: false });
       showMsg(`🃏 Joker aktiverad! Bokstav: ${data.jokerLetter} — dubbla poäng!`);
       console.log('Joker activated:', data.jokerLetter);
-    } catch {
+    } catch (error) {
+      console.log(`[Joker API] Exception:`, error);
       showMsg('Fel vid aktivering av Joker.');
     }
   }, [lobbyId, playerId, joker.isActive, score, setScore]);
@@ -74,7 +84,7 @@ export function useJoker(
   // ── Apply ─────────────────────────────────────────────────
   // Called after a word is validated as correct.
   // Returns the bonus multiplier (1 = no bonus, 2 = double).
-  const applyJoker = useCallback(async (word: string): Promise<number> => {
+  const applyJoker = useCallback(async (word: string, usedWildcard: boolean = false): Promise<number> => {
     if (!lobbyId || !playerId || !joker.isActive) return 1;
  
     try {
@@ -83,7 +93,7 @@ export function useJoker(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ word }),
+          body: JSON.stringify({ word, usedWildcard }),
         }
       );
  

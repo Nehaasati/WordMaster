@@ -147,7 +147,7 @@ public class GameEngine
         return letters;
     }
 
-    public (bool IsValid, string Message) ValidateWord(string word, string category, List<char> availableLetters)
+    public (bool IsValid, string Message) ValidateWord(string word, string category, List<char> availableLetters, bool allowJokerWildcard = false)
     {
         if (string.IsNullOrWhiteSpace(word))
             return (false, "Invalid request");
@@ -158,8 +158,7 @@ public class GameEngine
         if (!_validator.IsValidCharacters(word))
             return (false, "Word contains invalid characters");
 
-        // Check if word can be formed with available letters or nah
-        if (!CanFormWord(word, availableLetters))
+        if (!CanFormWord(word, availableLetters, allowJokerWildcard))
             return (false, "Word uses unavailable letters");
 
         bool inDictionary = _validator.IsInDictionary(word, _dictionary);
@@ -171,15 +170,23 @@ public class GameEngine
         return (true, "Word found");
     }
 
-    private bool CanFormWord(string word, List<char> availableLetters)
+    private bool CanFormWord(string word, List<char> availableLetters, bool allowJokerWildcard = false)
     {
         var tempLetters = new List<char>(availableLetters);
+        int missingLetters = 0;
+
         foreach (var c in word.ToUpper())
         {
             if (!tempLetters.Contains(c))
-                return false;
+            {
+                if (!allowJokerWildcard || missingLetters >= 1)
+                    return false;
+                missingLetters++;
+                continue;
+            }
             tempLetters.Remove(c);
         }
+
         return true;
     }
 

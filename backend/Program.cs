@@ -59,10 +59,18 @@ if (app.Environment.IsDevelopment())
 
 app.MapControllers(); 
 app.MapPost("/api/word/validate", (
-    ValidateRequest request, 
-    GameEngine engine) =>
+    ValidateRequest request,
+    GameEngine engine,
+    JokerService jokerService) =>
 {
-    var (isValid, message) = engine.ValidateWord(request.Word, request.Category, request.Letters);
+    bool useJokerWildcard = false;
+    if (!string.IsNullOrWhiteSpace(request.LobbyId) && !string.IsNullOrWhiteSpace(request.PlayerId))
+    {
+        var joker = jokerService.GetActiveJoker(request.LobbyId, request.PlayerId);
+        useJokerWildcard = joker is not null && request.UseJokerWildcard;
+    }
+
+    var (isValid, message) = engine.ValidateWord(request.Word, request.Category, request.Letters, useJokerWildcard);
     return Results.Ok(new { isValid, message });
 });
 
@@ -468,6 +476,7 @@ app.MapPost("/api/lobby/{lobbyId}/leave/{playerId}", async (
 app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/activate", (
     string lobbyId,
     string playerId,
+    JokerActivateRequest request,
     JokerService jokerService,
     GameEngine engine) =>
 {
@@ -479,19 +488,19 @@ app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/activate", (
     if (player == null)
         return Results.NotFound(new { error = "Player not found" });
  
-    // Cost: 10 points
+    // Cost: 10 points (check against frontend score)
     const int cost = 10;
-    if (player.Score < cost)
+    if (request.CurrentScore < cost)
         return Results.BadRequest(new { error = "Not enough points. Joker costs 10 points." });
  
     var joker = jokerService.ActivateJoker(lobbyId, playerId);
     if (joker == null)
         return Results.BadRequest(new { error = "You already have an active Joker." });
  
-    // Deduct cost
-    player.Score -= cost;
+    // Update player score (deduct cost)
+    player.Score = request.CurrentScore - cost;
  
-    Console.WriteLine($"Player {player.Name} activated Joker: {joker.JokerLetter}");
+    Console.WriteLine($"Player {player.Name} activated Joker: {joker.JokerLetter} | New Score: {player.Score}");
  
     return Results.Ok(new
     {
@@ -532,13 +541,7 @@ app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/apply", (
     ApplyJokerRequest request,
     JokerService jokerService) =>
 {
-    var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word);
-    bool triggered = multiplier > 1;
- 
-    return Results.Ok(new
-    {
-        multiplier    = multiplier,
-        jokerTriggered = triggered,
+    var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word, request.UsedWildcard);
         word          = request.Word,
         message       = triggered
             ? $"🃏 JOKER! Dubbla poäng för \"{request.Word}\"!"
@@ -551,8 +554,9 @@ app.MapHub<LobbyHub>("/lobbyHub");
 
 app.Run();
 
-public record ApplyJokerRequest(string Word);
-public record ValidateRequest(string Word, string Category, List<char> Letters);
+public record ApplyJokerRequest(string Word, bool UsedWildcard);
+public record JokerActivateRequest(int CurrentScore);
+public record ValidateRequest(string Word, string Category, List<char> Letters, string? LobbyId = null, string? PlayerId = null, bool UseJokerWildcard = false);
 public record SubmitWordRequest(string Word);
 public record StartGameRequest(string GameMode);
 public record CategorySubmission(string Id, string Word, bool IsValid);

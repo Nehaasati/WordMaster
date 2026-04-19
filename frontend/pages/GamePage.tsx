@@ -72,7 +72,9 @@ const GamePage: React.FC = () => {
   const [freezeActive, setFreezeActive] = useState(false);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const bonusRef = useRef<number>(0);
+  const bonusRef = useRef<Record<string, number>>({}); // Track bonuses per category
+  const jokerWildcardRef = useRef<boolean>(false); // Track if the next word used Joker wildcard
+  const jokerCategoriesRef = useRef<Set<string>>(new Set()); // Track categories with Joker words
   const storedPlayerId = localStorage.getItem('wordmaster-player-id') ?? '';
   const { joker, jokerMsg, activateJoker, applyJoker } = useJoker(
   lobbyId,
@@ -404,10 +406,18 @@ useEffect(() => {
       if (index !== -1) pool.splice(index, 1);
     }
 
+    let missingLetters = 0;
+    jokerWildcardRef.current = false;
+
     // Now check if current word can be formed
     for (const char of wordUpper) {
       const index = pool.indexOf(char);
-      if (index === -1) return false;
+      if (index === -1) {
+        if (!joker.isActive || missingLetters >= 1) return false;
+        missingLetters += 1;
+        jokerWildcardRef.current = true;
+        continue;
+      }
       pool.splice(index, 1);
     }
     return true;
@@ -471,6 +481,9 @@ useEffect(() => {
           word: word.trim(),
           category: categoryId,
           letters: availablePool,
+          lobbyId,
+          playerId: storedPlayerId,
+          useJokerWildcard: jokerWildcardRef.current,
         }),
       });
 
@@ -493,14 +506,18 @@ useEffect(() => {
         // ── Character ability bonus ──────────────────
         const bonus = await calculateAbilityBonus(word);
         if (bonus > 0) {
-          bonusRef.current += bonus;    // ← store bonus in ref
-          console.log(`+${bonus} bonus from ${characterId}! Total bonus: ${bonusRef.current}`);
+          bonusRef.current[categoryId] = bonus;    // ← store bonus per category
+          console.log(`+${bonus} bonus from ${characterId} in ${categoryId}! Bonuses: ${JSON.stringify(bonusRef.current)}`);
 
         }
-        const multiplier = await applyJoker(word);
+        const multiplier = await applyJoker(word, jokerWildcardRef.current);
+        if (jokerWildcardRef.current) {
+          console.log(`🃏 Joker wildcard used for "${word}" in category ${categoryId}!`);
+          jokerWildcardRef.current = false;
+        }
         if (multiplier > 1) {
-          bonusRef.current += 10;
-          console.log(`🃏 Joker doubled score for "${word}"!`);
+          jokerCategoriesRef.current.add(categoryId);  // ← Mark this category as having Joker multiplier
+          console.log(`🃏 Joker activated for "${word}" in category ${categoryId}! Score will be doubled.`);
         }
         // ────────────────────────────────────────────
         // Fetch replacement letters from backend
@@ -608,14 +625,36 @@ useEffect(() => {
 
   useEffect(() => {
     let total = 0;
+    
+    // Clear bonuses and joker for invalid categories
+    for (const catId in bonusRef.current) {
+      if (!categories[catId]?.valid) {
+        delete bonusRef.current[catId];
+        jokerCategoriesRef.current.delete(catId);
+      }
+    }
+    
     for (const cat of CATEGORY_LIST) {
         const catData = categories[cat.id];
         if (!catData.valid) continue;
         const points = categoryPoints[cat.id] ?? 10;
-        total += points;
-        if (catData.word.length > 7) total += 5;
+        let wordScore = points;
+        if (catData.word.length > 7) wordScore += 5;
+
+        // Add character bonus for this word
+        if (bonusRef.current[cat.id]) {
+          wordScore += bonusRef.current[cat.id];
+        }
+
+        // Apply Joker multiplier if this category triggered Joker
+        if (jokerCategoriesRef.current.has(cat.id)) {
+          wordScore *= 2;
+        }
+
+        total += wordScore;
     }
-    const newScore = total + bonusRef.current;
+    const newScore = total;
+    console.log(`[Score Calc] Updated score: ${newScore}, Previous: ${scoreRef.current}, Categories valid:`, Object.keys(categories).filter(k => categories[k as keyof typeof categories].valid));
         setScore(newScore);
         scoreRef.current = newScore;
         }, [categories, categoryPoints]);
