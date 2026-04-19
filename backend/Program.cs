@@ -221,6 +221,7 @@ app.MapPost("/api/lobby/{lobbyId}/player-finished/{playerId}", async (
 {
     var lobby = engine.GetLobby(lobbyId);
     var player = lobby?.Players.FirstOrDefault(p => p.Id == playerId);
+    var finished = false;
 
     if (player != null)
     {
@@ -229,6 +230,7 @@ app.MapPost("/api/lobby/{lobbyId}/player-finished/{playerId}", async (
     }
     // Mark the player as finished in the game engine
     bool matchEnded = engine.PlayerFinished(lobbyId, playerId);
+    finished = player?.HasFinished == true;
 
     if (matchEnded)
     {
@@ -236,10 +238,10 @@ app.MapPost("/api/lobby/{lobbyId}/player-finished/{playerId}", async (
         await hub.Clients.Group(lobbyId)
             .SendAsync("MatchEnded", lobbyId);
 
-        return Results.Ok(new { finished = true, matchEnded = true });
+        return Results.Ok(new { finished, matchEnded = true });
     }
 
-    return Results.Ok(new { finished = true, matchEnded = false });
+    return Results.Ok(new { finished, matchEnded = false });
 });
 app.MapPost("/api/lobby/{lobbyId}/save-score/{playerId}", (
     string lobbyId,

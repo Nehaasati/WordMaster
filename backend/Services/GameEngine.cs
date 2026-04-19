@@ -247,12 +247,15 @@ public class GameEngine
         if (player == null)
             return false;
 
-        // Mark the player as finished
+        if (!player.CategoriesCompleted)
+            return false;
+
+        // Mark the player as finished.
         player.HasFinished = true;
 
-        // the first player finish => end the match
+        // End the match immediately on the first player who actually finishes.
         lobby.MatchEnded = true;
-        lobby.State = GameState.WaitingForReady;
+        lobby.State = GameState.GameFinished;
 
         return true;
     }
