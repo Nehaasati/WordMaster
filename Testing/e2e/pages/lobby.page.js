@@ -3,19 +3,16 @@ export default class LobbyPage {
     this.page = page;
   }
 
-  async goto(lobbyId) {
-    await this.page.goto(`/lobby/${lobbyId}`);
+  async waitForLobbyToLoad() {
+    await this.page.getByTestId('lobby-title').waitFor();
   }
 
-  getPlayerName(name) {
-    return this.page.getByText(name);
+  async getCharacterImage() {
+    return this.page.getByTestId('character-image');
   }
 
-  getHostBadge(name) {
-    return this.page.locator(`[data-testid="host-badge-${name}"]`);
-  }
-
-  getCharacterTitle() {
-    return this.page.getByText("VÄLJ EN KARAKTÄR");
+  async expectSelfReady() {
+    const playerId = await this.page.evaluate(() => localStorage.getItem('playerId'));
+    await this.page.getByTestId(`player-ready-${playerId}`).waitFor();
   }
 }
