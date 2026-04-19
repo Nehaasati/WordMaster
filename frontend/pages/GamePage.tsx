@@ -6,7 +6,6 @@ import { useSignalRGame } from "../hooks/useSignalRGame";
 import { useSignalR } from "../hooks/SignalRContext";
 import {
   handleRestart,
-  handleLeave,
   handleFreeze,
   handleFreezePowerup,
   handleMix,
@@ -351,11 +350,6 @@ const GamePage: React.FC = () => {
       {/* Top bar */}
       <div className="gp-top-bar">
         {isHost && <div className="gp-host">Värden</div>}
-
-        {/* Leave the lobby */}
-        <button className="gp-leave" onClick={() => handleLeave(lobbyId)}>
-          Lämna Lobby
-        </button>
         <div className="gp-freeze-msg" data-testid="freeze-msg">
           {freezeMsg}
         </div>

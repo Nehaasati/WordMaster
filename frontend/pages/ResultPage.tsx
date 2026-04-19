@@ -35,12 +35,15 @@ export default function ResultPage() {
           return;
         }
         const data = await res.json();
-        const mapped: PlayerResult[] = (data.players ?? []).map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          score: p.score ?? 0,
-          characterId: p.characterId,
-        }));
+        // Deleted any sensitive info from the results before setting state
+        const mapped: PlayerResult[] = (data.players as PlayerResult[]).map(
+          (p) => ({
+            id: p.id,
+            name: p.name,
+            score: p.score ?? 0,
+            characterId: p.characterId,
+          }),
+        );
         mapped.sort((a, b) => b.score - a.score);
         setPlayers(mapped);
       } catch {
