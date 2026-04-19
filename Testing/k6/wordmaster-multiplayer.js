@@ -4,11 +4,16 @@ import { Counter, Rate } from 'k6/metrics';
 
 const workflowCompletions = new Counter('workflow_completions');
 const workflowFailures = new Rate('workflow_failures');
+const createLobbyFailures = new Counter('create_lobby_failures');
+const createLobbyFailureStatus = new Counter('create_lobby_failure_status');
 
 const rawBaseUrl = __ENV.BASE_URL || 'http://127.0.0.1:5024';
 const baseUrl = rawBaseUrl.replace(/\/+$/, '');
 const apiBaseUrl = `${baseUrl}/api`;
 const profile = (__ENV.TEST_PROFILE || 'load').toLowerCase();
+const debugFailures = `${__ENV.DEBUG_FAILURES || 'true'}`.toLowerCase() === 'true';
+const maxFailureSamples = Number.parseInt(__ENV.MAX_FAILURE_SAMPLES || '8', 10);
+const failureSamples = [];
 
 const profiles = {
   load: {
@@ -53,15 +58,39 @@ export const options = {
 function postJson(url, payload, tags) {
   return http.post(url, JSON.stringify(payload), {
     headers: { 'Content-Type': 'application/json' },
-    tags,
+    tags: {
+      name: tags.endpoint,
+      ...tags,
+    },
+  });
+}
+
+function truncate(value, maxLength = 250) {
+  if (!value) {
+    return '';
+  }
+
+  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
+}
+
+function recordFailureSample(type, response, payload) {
+  if (!debugFailures || failureSamples.length >= maxFailureSamples) {
+    return;
+  }
+
+  failureSamples.push({
+    type,
+    status: response.status,
+    body: truncate(response.body || ''),
+    payload,
   });
 }
 
 function createLobby() {
-  const hostName = `host-${__VU}-${__ITER}-${Date.now()}`;
+  const payload = { name: `host-${__VU}-${__ITER}-${Date.now()}` };
   const response = postJson(
     `${apiBaseUrl}/lobby`,
-    { name: hostName },
+    payload,
     { endpoint: 'create_lobby' }
   );
 
@@ -78,6 +107,9 @@ function createLobby() {
   });
 
   if (!ok) {
+    createLobbyFailures.add(1);
+    createLobbyFailureStatus.add(1, { status: String(response.status) });
+    recordFailureSample('create_lobby', response, payload);
     return null;
   }
 
@@ -118,7 +150,13 @@ function readyPlayer(lobbyId, playerId, role) {
   const response = http.post(
     `${apiBaseUrl}/lobby/${lobbyId}/ready/${playerId}`,
     null,
-    { tags: { endpoint: 'ready_player', role } }
+    {
+      tags: {
+        name: 'ready_player',
+        endpoint: 'ready_player',
+        role,
+      },
+    }
   );
 
   return check(response, {
@@ -130,7 +168,12 @@ function startGame(lobbyId, hostId) {
   const response = http.post(
     `${apiBaseUrl}/lobby/${lobbyId}/start/${hostId}`,
     null,
-    { tags: { endpoint: 'start_game' } }
+    {
+      tags: {
+        name: 'start_game',
+        endpoint: 'start_game',
+      },
+    }
   );
 
   return check(response, {
@@ -142,7 +185,13 @@ function leaveLobby(lobbyId, playerId, role) {
   const response = http.post(
     `${apiBaseUrl}/lobby/${lobbyId}/leave/${playerId}`,
     null,
-    { tags: { endpoint: 'leave_lobby', role } }
+    {
+      tags: {
+        name: 'leave_lobby',
+        endpoint: 'leave_lobby',
+        role,
+      },
+    }
   );
 
   return check(response, {
@@ -152,7 +201,10 @@ function leaveLobby(lobbyId, playerId, role) {
 
 export function setup() {
   const healthResponse = http.get(`${apiBaseUrl}/health`, {
-    tags: { endpoint: 'healthcheck' },
+    tags: {
+      name: 'healthcheck',
+      endpoint: 'healthcheck',
+    },
   });
 
   const ok = check(healthResponse, {
@@ -164,6 +216,40 @@ export function setup() {
   }
 
   return { profile, baseUrl };
+}
+
+export function handleSummary(data) {
+  const iterations = data.metrics.iterations?.values?.count ?? 0;
+  const httpFailureRate = data.metrics.http_req_failed?.values?.rate ?? 0;
+  const workflowFailureRate = data.metrics.workflow_failures?.values?.rate ?? 0;
+  const lobbyFailureCount = data.metrics.create_lobby_failures?.values?.count ?? 0;
+
+  const lines = [
+    '# k6 Summary',
+    '',
+    `- Target: ${baseUrl}`,
+    `- Profile: ${profile}`,
+    `- Iterations: ${iterations}`,
+    `- HTTP failure rate: ${httpFailureRate}`,
+    `- Workflow failure rate: ${workflowFailureRate}`,
+    `- Create lobby failures: ${lobbyFailureCount}`,
+    '',
+  ];
+
+  if (failureSamples.length > 0) {
+    lines.push('## Failure samples', '');
+    for (const sample of failureSamples) {
+      lines.push(`- Type: ${sample.type}`);
+      lines.push(`- Status: ${sample.status}`);
+      lines.push(`- Payload: ${JSON.stringify(sample.payload)}`);
+      lines.push(`- Body: ${sample.body || '<empty>'}`);
+      lines.push('');
+    }
+  }
+
+  return {
+    stdout: `${lines.join('\n')}\n`,
+  };
 }
 
 export default function () {

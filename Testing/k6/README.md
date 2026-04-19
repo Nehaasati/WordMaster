@@ -62,6 +62,42 @@ k6 run .\Testing\k6\wordmaster-multiplayer.js
 
 If `k6` was just installed and PowerShell cannot find it, restart the terminal and run `k6 version` again.
 
+## Optional PowerShell shortcut
+
+If you do not want to type the full command every time, you can add a small helper function in PowerShell.
+
+Create a session-only shortcut:
+
+```Time Saver
+function runk6load { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; $env:TEST_PROFILE='load'; & 'C:\Program Files\k6\k6.exe' run .\Testing\k6\wordmaster-multiplayer.js }
+function runk6stress { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; $env:TEST_PROFILE='stress'; & 'C:\Program Files\k6\k6.exe' run .\Testing\k6\wordmaster-multiplayer.js }
+```
+
+Then run:
+
+```Rider
+runk6load
+runk6stress
+```
+
+For a permanent shortcut:
+
+1. Open your PowerShell profile:
+
+```powershell
+notepad $PROFILE
+```
+
+2. Paste the function into that file and save it.
+3. Restart PowerShell.
+4. Run:
+
+```powershell
+runk6load
+```
+
+You can create a similar function for the stress profile by changing `TEST_PROFILE` from `load` to `stress`.
+
 ## GitHub Actions
 
 Performance tests run in a separate workflow: `.github/workflows/performance.yml`.
