@@ -74,11 +74,11 @@ public class CharacterServiceTests
     }
 
     
-    // Ugglan — LongWordBonus (+3 for words longer than 8 letters)
+    // Ugglan — LongWordBonus (+3 for words longer than 5 letters)
     
 
     [Fact]
-    public void Ugglan_EarnsBonus_WhenWordIsLongerThan8Letters()
+    public void Ugglan_EarnsBonus_WhenWordIsLongerThan5Letters()
     {
         // "katastrofal" is 11 letters — qualifies
         var bonus = _service.CalculateAbilityBonus("ugglan", "katastrofal");
@@ -87,16 +87,16 @@ public class CharacterServiceTests
     }
 
     [Fact]
-    public void Ugglan_EarnsNoBonus_WhenWordIs8LettersExactly()
+    public void Ugglan_EarnsNoBonus_WhenWordIs5LettersExactly()
     {
-        // Exactly 8 letters — NOT longer than 8, so no bonus
-        var bonus = _service.CalculateAbilityBonus("ugglan", "abcdefgh"); // 8 letters
+        // Exactly 5 letters — NOT longer than 5, so no bonus
+        var bonus = _service.CalculateAbilityBonus("ugglan", "abcde"); // 5 letters
 
         Assert.Equal(0, bonus);
     }
 
     [Fact]
-    public void Ugglan_EarnsNoBonus_WhenWordIsShorterThan8Letters()
+    public void Ugglan_EarnsNoBonus_WhenWordIsShorterThan5Letters()
     {
         var bonus = _service.CalculateAbilityBonus("ugglan", "katt"); // 4 letters
 
@@ -104,30 +104,30 @@ public class CharacterServiceTests
     }
 
     
-    // Leopard — FastAnswerBonus (+3 for words submitted within 10 seconds)
+    // Leopard — FastAnswerBonus (+3 for words submitted within 60 seconds)
     
 
     [Fact]
-    public void Leopard_EarnsBonus_WhenSubmittedWithin10Seconds()
+    public void Leopard_EarnsBonus_WhenSubmittedWithin60Seconds()
     {
-        var bonus = _service.CalculateAbilityBonus("leopard", "katt", secondsTaken: 7.5);
+        var bonus = _service.CalculateAbilityBonus("leopard", "katt", secondsTaken: 55.5);
 
         Assert.Equal(3, bonus);
     }
 
     [Fact]
-    public void Leopard_EarnsBonus_WhenSubmittedAtExactly10Seconds()
+    public void Leopard_EarnsBonus_WhenSubmittedAtExactly60Seconds()
     {
-        // Boundary: exactly 10 seconds should still qualify
-        var bonus = _service.CalculateAbilityBonus("leopard", "katt", secondsTaken: 10.0);
+        // Boundary: exactly 60 seconds should still qualify
+        var bonus = _service.CalculateAbilityBonus("leopard", "katt", secondsTaken: 60.0);
 
         Assert.Equal(3, bonus);
     }
 
     [Fact]
-    public void Leopard_EarnsNoBonus_WhenSubmittedAfter10Seconds()
+    public void Leopard_EarnsNoBonus_WhenSubmittedAfter60Seconds()
     {
-        var bonus = _service.CalculateAbilityBonus("leopard", "katt", secondsTaken: 15.0);
+        var bonus = _service.CalculateAbilityBonus("leopard", "katt", secondsTaken: 65.0);
 
         Assert.Equal(0, bonus);
     }

@@ -5,6 +5,7 @@ namespace WordMaster.Tests;
 
 public class GameEngineTests
 {
+    private Player CreateHost(string name = "Host") => new Player { Name = name };
 
     private GameEngine CreateEngine()
     {
@@ -32,7 +33,8 @@ public class GameEngineTests
     {
         var engine = CreateEngine();
 
-        var lobby = engine.CreateLobby();
+        var host = new Player { Name = "Host" };
+        var lobby = engine.CreateLobby(host);
 
         Assert.NotNull(lobby);
         Assert.NotNull(lobby.Id);
@@ -45,7 +47,7 @@ public class GameEngineTests
     {
         var engine = CreateEngine();
 
-        var lobby = engine.CreateLobby();
+        var lobby = engine.CreateLobby(CreateHost());
 
         var result = engine.GetLobby(lobby.Id);
 
@@ -58,7 +60,7 @@ public class GameEngineTests
     {
         var engine = CreateEngine();
 
-        var lobby = engine.CreateLobby();
+        var lobby = engine.CreateLobby(CreateHost());
 
         var result = engine.GetLobby(lobby.InviteCode);
 
@@ -81,14 +83,14 @@ public class GameEngineTests
     public void TryJoinLobby_ShouldAddPlayer()
     {
         var engine = CreateEngine();
-        var lobby = engine.CreateLobby();
+        var lobby = engine.CreateLobby(CreateHost());
 
         var player = new Player { Name = "Anna" };
 
         var result = engine.TryJoinLobby(lobby.Id, player, out var error);
 
         Assert.True(result);
-        Assert.Single(lobby.Players);
+        Assert.Equal(2, lobby.Players.Count);
     }
 
     // Test that a player cannot join a lobby that is already full (2 players)
@@ -96,35 +98,33 @@ public class GameEngineTests
     public void TryJoinLobby_ShouldFail_WhenLobbyIsFull()
     {
         var engine = CreateEngine();
-        var lobby = engine.CreateLobby();
+        var lobby = engine.CreateLobby(CreateHost());
 
         var p1 = new Player { Name = "A" };
         var p2 = new Player { Name = "B" };
-        var p3 = new Player { Name = "C" };
 
         engine.TryJoinLobby(lobby.Id, p1, out _);
-        engine.TryJoinLobby(lobby.Id, p2, out _);
 
-        var result = engine.TryJoinLobby(lobby.Id, p3, out var error);
+        var result = engine.TryJoinLobby(lobby.Id, p2, out var error);
 
         Assert.False(result);
         Assert.Equal("Tyvärr är Lobbyn full och kan inte ta emot fler spelare.", error);
     }
 
-    // Test that a player cannot join a lobby they are already in
+    // Test that rejoining the same player returns success for the existing lobby entry
     [Fact]
-    public void TryJoinLobby_ShouldFail_WhenPlayerAlreadyInLobby()
+    public void TryJoinLobby_ShouldReturnTrue_WhenPlayerAlreadyInLobby()
     {
         var engine = CreateEngine();
-        var lobby = engine.CreateLobby();
+        var lobby = engine.CreateLobby(CreateHost());
 
         var player = new Player { Name = "Anna" };
 
         engine.TryJoinLobby(lobby.Id, player, out _);
         var result = engine.TryJoinLobby(lobby.Id, player, out var error);
 
-        Assert.False(result);
-        Assert.Equal("Player already in lobby", error);
+        Assert.True(result);
+        Assert.Equal(string.Empty, error);
     }
 
     // Test that a player can set themselves as ready
@@ -132,7 +132,7 @@ public class GameEngineTests
     public void SetPlayerReady_ShouldMarkPlayerAsReady()
     {
         var engine = CreateEngine();
-        var lobby = engine.CreateLobby();
+        var lobby = engine.CreateLobby(CreateHost());
 
         var player = new Player { Name = "Anna" };
         engine.TryJoinLobby(lobby.Id, player, out _);
@@ -149,7 +149,7 @@ public class GameEngineTests
     public void CanStartGame_ShouldReturnFalse_WhenOnlyOnePlayerReady()
     {
         var engine = CreateEngine();
-        var lobby = engine.CreateLobby();
+        var lobby = engine.CreateLobby(CreateHost());
 
         var p1 = new Player { Name = "A" };
         var p2 = new Player { Name = "B" };
@@ -203,16 +203,15 @@ public class GameEngineTests
   public void CanStartGame_ShouldReturnTrue_WhenTwoPlayersReady()
   {
     var engine = CreateEngine();
-    var lobby = engine.CreateLobby();
+    var host = CreateHost();
+    var lobby = engine.CreateLobby(host);
 
-    var p1 = new Player { Name = "A" };
-    var p2 = new Player { Name = "B" };
+    var player = new Player { Name = "A" };
 
-    engine.TryJoinLobby(lobby.Id, p1, out _);
-    engine.TryJoinLobby(lobby.Id, p2, out _);
+    engine.TryJoinLobby(lobby.Id, player, out _);
 
-    engine.SetPlayerReady(lobby.Id, p1.Id);
-    engine.SetPlayerReady(lobby.Id, p2.Id);
+    engine.SetPlayerReady(lobby.Id, host.Id);
+    engine.SetPlayerReady(lobby.Id, player.Id);
 
     var result = engine.CanStartGame(lobby.Id);
 
