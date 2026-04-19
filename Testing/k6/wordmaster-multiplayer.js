@@ -5,16 +5,23 @@ import { Counter, Rate } from 'k6/metrics';
 const workflowCompletions = new Counter('workflow_completions');
 const workflowFailures = new Rate('workflow_failures');
 const createLobbyFailures = new Counter('create_lobby_failures');
-const createLobbyFailureStatus = new Counter('create_lobby_failure_status');
+const createLobbyStatus0 = new Counter('create_lobby_status_0');
+const createLobbyStatus400 = new Counter('create_lobby_status_400');
+const createLobbyStatus401 = new Counter('create_lobby_status_401');
+const createLobbyStatus403 = new Counter('create_lobby_status_403');
+const createLobbyStatus404 = new Counter('create_lobby_status_404');
+const createLobbyStatus409 = new Counter('create_lobby_status_409');
+const createLobbyStatus429 = new Counter('create_lobby_status_429');
+const createLobbyStatus500 = new Counter('create_lobby_status_500');
+const createLobbyStatus502 = new Counter('create_lobby_status_502');
+const createLobbyStatus503 = new Counter('create_lobby_status_503');
+const createLobbyStatus504 = new Counter('create_lobby_status_504');
+const createLobbyStatusOther = new Counter('create_lobby_status_other');
 
 const rawBaseUrl = __ENV.BASE_URL || 'http://127.0.0.1:5024';
 const baseUrl = rawBaseUrl.replace(/\/+$/, '');
 const apiBaseUrl = `${baseUrl}/api`;
 const profile = (__ENV.TEST_PROFILE || 'load').toLowerCase();
-const debugFailures = `${__ENV.DEBUG_FAILURES || 'true'}`.toLowerCase() === 'true';
-const maxFailureSamples = Number.parseInt(__ENV.MAX_FAILURE_SAMPLES || '8', 10);
-const failureSamples = [];
-
 const profiles = {
   load: {
     stages: [
@@ -65,25 +72,45 @@ function postJson(url, payload, tags) {
   });
 }
 
-function truncate(value, maxLength = 250) {
-  if (!value) {
-    return '';
+function recordCreateLobbyFailureStatus(status) {
+  switch (status) {
+    case 0:
+      createLobbyStatus0.add(1);
+      break;
+    case 400:
+      createLobbyStatus400.add(1);
+      break;
+    case 401:
+      createLobbyStatus401.add(1);
+      break;
+    case 403:
+      createLobbyStatus403.add(1);
+      break;
+    case 404:
+      createLobbyStatus404.add(1);
+      break;
+    case 409:
+      createLobbyStatus409.add(1);
+      break;
+    case 429:
+      createLobbyStatus429.add(1);
+      break;
+    case 500:
+      createLobbyStatus500.add(1);
+      break;
+    case 502:
+      createLobbyStatus502.add(1);
+      break;
+    case 503:
+      createLobbyStatus503.add(1);
+      break;
+    case 504:
+      createLobbyStatus504.add(1);
+      break;
+    default:
+      createLobbyStatusOther.add(1);
+      break;
   }
-
-  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
-}
-
-function recordFailureSample(type, response, payload) {
-  if (!debugFailures || failureSamples.length >= maxFailureSamples) {
-    return;
-  }
-
-  failureSamples.push({
-    type,
-    status: response.status,
-    body: truncate(response.body || ''),
-    payload,
-  });
 }
 
 function createLobby() {
@@ -108,8 +135,7 @@ function createLobby() {
 
   if (!ok) {
     createLobbyFailures.add(1);
-    createLobbyFailureStatus.add(1, { status: String(response.status) });
-    recordFailureSample('create_lobby', response, payload);
+    recordCreateLobbyFailureStatus(response.status);
     return null;
   }
 
@@ -217,41 +243,6 @@ export function setup() {
 
   return { profile, baseUrl };
 }
-
-export function handleSummary(data) {
-  const iterations = data.metrics.iterations?.values?.count ?? 0;
-  const httpFailureRate = data.metrics.http_req_failed?.values?.rate ?? 0;
-  const workflowFailureRate = data.metrics.workflow_failures?.values?.rate ?? 0;
-  const lobbyFailureCount = data.metrics.create_lobby_failures?.values?.count ?? 0;
-
-  const lines = [
-    '# k6 Summary',
-    '',
-    `- Target: ${baseUrl}`,
-    `- Profile: ${profile}`,
-    `- Iterations: ${iterations}`,
-    `- HTTP failure rate: ${httpFailureRate}`,
-    `- Workflow failure rate: ${workflowFailureRate}`,
-    `- Create lobby failures: ${lobbyFailureCount}`,
-    '',
-  ];
-
-  if (failureSamples.length > 0) {
-    lines.push('## Failure samples', '');
-    for (const sample of failureSamples) {
-      lines.push(`- Type: ${sample.type}`);
-      lines.push(`- Status: ${sample.status}`);
-      lines.push(`- Payload: ${JSON.stringify(sample.payload)}`);
-      lines.push(`- Body: ${sample.body || '<empty>'}`);
-      lines.push('');
-    }
-  }
-
-  return {
-    stdout: `${lines.join('\n')}\n`,
-  };
-}
-
 export default function () {
   let workflowPassed = false;
   let lobbyId = null;
