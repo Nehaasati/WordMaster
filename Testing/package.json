@@ -11,7 +11,9 @@
     "test:ui": "npm run bdd:gen && playwright test --project=ui",
     "test:unit": "dotnet test ../UnitTests/WordMaster.UnitTests/WordMaster.UnitTests.csproj",
     "test:headed": "npm run bdd:gen && playwright test --project=ui --headed",
-    "codegen": "playwright codegen http://127.0.0.1:5024"
+    "codegen": "playwright codegen http://127.0.0.1:5024",
+    "test:perf:load": "k6 run --env TEST_PROFILE=load k6/wordmaster-multiplayer.js",
+    "test:perf:stress": "k6 run --env TEST_PROFILE=stress k6/wordmaster-multiplayer.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
