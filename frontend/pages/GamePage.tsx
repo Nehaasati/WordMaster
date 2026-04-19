@@ -227,7 +227,7 @@ const GamePage: React.FC = () => {
     if (nextCat) {
       inputRefs.current[nextCat.id]?.focus();
     }
-  }, [validStates]);
+  }, [validStates, categories]);
 
   useEffect(() => {
     updateUsedLetters(categories, setAllLetters);
@@ -247,7 +247,7 @@ const GamePage: React.FC = () => {
     const newScore = total + bonusRef.current;
     setScore(newScore);
     scoreRef.current = newScore;
-  }, [categories, categoryPoints]);
+  }, [categories, categoryPoints, setScore, bonusRef, scoreRef]);
 
  const handleInputChange = (
    categoryId: string,
@@ -339,13 +339,13 @@ const GamePage: React.FC = () => {
     };
     
     notifyFinished();
-  }, [allDone, stopped, lobbyId, scoreRef]);
+  }, [allDone, stopped, lobbyId, scoreRef, setStopped]);
 
   return (
     <div className="gp-scene" data-testid="game-page">
       <div className="gp-bg" />
       <Stars />
-      {toast && <div className="gp-toast">{toast}</div>}
+      {toast && <div data-testid="toast" className="gp-toast">{toast}</div>}
 
       {/* Top bar */}
       <div className="gp-top-bar">
@@ -368,6 +368,7 @@ const GamePage: React.FC = () => {
       {/* Classic game stop button */}
       {!lobbyId && !stopped && (
         <button
+          data-testid="btn-finish"
           className="gp-btn gp-btn--finish"
           onClick={() => setStopped(true)}
         >
@@ -378,17 +379,17 @@ const GamePage: React.FC = () => {
       {/* Powerups */}
       <div className="gp-powerups">
         <button
+          data-testid="btn-freeze"
           className="gp-btn gp-btn--freeze"
           onClick={handleFreezePowerupLocal}
-          data-testid="btn-freeze"
         >
           Freeze
         </button>
 
         <button
+          data-testid="btn-black"
           className="gp-btn gp-btn--black"
           onClick={() => connection?.invoke("UseInk", lobbyId)}
-          data-testid="btn-black"
         >
           Bläck
         </button>
@@ -404,6 +405,7 @@ const GamePage: React.FC = () => {
 
       {/* Main content */}
       <ShopPanel
+        data-testid="shop-panel"
         score={score}
         onBuyLetter={(letter: string, cost: number) => {
           setScore((prev) => prev - cost);
@@ -500,6 +502,7 @@ const GamePage: React.FC = () => {
       {/* Ink animation */}
       {showInk && (
         <video
+          data-testid="ink-animation"
           src="/videos/Bläck.webm"
           autoPlay
           muted
@@ -516,6 +519,7 @@ const GamePage: React.FC = () => {
       {/* Freeze animation */}
       {showFreeze && (
         <video
+          data-testid="freeze-animation"
           src="/videos/Freeze5Sec.webm"
           autoPlay
           muted
@@ -542,6 +546,7 @@ const GamePage: React.FC = () => {
             {/* Restart button (ONLY HOST) */}
             {lobbyId && localStorage.getItem("isHost") === "true" && (
               <button
+                data-testid="btn-restart"
                 className="gp-btn"
                 onClick={handleRestartLocal}
                 style={{
