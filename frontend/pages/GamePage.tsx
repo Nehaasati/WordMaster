@@ -286,7 +286,7 @@ const GamePage: React.FC = () => {
        },
      };
 
-     // ⭐ Validate AFTER state update
+     // Validate AFTER state update
      setTimeout(() => {
        validateWord(filtered, categoryId);
      }, 0);
@@ -329,29 +329,26 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     const notifyFinished = async () => {
       if (allDone && !stopped) {
-        if (lobbyId && connection) {
-          connection
-            .invoke("FinishGame", lobbyId)
-            .catch((err) => console.error("SignalR Finish Error:", err));
-          const playerId = localStorage.getItem("wordmaster-player-id");
-          if (playerId) {
-            fetch(`/api/lobby/${lobbyId}/player-finished/${playerId}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                categoriesCompleted: true,
-                score: score,
-              }),
-            }).catch((err) => console.error("API Finish Error:", err));
-          }
-        } else if (!lobbyId) {
-          setStopped(true);
-        }
+        const playerId = localStorage.getItem("wordmaster-player-id");
+        if (!playerId || !lobbyId) return;
+
+        // Send finish to backend
+        await fetch(`/api/lobby/${lobbyId}/player-finished/${playerId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            categoriesCompleted: CATEGORY_LIST.length, // 7 categories
+            score: scoreRef.current,
+          }),
+        }).catch((err) => console.error("API Finish Error:", err));
+
+        // Prevent double sending
+        setStopped(true);
       }
     };
 
     notifyFinished();
-  }, [allDone, lobbyId, stopped, connection, score, setStopped]);
+  }, [allDone, stopped, lobbyId, scoreRef]);
 
   return (
     <div className="gp-scene" data-testid="game-page">

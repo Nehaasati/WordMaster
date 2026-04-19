@@ -143,9 +143,12 @@ export default function ResultPage() {
             onClick={async () => {
               const playerId = localStorage.getItem("wordmaster-player-id");
               if (!playerId) return;
-              await fetch(`/api/lobby/${lobbyId}/restart/${playerId}`, {
-                method: "POST",
-              });
+              await fetch(
+                `/api/lobby/${lobbyId}/restart?playerId=${playerId}`,
+                {
+                  method: "POST",
+                },
+              );
             }}
             disabled={restartVotes.includes(myPlayerId)}
           >
