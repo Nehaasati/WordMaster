@@ -10,7 +10,6 @@ import {
   handleFreeze,
   handleFreezePowerup,
   handleMix,
-  handleStopGame,
 } from "../services/gameService";
 import { updateUsedLetters } from "../services/wordValidator";
 import "../css/GamePage.css";
@@ -80,7 +79,7 @@ const GamePage: React.FC = () => {
   );
 
   // Use SignalR hook for real-time events
-  const { submitWord, stopGame } = useSignalRGame(lobbyId, {
+  const { submitWord } = useSignalRGame(lobbyId, {
     onLobbyReset: async () => {
       console.log("Lobby reset → new round");
 
@@ -306,13 +305,6 @@ const GamePage: React.FC = () => {
     handleMix(setAllLetters);
   };
 
-  const handleStopGameLocal = async () => {
-    await handleStopGame(lobbyId, () => {
-      stopGame(scoreRef.current);
-      return Promise.resolve();
-    });
-  };
-
   const handleRestartLocal = async () => {
     await handleRestart(lobbyId);
   };
@@ -362,7 +354,7 @@ const GamePage: React.FC = () => {
 
         {/* Leave the lobby */}
         <button className="gp-leave" onClick={() => handleLeave(lobbyId)}>
-          Leave
+          Lämna Lobby
         </button>
         <div className="gp-freeze-msg" data-testid="freeze-msg">
           {freezeMsg}
