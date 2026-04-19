@@ -53,7 +53,7 @@ const NameModal: React.FC<{
         <div className="wm-modal-btns">
           {/* a button to confirm the selection */}
           <button
-            data-testid="btn-join-lobby"
+            data-testid={mode === "join" ? "modal-join-confirm" : "modal-name-confirm"}
             className="wm-modal-btn wm-modal-btn--confirm"
             disabled={!playerName.trim() || (showCodeField && !code.trim())}
             onClick={() =>
@@ -473,6 +473,7 @@ export default function LobbyPage() {
               </p>
 
               <button
+                data-testid="btn-copy-invite"
                 onClick={copyToClipboard}
                 className="wm-modal-btn wm-modal-btn--cancel"
               >
@@ -509,7 +510,7 @@ export default function LobbyPage() {
                 </div>
               </div>
 
-              <button className="ch-arrow" onClick={next}>
+              <button data-testid="carousel-next" className="ch-arrow" onClick={next}>
                 <img src="/images/next.png" className="ch-arrow-img" />
               </button>
             </div>
@@ -520,6 +521,7 @@ export default function LobbyPage() {
           {/* Add bot button — host only */}
           {isHost && !ready && players.length < 2 && (
             <button
+              data-testid="btn-add-bot"
               className="wm-modal-btn wm-modal-btn--cancel"
               style={{ marginBottom: "12px" }}
               onClick={async () => {
@@ -542,6 +544,7 @@ export default function LobbyPage() {
               <p className="game-mode-label">Välj spelläge</p>
               <div className="game-mode-btns">
                 <button
+                  data-testid="btn-mode-standard"
                   className={`game-mode-btn ${
                     gameMode === "standard" ? "active" : ""
                   }`}
@@ -550,6 +553,7 @@ export default function LobbyPage() {
                   Standard WordMaster
                 </button>
                 <button
+                  data-testid="btn-mode-blitz"
                   className={`game-mode-btn ${
                     gameMode === "blitz" ? "active" : ""
                   }`}
@@ -565,6 +569,7 @@ export default function LobbyPage() {
 
           {/* Ready / Start button */}
           <button
+            data-testid="btn-ready"
             className={`ready-btn ${ready ? "isReady-btn" : ""}`}
             onClick={async () => {
               // FIRST CLICK → not ready yet
@@ -655,6 +660,7 @@ export default function LobbyPage() {
             </div>
 
             <button
+              data-testid="btn-info"
               ref={infoBtnRef}
               type="button"
               className="info-icon"
