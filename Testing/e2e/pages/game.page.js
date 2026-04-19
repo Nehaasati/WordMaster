@@ -1,56 +1,45 @@
-// game page
 export default class GamePage {
   constructor(page) {
     this.page = page;
-
-    // Score & timer
-    this.scoreLabel = 'text=POÄNG';
-    this.timerLabel = 'text=TID';
-
-    // Category inputs
-    this.categoryInputs = {
-      NAMN: 'input[placeholder="NAMN"]',
-      MAT: 'input[placeholder="MAT"]',
-      JOBB: 'input[placeholder="JOBB"]',
-      LAND: 'input[placeholder="LAND"]',
-      FÄRG: 'input[placeholder="FÄRG"]',
-      DJUR: 'input[placeholder="DJUR"]',
-      SAK: 'input[placeholder="SAK"]'
-    };
-
-    // Buttons
-    this.freezeBtn = 'text=Freeze';
-    this.inkBtn = 'text=Bläck';
-    this.mixBtn = 'text=Mix';
-    this.stopBtn = 'text=Stopp';
-    this.leaveGameBtn = 'text=Lämna spelet';
   }
 
-  async waitForGameStart() {
-    await this.page.waitForSelector(this.scoreLabel);
+  async waitForGameToLoad() {
+    await this.page.getByTestId('game-page').waitFor();
   }
 
-  async fillCategory(category, word) {
-    await this.page.fill(this.categoryInputs[category], word);
+  async getTimer() {
+    return this.page.getByTestId('timer');
+  }
+
+  async getScore() {
+    return this.page.getByTestId('score');
+  }
+
+  async getCategoryInput(catId) {
+    return this.page.getByTestId(`input-${catId}`);
+  }
+
+  async getFeedback(catId) {
+    return this.page.getByTestId(`feedback-${catId}`);
+  }
+
+  async getLetters() {
+    return this.page.locator('[data-testid="letter-tile"]');
   }
 
   async clickFreeze() {
-    await this.page.click(this.freezeBtn);
-  }
-
-  async clickInk() {
-    await this.page.click(this.inkBtn);
+    await this.page.getByTestId('btn-freeze').click();
   }
 
   async clickMix() {
-    await this.page.click(this.mixBtn);
+    await this.page.getByTestId('btn-mix').click();
   }
 
-  async waitForMatchEnd() {
-    await this.page.waitForSelector(this.stopBtn);
+  async clickInk() {
+    await this.page.getByTestId('btn-black').click();
   }
 
-  async leaveGame() {
-    await this.page.click(this.leaveGameBtn);
+  async clickFinish() {
+    await this.page.getByTestId('btn-finish').click();
   }
 }
