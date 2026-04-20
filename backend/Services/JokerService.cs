@@ -1,91 +1,87 @@
-using WordMaster.Models;
- 
-namespace WordMaster.Services;
- 
-/// <summary>
-/// Manages Joker Cards for all active lobbies.
-/// Each player can hold one active joker at a time.
-/// </summary>
-public class JokerService
+// ============================================================
+// ADD to backend/Program.cs
+// ============================================================
+// STEP 1: Add this line near other AddSingleton calls (before builder.Build())
+//   builder.Services.AddSingleton<JokerService>();
+
+
+// STEP 2: Add these 3 endpoints anywhere before app.Run()
+
+// POST /api/lobby/{lobbyId}/joker/{playerId}/activate
+// FREE — activates a joker card for a player, no point cost
+app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/activate", (
+    string lobbyId,
+    string playerId,
+    JokerActivateRequest request,
+    JokerService jokerService,
+    GameEngine engine) =>
 {
-    // Key: "{lobbyId}:{playerId}"  Value: JokerCard
-    private readonly Dictionary<string, JokerCard> _activeJokers = new();
- 
-    private static readonly string[] SwedishLetters =
+    var lobby = engine.GetLobby(lobbyId);
+    if (lobby == null)
+        return Results.NotFound(new { error = "Lobby not found" });
+
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.NotFound(new { error = "Player not found" });
+
+    // FREE — no point check, no deduction
+    var joker = jokerService.ActivateJoker(lobbyId, playerId);
+    if (joker == null)
+        return Results.BadRequest(new { error = "Du har redan en aktiv Joker." });
+
+    Console.WriteLine($"[Joker] Player {player.Name} activated Joker: {joker.JokerLetter}");
+
+    return Results.Ok(new
     {
-        "A","B","D","E","F","G","H","I","K","L",
-        "M","N","O","R","S","T","U","Å","Ä","Ö"
-    };
- 
-    // ── Activate ─────────────────────────────────────────────
- 
-    /// <summary>
-    /// Activates a new Joker Card for a player.
-    /// Returns null if the player already has an active joker.
-    /// </summary>
-    public JokerCard? ActivateJoker(string lobbyId, string playerId)
+        jokerLetter = joker.JokerLetter,
+        cost        = 0,               // FREE
+        newScore    = player.Score,    // score unchanged
+        message     = $"Bokstaven {joker.JokerLetter} är nu din Joker! Ord med denna bokstav ger dubbla poäng."
+    });
+});
+
+
+// GET /api/lobby/{lobbyId}/joker/{playerId}
+// Returns current active joker for a player
+app.MapGet("/api/lobby/{lobbyId}/joker/{playerId}", (
+    string lobbyId,
+    string playerId,
+    JokerService jokerService) =>
+{
+    var joker = jokerService.GetActiveJoker(lobbyId, playerId);
+    if (joker == null)
+        return Results.Ok(new { hasJoker = false, jokerLetter = (string?)null });
+
+    return Results.Ok(new
     {
-        var key = MakeKey(lobbyId, playerId);
- 
-        // Player already has an active joker
-        if (_activeJokers.TryGetValue(key, out var existing) && !existing.IsUsed)
-            return null;
- 
-        // Pick a random letter
-        var rng = new Random();
-        var jokerLetter = SwedishLetters[rng.Next(SwedishLetters.Length)];
- 
-        var joker = new JokerCard
-        {
-            LobbyId     = lobbyId,
-            PlayerId    = playerId,
-            JokerLetter = jokerLetter,
-            IsUsed      = false,
-            ActivatedAt = DateTime.UtcNow
-        };
- 
-        _activeJokers[key] = joker;
-        return joker;
-    }
- 
-    // ── Query ─────────────────────────────────────────────────
- 
-    /// <summary>
-    /// Returns the active (unused) joker for a player, or null.
-    /// </summary>
-    public JokerCard? GetActiveJoker(string lobbyId, string playerId)
+        hasJoker    = true,
+        jokerLetter = joker.JokerLetter,
+        isUsed      = joker.IsUsed
+    });
+});
+
+
+// POST /api/lobby/{lobbyId}/joker/{playerId}/apply
+// Called after word is validated as correct
+// Returns multiplier: 1 = no bonus, 2 = double points
+app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/apply", (
+    string lobbyId,
+    string playerId,
+    ApplyJokerRequest request,
+    JokerService jokerService) =>
+{
+    var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word);
+    bool triggered = multiplier > 1;
+
+    return Results.Ok(new
     {
-        var key = MakeKey(lobbyId, playerId);
-        if (_activeJokers.TryGetValue(key, out var joker) && !joker.IsUsed)
-            return joker;
-        return null;
-    }
- 
-    // ── Apply ─────────────────────────────────────────────────
- 
-    /// <summary>
-    /// Checks if the word triggers the joker bonus.
-    /// If yes — marks the joker as used and returns the multiplier (2).
-    /// If no  — returns multiplier 1.
-    /// </summary>
-    public int ApplyJoker(string lobbyId, string playerId, string word, bool usedWildcard = false)
-    {
-        var joker = GetActiveJoker(lobbyId, playerId);
-        if (joker == null) return 1;
- 
-        bool wordUsesJoker = word
-            .ToUpperInvariant()
-            .Contains(joker.JokerLetter.ToUpperInvariant());
- 
-        if (!wordUsesJoker && !usedWildcard) return 1;
- 
-        // Consume the joker
-        joker.IsUsed = true;
-        return 2; // double points
-    }
- 
-    // ── Helper ────────────────────────────────────────────────
- 
-    private static string MakeKey(string lobbyId, string playerId)
-        => $"{lobbyId}:{playerId}";
-}
+        multiplier     = multiplier,
+        jokerTriggered = triggered,
+        word           = request.Word,
+        message        = triggered
+            ? $"🃏 JOKER! Dubbla poäng för \"{request.Word}\"!"
+            : "No joker bonus."
+    });
+});
+
+
