@@ -1,27 +1,22 @@
+import { useState, useCallback, useRef } from 'react';
 
-import { useState, useCallback } from 'react';
- 
-const BASE_API = 'http://127.0.0.1:5024/api';
- 
 interface JokerState {
   jokerLetter: string | null;
   isActive: boolean;
   isUsed: boolean;
 }
- 
+
 interface UseJokerReturn {
   joker: JokerState;
   jokerMsg: string;
+  jokerCategoriesRef: React.MutableRefObject<Set<string>>;
   activateJoker: () => Promise<void>;
-  applyJoker: (word: string, usedWildcard?: boolean) => Promise<number>;
-  clearMsg: () => void;
+  applyJoker: (word: string, categoryId: string) => Promise<number>;
 }
- 
+
 export function useJoker(
   lobbyId: string | undefined,
   playerId: string | undefined,
-  score: number,
-  setScore: React.Dispatch<React.SetStateAction<number>>
 ): UseJokerReturn {
   const [joker, setJoker] = useState<JokerState>({
     jokerLetter: null,
@@ -29,95 +24,103 @@ export function useJoker(
     isUsed: false,
   });
   const [jokerMsg, setJokerMsg] = useState('');
- 
+
+  // Tracks which categories had joker applied — used in score calculation
+  const jokerCategoriesRef = useRef<Set<string>>(new Set());
+
   const showMsg = (msg: string) => {
     setJokerMsg(msg);
     setTimeout(() => setJokerMsg(''), 3500);
   };
- 
-  // ── Activate ──────────────────────────────────────────────
+
+  // ── Activate — FREE, no point cost ───────────────────────
   const activateJoker = useCallback(async () => {
-    if (!lobbyId || !playerId) return;
+    if (!lobbyId || !playerId) {
+      showMsg('Inget lobby eller spelare hittades.');
+      return;
+    }
 
     if (joker.isActive) {
       showMsg('Du har redan en aktiv Joker!');
       return;
     }
 
-    console.log(`[Joker] Checking score: ${score} (need 10+)`);
-    if (score < 10) {
-      showMsg(`Inte tillräckligt med poäng! Du har ${score} poäng, Joker kostar 10.`);
-      return;
-    }
-
     try {
       const res = await fetch(
-        `${BASE_API}/lobby/${lobbyId}/joker/${playerId}/activate`,
-        { 
+        `/api/lobby/${lobbyId}/joker/${playerId}/activate`,
+        {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ currentScore: score })
+          body: JSON.stringify({ currentScore: 0 }) // score not used anymore
         }
       );
 
-      console.log(`[Joker API] Response status: ${res.status}`);
-      
       if (!res.ok) {
-        const err = await res.json();
-        console.log(`[Joker API] Error:`, err);
+        const err = await res.json().catch(() => ({}));
         showMsg(err.error || 'Kunde inte aktivera Joker.');
         return;
       }
 
       const data = await res.json();
-      console.log(`[Joker API] Success:`, data);
-      setScore(data.newScore);
+      // FREE — do NOT deduct score
       setJoker({ jokerLetter: data.jokerLetter, isActive: true, isUsed: false });
       showMsg(`🃏 Joker aktiverad! Bokstav: ${data.jokerLetter} — dubbla poäng!`);
-      console.log('Joker activated:', data.jokerLetter);
-    } catch (error) {
-      console.log(`[Joker API] Exception:`, error);
+      console.log('[Joker] Activated:', data.jokerLetter);
+    } catch (err) {
+      console.error('[Joker] Activation error:', err);
       showMsg('Fel vid aktivering av Joker.');
     }
-  }, [lobbyId, playerId, joker.isActive, score, setScore]);
- 
-  // ── Apply ─────────────────────────────────────────────────
-  // Called after a word is validated as correct.
-  // Returns the bonus multiplier (1 = no bonus, 2 = double).
-  const applyJoker = useCallback(async (word: string, usedWildcard: boolean = false): Promise<number> => {
-    if (!lobbyId || !playerId || !joker.isActive) return 1;
- 
+  }, [lobbyId, playerId, joker.isActive]);
+
+  // ── Apply — called after word is validated ────────────────
+  const applyJoker = useCallback(async (
+    word: string,
+    categoryId: string
+  ): Promise<number> => {
+    if (!lobbyId || !playerId || !joker.isActive || !joker.jokerLetter) return 1;
+
+    // Check locally if word contains joker letter
+    const wordContainsJoker = word
+      .toUpperCase()
+      .includes(joker.jokerLetter.toUpperCase());
+
+    if (!wordContainsJoker) return 1;
+
     try {
       const res = await fetch(
-        `${BASE_API}/lobby/${lobbyId}/joker/${playerId}/apply`,
+        `/api/lobby/${lobbyId}/joker/${playerId}/apply`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ word, usedWildcard }),
+          body: JSON.stringify({ word, usedWildcard: false }),
         }
       );
- 
+
       if (!res.ok) return 1;
- 
+
       const data = await res.json();
- 
+
       if (data.jokerTriggered) {
+        // Mark joker as consumed
         setJoker({ jokerLetter: null, isActive: false, isUsed: true });
+        // Remember this category gets doubled score
+        jokerCategoriesRef.current.add(categoryId);
         showMsg(`🃏 JOKER! Dubbla poäng för "${word}"!`);
-        console.log(`Joker triggered by: ${word} | multiplier: ${data.multiplier}`);
+        console.log(`[Joker] Triggered for "${word}" in ${categoryId} | multiplier: ${data.multiplier}`);
       }
- 
+
       return data.multiplier ?? 1;
-    } catch {
+    } catch (err) {
+      console.error('[Joker] Apply error:', err);
       return 1;
     }
-  }, [lobbyId, playerId, joker.isActive]);
- 
+  }, [lobbyId, playerId, joker.isActive, joker.jokerLetter]);
+
   return {
     joker,
     jokerMsg,
+    jokerCategoriesRef,
     activateJoker,
     applyJoker,
-    clearMsg: () => setJokerMsg(''),
   };
 }
