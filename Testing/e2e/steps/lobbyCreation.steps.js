@@ -5,11 +5,6 @@ import LobbyPage from '../pages/lobby.page.js';
 
 const { Given, When, Then } = createBdd();
 
-Given('att jag öppnar landningssidan', async ({ page }) => {
-  const landing = new LandingPage(page);
-  await landing.goto();
-});
-
 When('jag klickar på skapa-lobby knappen', async ({ page }) => {
   const landing = new LandingPage(page);
   await landing.clickCreateLobby();

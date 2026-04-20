@@ -4,10 +4,6 @@ import LandingPage from '../pages/landing.page.js';
 
 const { Given, When, Then } = createBdd();
 
-Given('att jag öppnar landningssidan', async ({ page }) => {
-  const landing = new LandingPage(page);
-  await landing.goto();
-});
 
 Then('ska jag se knappen {string}', async ({ page }, buttonText) => {
   await expect(page.getByRole('button', { name: buttonText })).toBeVisible();
