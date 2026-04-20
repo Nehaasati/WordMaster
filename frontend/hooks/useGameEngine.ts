@@ -90,8 +90,6 @@ export function useGameEngine(
               isExtra: false,
             })),
           );
-
-          roundStartTime.current = Date.now();
         }
       } catch {
         console.error("Failed to fetch letters");
