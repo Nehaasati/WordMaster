@@ -217,8 +217,8 @@ const GamePage: React.FC = () => {
       }));
     },
     // Added handlers for abilities (freeze and ink)
-    onFreezeReceived: () => {
-      handleFreezeLocal(); // your existing freeze UI logic
+    onFreezeReceived: async () => {
+      await handleFreezeReceivedLocal();
     },
 
     onInkReceived: () => {
@@ -483,9 +483,39 @@ const GamePage: React.FC = () => {
 
      return updated;
    });
- };
+  };
+
+  const isFreezeImmune = async () => {
+    const characterId = localStorage.getItem("characterId");
+    if (!characterId) return false;
+
+    try {
+      const res = await fetch(`/api/character/${characterId}/freeze-immune`);
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      return data.isFreezeImmune === true;
+    } catch (err) {
+      console.error("Freeze immunity check failed:", err);
+      return false;
+    }
+  };
+
   const handleFreezeLocal = () => {
     handleFreeze(setFrozen, setFreezeActive, setShowFreeze, setFreezeMsg);
+  };
+
+  const handleFreezeReceivedLocal = async () => {
+    if (await isFreezeImmune()) {
+      setFrozen(false);
+      setFreezeActive(false);
+      setShowFreeze(false);
+      setFreezeMsg("Björnen blockerade freeze!");
+      setTimeout(() => setFreezeMsg(""), 2000);
+      return;
+    }
+
+    handleFreezeLocal();
   };
 
   const handleFreezePowerupLocal = async () => {
