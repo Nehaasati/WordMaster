@@ -67,7 +67,7 @@ jobs:
           name: app-publish
           path: out/
 
-      # Upload the created frontend so that the test job can use it without needing to build it again.
+      # Upload frontend artifact
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
         with:
@@ -119,42 +119,34 @@ jobs:
           cache: "npm"
           cache-dependency-path: Testing/package-lock.json
 
-        # Installera testverktyg för API/UI (hoppas över på unit-matrisen via villkor).
+      # Install deps for API/UI tests
       - name: Install system test dependencies
         if: ${{ matrix.suite != 'unit' }}
         working-directory: Testing
         run: npm ci && npx playwright install
 
-      # Unit-testsvit med TRX-rapport.
+      # Unit tests
       - name: Run unit tests
         if: ${{ matrix.suite == 'unit' }}
         run: dotnet test --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults
 
-      # Install API test deps
-      - name: Install system test dependencies
-        if: ${{ matrix.suite == 'api' }}
-        working-directory: Testing/
-        run: npm ci
-
-      # Run API tests
+      # API tests
       - name: Run API tests
         if: ${{ matrix.suite == 'api' }}
         run: |
           dotnet run --project backend/backend.csproj --urls http://127.0.0.1:5024 &
           sleep 8
-          cd Testing/
+          cd Testing
           npm run test:api:ci
 
-      # UI-testsvit:
+      # UI tests (Playwright will start backend automatically)
       - name: Run UI tests
         if: ${{ matrix.suite == 'ui' }}
         run: |
-          dotnet run --project backend/backend.csproj --urls http://localhost:5024 &
-          sleep 8
           cd Testing
           npm run test:ui
 
-        # download the generated test reports and screenshots as artifacts, even if the tests fail, to allow for debugging.
+      # Upload artifacts
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -166,7 +158,6 @@ jobs:
             Testing/playwright-report/**
           if-no-files-found: ignore
 
-  # Job 3: report - samlar in alla testresultat och publicerar en sammanfattning i pipeline-loggen.
   report:
     needs: tests
     if: always()
@@ -184,6 +175,6 @@ jobs:
         run: |
           echo "## CI Rapport" >> "$GITHUB_STEP_SUMMARY"
           echo "- Build-jobb: klart" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Testmatris: endast API körs just nu" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Testmatris: unit, api, ui körda" >> "$GITHUB_STEP_SUMMARY"
           echo "- Nedladdade artefakter:" >> "$GITHUB_STEP_SUMMARY"
           find artifacts -type f | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
