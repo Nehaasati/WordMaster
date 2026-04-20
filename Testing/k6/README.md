@@ -4,14 +4,18 @@ This folder contains performance tests for the deployed WordMaster backend.
 
 ## Scope
 
-The current script, `wordmaster-multiplayer.js`, exercises a multiplayer lobby flow over HTTP:
+The current script, `wordmaster-multiplayer.js`, exercises a multiplayer and shop flow over HTTP:
 
 1. Create lobby
 2. Join lobby
 3. Mark host ready
 4. Mark guest ready
 5. Start game
-6. Leave lobby
+6. Load shop state
+7. Sync shop score
+8. Purchase a letter
+9. Purchase and consume a power-up
+10. Leave lobby
 
 The goal is to measure latency, failure rate, and basic flow stability under load. These tests complement the existing functional tests; they do not replace unit, API, or UI regression coverage.
 
@@ -45,23 +49,30 @@ References:
 
 Run from the repository root.
 
+Smoke profile against a local backend:
+
+```powershell
+$env:BASE_URL='http://127.0.0.1:5024'
+npm --prefix Testing run test:perf:smoke
+```
+
 Load profile against Render:
 
 ```powershell
 $env:BASE_URL='https://wordmaster-05vy.onrender.com'
-$env:TEST_PROFILE='load'
-k6 run .\Testing\k6\wordmaster-multiplayer.js
+npm --prefix Testing run test:perf:load
 ```
 
 Stress profile:
 
 ```powershell
 $env:BASE_URL='https://wordmaster-05vy.onrender.com'
-$env:TEST_PROFILE='stress'
-k6 run .\Testing\k6\wordmaster-multiplayer.js
+npm --prefix Testing run test:perf:stress
 ```
 
 If `k6` was just installed and PowerShell cannot find it, restart the terminal and run `k6 version` again.
+
+JSON summaries are written to `Testing/k6/results`.
 
 ## Optional PowerShell shortcut
 
@@ -70,8 +81,8 @@ If you do not want to type the full command every time, you can add a small help
 Create a session-only shortcut:
 
 ```Time Saver
-function runk6load { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; $env:TEST_PROFILE='load'; & 'C:\Program Files\k6\k6.exe' run .\Testing\k6\wordmaster-multiplayer.js }
-function runk6stress { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; $env:TEST_PROFILE='stress'; & 'C:\Program Files\k6\k6.exe' run .\Testing\k6\wordmaster-multiplayer.js }
+function runk6load { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; npm --prefix Testing run test:perf:load }
+function runk6stress { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; npm --prefix Testing run test:perf:stress }
 ```
 
 Then run:

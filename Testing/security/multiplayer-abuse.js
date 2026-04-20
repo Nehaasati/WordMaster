@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const rawBaseUrl = process.env.BASE_URL || 'http://127.0.0.1:5024';
 const baseUrl = rawBaseUrl.replace(/\/+$/, '');
 const apiBaseUrl = `${baseUrl}/api`;
 const failOnFindings = `${process.env.FAIL_ON_FINDINGS || 'false'}`.toLowerCase() === 'true';
 
-const resultsDir = path.resolve('Testing/security/results');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const resultsDir = path.join(scriptDir, 'results');
 const jsonReportPath = path.join(resultsDir, 'multiplayer-abuse-report.json');
 const markdownReportPath = path.join(resultsDir, 'multiplayer-abuse-report.md');
 
@@ -174,6 +176,92 @@ async function scenarioHostActionSpoof() {
   }
 }
 
+async function scenarioForgedShopScoreSync() {
+  const { lobbyId, hostId } = await createLobby(`host-shop-score-${Date.now()}`);
+  await joinLobby(lobbyId, `guest-shop-score-${Date.now()}`);
+
+  const { response, body } = await postJson(`${apiBaseUrl}/lobby/${lobbyId}/shop/${hostId}/sync-score`, {
+    earnedScore: 25,
+  });
+
+  if (response.status === 200 && body?.state?.earnedScore === 25) {
+    addFinding(
+      'forged-shop-score-sync',
+      'high',
+      'Unauthenticated client can sync another player shop score',
+      `/api/lobby/${lobbyId}/shop/${hostId}/sync-score`,
+      `Shop score sync succeeded and host earnedScore became ${body.state.earnedScore}.`
+    );
+  }
+}
+
+async function scenarioForgedShopPurchase() {
+  const { lobbyId, hostId } = await createLobby(`host-shop-buy-${Date.now()}`);
+  await joinLobby(lobbyId, `guest-shop-buy-${Date.now()}`);
+
+  await postJson(`${apiBaseUrl}/lobby/${lobbyId}/shop/${hostId}/sync-score`, {
+    earnedScore: 10,
+  });
+
+  const { response, body } = await postJson(`${apiBaseUrl}/lobby/${lobbyId}/shop/${hostId}/purchase`, {
+    itemId: 'A',
+  });
+
+  if (response.status === 200 && body?.state?.purchasedLetters?.includes('A')) {
+    addFinding(
+      'forged-shop-purchase',
+      'high',
+      'Unauthenticated client can purchase shop items for another player',
+      `/api/lobby/${lobbyId}/shop/${hostId}/purchase`,
+      `Purchase succeeded and added letter A to the host shop state.`
+    );
+  }
+}
+
+async function scenarioForgedShopPowerupConsume() {
+  const { lobbyId } = await createLobby(`host-shop-consume-${Date.now()}`);
+  const guestId = await joinLobby(lobbyId, `guest-shop-consume-${Date.now()}`);
+
+  await postJson(`${apiBaseUrl}/lobby/${lobbyId}/shop/${guestId}/sync-score`, {
+    earnedScore: 10,
+  });
+  await postJson(`${apiBaseUrl}/lobby/${lobbyId}/shop/${guestId}/purchase`, {
+    itemId: 'freeze',
+  });
+
+  const { response, body } = await postJson(`${apiBaseUrl}/lobby/${lobbyId}/shop/${guestId}/consume-powerup`, {
+    powerupId: 'freeze',
+  });
+
+  if (response.status === 200 && (body?.state?.powerups?.freeze || 0) === 0) {
+    addFinding(
+      'forged-shop-powerup-consume',
+      'high',
+      'Unauthenticated client can consume another player power-up',
+      `/api/lobby/${lobbyId}/shop/${guestId}/consume-powerup`,
+      `Consume request succeeded and removed the guest freeze power-up.`
+    );
+  }
+}
+
+async function scenarioInvalidShopScoreRejected() {
+  const { lobbyId, hostId } = await createLobby(`host-shop-invalid-${Date.now()}`);
+
+  const { response, body } = await postJson(`${apiBaseUrl}/lobby/${lobbyId}/shop/${hostId}/sync-score`, {
+    earnedScore: -1,
+  });
+
+  if (response.status < 400 || body?.state?.earnedScore < 0) {
+    addFinding(
+      'invalid-shop-score-accepted',
+      'medium',
+      'Shop accepts invalid negative earned score',
+      `/api/lobby/${lobbyId}/shop/${hostId}/sync-score`,
+      `Negative score sync returned ${response.status}.`
+    );
+  }
+}
+
 function writeReports() {
   ensureResultsDir();
 
@@ -222,6 +310,10 @@ async function main() {
     await scenarioForgedScoreSave();
     await scenarioForcedLeave();
     await scenarioHostActionSpoof();
+    await scenarioForgedShopScoreSync();
+    await scenarioForgedShopPurchase();
+    await scenarioForgedShopPowerupConsume();
+    await scenarioInvalidShopScoreRejected();
   } finally {
     writeReports();
   }

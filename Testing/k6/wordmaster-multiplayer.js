@@ -238,6 +238,104 @@ function leaveLobby(lobbyId, playerId, role) {
   });
 }
 
+function getShopState(lobbyId, playerId, role) {
+  const response = http.get(
+    `${apiBaseUrl}/lobby/${lobbyId}/shop/${playerId}`,
+    {
+      tags: {
+        name: 'shop_state',
+        endpoint: 'shop_state',
+        role,
+      },
+    }
+  );
+
+  const ok = check(response, {
+    [`${role} shop state returned 200`]: (r) => r.status === 200,
+    [`${role} shop state includes catalog`]: (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      return Array.isArray(r.json().state?.catalog);
+    },
+  });
+
+  return ok ? response.json().state : null;
+}
+
+function syncShopScore(lobbyId, playerId, role, earnedScore) {
+  const response = postJson(
+    `${apiBaseUrl}/lobby/${lobbyId}/shop/${playerId}/sync-score`,
+    { earnedScore },
+    {
+      endpoint: 'shop_sync_score',
+      role,
+    }
+  );
+
+  const ok = check(response, {
+    [`${role} shop score sync returned 200`]: (r) => r.status === 200,
+    [`${role} shop balance reflects synced score`]: (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      return r.json().state?.earnedScore === earnedScore;
+    },
+  });
+
+  return ok ? response.json().state : null;
+}
+
+function purchaseShopItem(lobbyId, playerId, role, itemId) {
+  const response = postJson(
+    `${apiBaseUrl}/lobby/${lobbyId}/shop/${playerId}/purchase`,
+    { itemId },
+    {
+      endpoint: 'shop_purchase',
+      role,
+      itemId,
+    }
+  );
+
+  const ok = check(response, {
+    [`${role} purchase ${itemId} returned 200`]: (r) => r.status === 200,
+    [`${role} purchase ${itemId} returned item`]: (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      return r.json().item?.id?.toLowerCase() === itemId.toLowerCase();
+    },
+  });
+
+  return ok ? response.json().state : null;
+}
+
+function consumeShopPowerup(lobbyId, playerId, role, powerupId) {
+  const response = postJson(
+    `${apiBaseUrl}/lobby/${lobbyId}/shop/${playerId}/consume-powerup`,
+    { powerupId },
+    {
+      endpoint: 'shop_consume_powerup',
+      role,
+      powerupId,
+    }
+  );
+
+  return check(response, {
+    [`${role} consume ${powerupId} returned 200`]: (r) => r.status === 200,
+    [`${role} consume ${powerupId} clears owned count`]: (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      return (r.json().state?.powerups?.[powerupId] || 0) === 0;
+    },
+  });
+}
+
 export function setup() {
   const healthResponse = http.get(`${apiBaseUrl}/health`, {
     tags: {
@@ -285,6 +383,26 @@ export default function () {
     }
 
     if (!startGame(lobbyId, hostId)) {
+      return;
+    }
+
+    if (!getShopState(lobbyId, hostId, 'host')) {
+      return;
+    }
+
+    if (!syncShopScore(lobbyId, hostId, 'host', 15)) {
+      return;
+    }
+
+    if (!purchaseShopItem(lobbyId, hostId, 'host', 'A')) {
+      return;
+    }
+
+    if (!purchaseShopItem(lobbyId, hostId, 'host', 'freeze')) {
+      return;
+    }
+
+    if (!consumeShopPowerup(lobbyId, hostId, 'host', 'freeze')) {
       return;
     }
 
