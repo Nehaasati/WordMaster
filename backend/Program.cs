@@ -545,7 +545,7 @@ app.MapHub<LobbyHub>("/lobbyHub");
 app.MapFallbackToFile("index.html");
 
 app.Run();
-public record ApplyJokerRequest(string Word, bool UsedWildcard);
+public record ApplyJokerRequest(string Word, bool UsedWildcard=false);
 public record JokerActivateRequest(int CurrentScore);
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record SubmitWordRequest(string Word);
