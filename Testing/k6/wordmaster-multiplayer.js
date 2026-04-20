@@ -85,6 +85,14 @@ function postJson(url, payload, tags) {
   });
 }
 
+function safeJson(response) {
+  try {
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+
 function recordCreateLobbyFailureStatus(status) {
   switch (status) {
     case 0:
@@ -141,7 +149,7 @@ function createLobby() {
         return false;
       }
 
-      const body = r.json();
+      const body = safeJson(r);
       return !!body.lobbyId && !!body.playerId;
     },
   });
@@ -152,7 +160,7 @@ function createLobby() {
     return null;
   }
 
-  const body = response.json();
+  const body = safeJson(response);
   return {
     lobbyId: body.lobbyId,
     hostId: body.playerId,
@@ -174,7 +182,7 @@ function joinLobby(lobbyId) {
         return false;
       }
 
-      return !!r.json().player?.id;
+      return !!safeJson(r)?.player?.id;
     },
   });
 
@@ -182,7 +190,7 @@ function joinLobby(lobbyId) {
     return null;
   }
 
-  return response.json().player.id;
+  return safeJson(response).player.id;
 }
 
 function readyPlayer(lobbyId, playerId, role) {
@@ -257,11 +265,11 @@ function getShopState(lobbyId, playerId, role) {
         return false;
       }
 
-      return Array.isArray(r.json().state?.catalog);
+      return Array.isArray(safeJson(r)?.state?.catalog);
     },
   });
 
-  return ok ? response.json().state : null;
+  return ok ? safeJson(response)?.state : null;
 }
 
 function syncShopScore(lobbyId, playerId, role, earnedScore) {
@@ -281,11 +289,11 @@ function syncShopScore(lobbyId, playerId, role, earnedScore) {
         return false;
       }
 
-      return r.json().state?.earnedScore === earnedScore;
+      return safeJson(r)?.state?.earnedScore === earnedScore;
     },
   });
 
-  return ok ? response.json().state : null;
+  return ok ? safeJson(response)?.state : null;
 }
 
 function purchaseShopItem(lobbyId, playerId, role, itemId) {
@@ -306,11 +314,11 @@ function purchaseShopItem(lobbyId, playerId, role, itemId) {
         return false;
       }
 
-      return r.json().item?.id?.toLowerCase() === itemId.toLowerCase();
+      return safeJson(r)?.item?.id?.toLowerCase() === itemId.toLowerCase();
     },
   });
 
-  return ok ? response.json().state : null;
+  return ok ? safeJson(response)?.state : null;
 }
 
 function consumeShopPowerup(lobbyId, playerId, role, powerupId) {
@@ -331,7 +339,7 @@ function consumeShopPowerup(lobbyId, playerId, role, powerupId) {
         return false;
       }
 
-      return (r.json().state?.powerups?.[powerupId] || 0) === 0;
+      return (safeJson(r)?.state?.powerups?.[powerupId] || 0) === 0;
     },
   });
 }

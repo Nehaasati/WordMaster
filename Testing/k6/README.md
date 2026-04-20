@@ -74,6 +74,8 @@ If `k6` was just installed and PowerShell cannot find it, restart the terminal a
 
 JSON summaries are written to `Testing/k6/results`.
 
+If the smoke run fails at `host shop state includes catalog` against Render, the deployed backend does not have the shop endpoints used by this test yet. Run `runk6smoke` against a local backend with the current code, or deploy the backend before running the Render load/stress shortcuts.
+
 ## Optional PowerShell shortcut
 
 If you do not want to type the full command every time, you can add a small helper function in PowerShell.
@@ -81,13 +83,17 @@ If you do not want to type the full command every time, you can add a small help
 Create a session-only shortcut:
 
 ```Time Saver
-function runk6load { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; npm --prefix Testing run test:perf:load }
-function runk6stress { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; npm --prefix Testing run test:perf:stress }
+$WordMasterRoot = 'C:\Users\learn\RiderProjects\WordMaster'
+
+function runk6smoke { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; npm --prefix "$WordMasterRoot\Testing" run test:perf:smoke }
+function runk6load { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; npm --prefix "$WordMasterRoot\Testing" run test:perf:load }
+function runk6stress { $env:BASE_URL='https://wordmaster-05vy.onrender.com'; npm --prefix "$WordMasterRoot\Testing" run test:perf:stress }
 ```
 
 Then run:
 
 ```Rider
+runk6smoke
 runk6load
 runk6stress
 ```
