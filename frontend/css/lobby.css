@@ -355,3 +355,11 @@ height: 400px;
   color: #f0e0ff;
   
 }
+.character-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+
