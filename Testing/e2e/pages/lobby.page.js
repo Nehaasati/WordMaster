@@ -5,6 +5,7 @@ export default class LobbyPage {
 
   async waitForLobbyToLoad() {
     await this.page.getByText('VÄLJ EN KARAKTÄR').waitFor();
+    await this.page.waitForSelector('[data-testid="carousel-next"]');
   }
 
   async getCharacterImage() {
