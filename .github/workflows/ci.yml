@@ -122,7 +122,7 @@ jobs:
         # Installera testverktyg för API/UI (hoppas över på unit-matrisen via villkor).
       - name: Install system test dependencies
         if: ${{ matrix.suite != 'unit' }}
-        working-directory: Testing/SystemTests
+        working-directory: Testing
         run: npm ci && npx playwright install
 
       # Unit-testsvit med TRX-rapport.
