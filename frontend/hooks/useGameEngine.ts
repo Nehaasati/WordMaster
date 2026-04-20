@@ -193,79 +193,79 @@ export function useGameEngine(
   // VALIDATE WORD
   // -----------------------------
   const validateWord = async (word: string, categoryId: string) => {
-    if (word.length < 2) return;
+  if (word.length < 2) return;
 
-    if (!checkWordWithLetters(word, categoryId, categories, allLetters)) {
+  if (!checkWordWithLetters(word, categoryId, categories, allLetters)) {
+    return;
+  }
+
+  const availablePool = buildAvailablePool(categoryId);
+
+  try {
+    const res = await fetch("/api/word/validate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        Word: word.trim(),
+        Category: categoryId,
+        Letters: availablePool,
+      }),
+    });
+
+    const raw = await res.text();
+    let data: ValidateResponse;
+
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      console.error("Invalid JSON");
       return;
     }
 
-    const availablePool = buildAvailablePool(categoryId);
+    if (data.isValid) {
+      // Ability bonus
+      const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
+      bonusRef.current += bonus;
 
-    try {
-      const res = await fetch("/api/word/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          Word: word.trim(),
-          Category: categoryId,
-          Letters: availablePool,
-        }),
-      });
-
-      const raw = await res.text();
-      let data: ValidateResponse;
-
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        console.error("Invalid JSON");
-        return;
-      }
-
-      if (data.isValid) {
-        // Ability bonus
-        const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
-        bonusRef.current += bonus;
-
-        // Joker multiplier — apply BEFORE updating category state
-        if (applyJokerFn) {
-          const multiplier = await applyJokerFn(word, categoryId);
-          if (multiplier > 1) {
-            console.log(`🃏 Joker triggered for "${word}" in ${categoryId}`);
-          }
+      // Joker multiplier — apply BEFORE updating category state
+      if (applyJokerFn) {
+        const multiplier = await applyJokerFn(word, categoryId);
+        if (multiplier > 1) {
+          console.log(`🃏 Joker triggered for "${word}" in ${categoryId}`);
         }
-
-        // Update category
-        setCategories((prev) => ({
-          ...prev,
-          [categoryId]: {
-            ...prev[categoryId],
-            valid: true,
-            word,
-            feedback: "",
-          },
-        }));
-
-        // Submit to SignalR
-        submitWord?.(categoryId, word);
-      } else {
-        setCategories((prev) => ({
-          ...prev,
-          [categoryId]: {
-            ...prev[categoryId],
-            valid: false,
-            word,
-            feedback: data.message || "Invalid",
-          },
-        }));
       }
-    } catch (err) {
-      console.error("Validation error:", err);
+
+      // Update category
+      setCategories((prev) => ({
+        ...prev,
+        [categoryId]: {
+          ...prev[categoryId],
+          valid: true,
+          word,
+          feedback: "",
+        },
+      }));
+
+      // Submit to SignalR
+      submitWord?.(categoryId, word);
+    } else {
+      setCategories((prev) => ({
+        ...prev,
+        [categoryId]: {
+          ...prev[categoryId],
+          valid: false,
+          word,
+          feedback: data.message || "Invalid",
+        },
+      }));
     }
-  };
+  } catch (err) {
+    console.error("Validation error:", err);
+  }
+};;
 
   // -----------------------------
   // RESET FUNCTIONS

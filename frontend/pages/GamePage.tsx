@@ -5,7 +5,7 @@ import { useGameEngine } from "../hooks/useGameEngine";
 import { useSignalRGame } from "../hooks/useSignalRGame";
 import { useSignalR } from "../hooks/SignalRContext";
  
-import { useJoker } from "../interfaces/jokerCard";
+import { useJoker } from "../interfaces/useJoker";
 import JokerButton from "./JokerCard";
 import {
   handleRestart,
@@ -60,13 +60,18 @@ const CATEGORY_LIST: Category[] = [
   { id: "Object", label: "Sak" },
 ];
 const GamePage: React.FC = () => {
+
   const { lobbyId } = useParams<{ lobbyId: string }>();
+  const storedPlayerId = localStorage.getItem('wordmaster-player-id') ?? '';
+  const { joker, jokerMsg, jokerCategoriesRef, activateJoker, applyJoker } = useJoker(
+  lobbyId,
+  storedPlayerId,
+  );
   const navigate = useNavigate();
 
   // Get the shared SignalR connection
   const connection = useSignalR();
-  // adde joker
-  const storedPlayerId = localStorage.getItem('wordmaster-player-id') ?? '';
+ 
   
   // Additional state not covered by the hook
   const [frozen, setFrozen] = useState(false);
@@ -201,37 +206,32 @@ const GamePage: React.FC = () => {
 
   // Use the game engine hook for state management
   const {
-    categories,
-    setCategories,
-    resetCategories,
-    resetRound,
-    allLetters,
-    setAllLetters,
-    timeLeft,
-    score,
-    setScore,
-    stopped,
-    setStopped,
-    categoryPoints,
-    setCategoryPoints,
-    bonusRef,
-    scoreRef,
-    myWordsRef,
-    opponentWordsRef,
-    validateWord,
-    buildAvailablePool,
-  } = useGameEngine(lobbyId, submitWord);
+  categories,
+  setCategories,
+  resetCategories,
+  resetRound,
+  allLetters,
+  setAllLetters,
+  timeLeft,
+  score,
+  setScore,
+  stopped,
+  setStopped,
+  categoryPoints,
+  setCategoryPoints,
+  bonusRef,
+  scoreRef,
+  myWordsRef,
+  opponentWordsRef,
+  validateWord,
+  buildAvailablePool,
+} = useGameEngine(lobbyId, submitWord, applyJoker);
 
   // Automatic focus shift to next category when one is completed
   const validStates = CATEGORY_LIST.map(
     (cat) => categories[cat.id]?.valid,
   ).join(",");
-  const { joker, jokerMsg, jokerCategoriesRef, activateJoker, applyJoker } = useJoker(
-   lobbyId,
-   storedPlayerId,
-   score,
-   setScore
-   );
+  ;
 
   useEffect(() => {
     const nextCat = CATEGORY_LIST.find((cat) => !categories[cat.id]?.valid);
@@ -498,14 +498,21 @@ const GamePage: React.FC = () => {
           <div className="gp-letters" data-testid="letters">
             {allLetters.map((letter) => (
               <div
-                key={letter.id}
-                className={`gp-letter ${
-                  letter.isExtra ? "gp-letter--extra" : ""
-                } ${letter.used ? "gp-letter--used" : ""}`}
-                data-testid="letter-tile"
-              >
-                {letter.char}
-              </div>
+                  key={letter.id}
+                  className={`gp-letter ${
+                    letter.isExtra ? 'gp-letter--extra' : ''
+                  } ${letter.used ? 'gp-letter--used' : ''} ${
+                    joker.isActive && letter.char === joker.jokerLetter
+                      ? 'gp-letter--joker'
+                      : ''
+                  }`}
+                  data-testid="letter-tile"
+                >
+                  {letter.char}
+                  {joker.isActive && letter.char === joker.jokerLetter && (
+                    <span className="gp-joker-crown">🃏</span>
+                  )}
+                </div>
             ))}
           </div>
         </div>

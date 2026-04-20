@@ -33,7 +33,7 @@ export function useJoker(
     setTimeout(() => setJokerMsg(''), 3500);
   };
 
-  // Activate — FREE, no point cost
+  // ── Activate — FREE, no point cost ───────────────────────
   const activateJoker = useCallback(async () => {
     if (!lobbyId || !playerId) {
       showMsg('Inget lobby eller spelare hittades.');
@@ -72,7 +72,7 @@ export function useJoker(
     }
   }, [lobbyId, playerId, joker.isActive]);
 
-  // Apply — called after word is validated 
+  // ── Apply — called after word is validated ────────────────
   const applyJoker = useCallback(async (
     word: string,
     categoryId: string
