@@ -1,6 +1,6 @@
 # Security Tests
 
-This folder contains the local security checks for WordMaster. These commands are designed so GitHub Actions can call them later, but the workflow files are not part of this scope.
+This folder contains the security checks for WordMaster. The same scripts are used locally and by `.github/workflows/security.yml`.
 
 ## Current coverage
 
@@ -87,8 +87,9 @@ npm --prefix Testing run test:security:abuse
 
 ## Triggers
 
-- local manual runs
-- future GitHub Actions jobs that call the same npm scripts
+- pull request: local multiplayer and shop abuse checks against a temporary backend
+- manual workflow: ZAP baseline and abuse checks against `target_url` or `RENDER_BASE_URL`
+- nightly schedule: ZAP baseline and abuse checks against `RENDER_BASE_URL`
 
 ## Notes
 
