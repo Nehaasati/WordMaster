@@ -405,6 +405,12 @@ height: 400px;
   color: #fbfbfb;
   line-height: 3.6;
 }
+.thought-bubble-text p {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-style: 'Cinzel', serif;
+  font-weight: 700;
+}
 
 
 
