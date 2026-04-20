@@ -14,6 +14,12 @@ export default defineConfig({
   },
   reporter: [['list']],
   workers: 1, // Run tests sequentially
+
+  webServer: {
+    command: 'dotnet run --project ../backend/backend.csproj',
+    port: 5024,
+    reuseExistingServer: !process.env.CI,
+  },
   use: {
     baseURL: 'http://localhost:5024',
     trace: 'retain-on-failure',
