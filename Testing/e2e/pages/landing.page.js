@@ -12,7 +12,7 @@ export default class LandingPage {
   }
 
   async clickJoinLobby() {
-    await this.page.getByTestId('landing-join-btn').click();
+    await this.page.getByTestId('landing-join-lobby').click();
   }
 
   getCreateModalConfirmButton() {

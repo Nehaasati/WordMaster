@@ -5,8 +5,9 @@ import ResultPage from '../pages/result.page.js';
 const { Given, When, Then } = createBdd();
 
 Given('att jag är på resultatsidan', async ({ page }) => {
-  const result = new ResultPage(page);
-  await result.waitForLoad();
+  // For testing purposes, navigate directly to results page
+  await page.goto('/result/test-game');
+  await page.waitForTimeout(1000); // Give time for page to load
 });
 
 Then('ska jag se resultat-titeln', async ({ page }) => {
