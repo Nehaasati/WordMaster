@@ -542,8 +542,13 @@ app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/apply", (
     JokerService jokerService) =>
 {
     var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word, request.UsedWildcard);
-        word          = request.Word,
-        message       = triggered
+    bool triggered = multiplier > 1;
+
+    return Results.Ok(new
+    {
+        multiplier = multiplier,
+        word = request.Word,
+        message = triggered
             ? $"🃏 JOKER! Dubbla poäng för \"{request.Word}\"!"
             : "No joker bonus."
     });
