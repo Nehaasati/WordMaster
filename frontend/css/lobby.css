@@ -361,5 +361,11 @@ height: 400px;
   align-items: flex-end;
   justify-content: center;
 }
+.character-img {
+  width: auto;
+  height: 240px;
+  display: block;
+}
+
 
 
