@@ -366,6 +366,18 @@ height: 400px;
   height: 240px;
   display: block;
 }
+.thought-bubble {
+  position: absolute;
+  height: 180px;
+  top: -95px;
+  right: -460px;
+  width: 420px;
+   background: rgba(236, 236, 236, 0.35);
+  border-radius: 50%;
+  padding: 14px 12px;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 #000;
+}
 
 
 
