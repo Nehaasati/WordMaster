@@ -9,6 +9,7 @@ import type {
 export function useGameEngine(
   lobbyId?: string,
   submitWord?: (category: string, word: string) => void,
+  applyJokerFn?: (word: string, categoryId: string) => Promise<number>,
 ) {
   // -----------------------------
   // INITIAL CATEGORY SETUP
@@ -228,6 +229,14 @@ export function useGameEngine(
         // Ability bonus
         const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
         bonusRef.current += bonus;
+
+        // Joker multiplier — apply BEFORE updating category state
+        if (applyJokerFn) {
+          const multiplier = await applyJokerFn(word, categoryId);
+          if (multiplier > 1) {
+            console.log(`🃏 Joker triggered for "${word}" in ${categoryId}`);
+          }
+        }
 
         // Update category
         setCategories((prev) => ({
