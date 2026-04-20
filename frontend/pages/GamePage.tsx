@@ -4,6 +4,9 @@ import type { StarData, Category } from "../interfaces/Gamepage";
 import { useGameEngine } from "../hooks/useGameEngine";
 import { useSignalRGame } from "../hooks/useSignalRGame";
 import { useSignalR } from "../hooks/SignalRContext";
+ 
+import { useJoker } from "../hooks/useJoker";
+import JokerButton from "../pages/JokerCard";
 import {
   handleRestart,
   handleFreeze,
@@ -62,7 +65,12 @@ const GamePage: React.FC = () => {
 
   // Get the shared SignalR connection
   const connection = useSignalR();
-
+  // adde joker
+  const storedPlayerId = localStorage.getItem('wordmaster-player-id') ?? '';
+  const [joker, jokerMsg, jokerCategoriesRef, activateJoker, applyJoker ] = useJoker(
+  lobbyId,
+  storedPlayerId,
+);
   // Additional state not covered by the hook
   const [frozen, setFrozen] = useState(false);
   const [freezeMsg, setFreezeMsg] = useState("");
