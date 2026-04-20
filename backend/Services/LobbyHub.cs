@@ -80,6 +80,12 @@ public class LobbyHub : Hub
     await Clients.Group(lobbyId).SendAsync("LobbyReset", lobbyId);
   }
 
+  // A signalR to notify when a player votes to restart
+  public async Task PlayerRestartVote(string lobbyId, string playerId)
+  {
+    await Clients.Group(lobbyId).SendAsync("PlayerRestartVote", playerId);
+  }
+
   // A signalR to manage the lobby state when one player leavs the lobby
   public async Task PlayerLeft(string lobbyId, string playerId)
   {

@@ -104,7 +104,7 @@ public class GameEngine
     }
 
     // OSKAR's new method in order to fix the conflict // fatima
-    public bool StartGame(string lobbyId)
+    public bool StartClassicGame(string lobbyId)
     {
         // Classic mode start (teammate’s logic)
         var lobby = GetLobby(lobbyId);
@@ -246,13 +246,16 @@ public class GameEngine
         var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
         if (player == null)
             return false;
+
         if (!player.CategoriesCompleted)
             return false;
+
+        // Mark the player as finished.
         player.HasFinished = true;
 
-        // If one of the players is done => End the match
+        // End the match immediately on the first player who actually finishes.
         lobby.MatchEnded = true;
-        lobby.State = GameState.WaitingForReady;
+        lobby.State = GameState.GameFinished;
 
         return true;
     }
@@ -279,6 +282,9 @@ public class GameEngine
             p.CategoriesCompleted = false;
             p.HasSubmitted = false;
         }
+
+        // Clear restart votes
+        lobby.RestartVotes.Clear();
 
         return true;
     }
@@ -370,6 +376,9 @@ public class Lobby
 
     // Indicates if the match has ended
     public bool MatchEnded { get; set; }
+
+    // Track which players have voted to restart the game
+    public List<string> RestartVotes { get; set; } = new();
 }
 
 // Player class to represent a player in the lobby. This can be expanded with more properties as needed.
