@@ -79,7 +79,7 @@ const CHARACTER_IMAGES: Record<string, string> = {
    Lobby Page
  */
 export default function LobbyPage() {
-  const { lobbyId } = useParams<{ lobbyId: string }>();
+  const { lobbyId } = useParams<{ lobbyId: string; }>();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -139,12 +139,12 @@ export default function LobbyPage() {
      (prevents incorrect host/guest behavior)
  */
   useEffect(() => {
-    
+
     if (entryMode === "invite" && !fromResult) {
       localStorage.removeItem("playerId");
       localStorage.removeItem("isHost");
     }
-    
+
   }, [entryMode, fromResult]);
 
   // Player name handling
@@ -427,7 +427,7 @@ export default function LobbyPage() {
   */
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
-    alert("Länk kopierad!");
+    alert("Länk ad!");
   };
 
   if (!playerName) return null;
@@ -441,20 +441,20 @@ export default function LobbyPage() {
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
           <div className="player-box" style={{ marginBottom: "20px" }}>
-            <p style={{ color: "#e6e315", fontWeight: "800",fontFamily: "Inter, sans-serif", textShadow: "0 0 9px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>Dit namn: {playerName}</p>
+            <p style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 9px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>Dit namn: {playerName}</p>
           </div>
 
           <div className="players-list">
             {players.map((p, index) => (
               <div key={p.id} className="player-box">
-                <p  style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 8px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>
+                <p style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 8px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>
                   Spelare {index + 1}: {p.name} {p.isReady ? "Ja" : ""}
                 </p>
               </div>
             ))}
           </div>
 
-          {realLobbyId && isHost &&(
+          {realLobbyId && isHost && (
             <div className="lobby-info">
               <p className="wm-modal-label">
                 LOBBY ID:{" "}
@@ -474,6 +474,24 @@ export default function LobbyPage() {
               >
                 KOPIERA INBJUDNINGSLÄNK
               </button>
+          {/* Add bot button — host only */}
+          {isHost && !ready && players.length < 2 && (
+            <button
+              className="wm-modal-btn wm-modal-btn--cancel"
+              style={{ marginTop: "4px", background: "rgba(0, 0, 0, 0.45)" }}
+              onClick={async () => {
+                const res = await fetch(`/api/lobby/${realLobbyId}/add-bot`, {
+                  method: "POST",
+                });
+                if (!res.ok) {
+                  const data = await res.json();
+                  setMessage(data.error || "Kunde inte lägga till bot.");
+                }
+              }}
+            >
+              + Lägg till motståndare (Easy Bot)
+            </button>
+          )}
             </div>
           )}
 
@@ -488,23 +506,23 @@ export default function LobbyPage() {
                 <img src="/images/prev.png" className="ch-arrow-img" />
               </button>
 
-             <div className="characters">
-             <div className="character-wrapper">
-             <div className="thought-bubble">
-             <div className="thought-bubble-text">
-             <p>{character.description}</p>
-             <span>✦ {character.ability.effectDescription}</span>
-            </div>
-           </div>
-          <img
-           key={character.id}
-          src={character.image}
-          alt={character.name}
-          className="character-img"
-            />
-         </div>
-        <h2 className="character-name">{character.name}</h2>
-       </div>
+              <div className="characters">
+                <div className="character-wrapper">
+                  <div className="thought-bubble">
+                    <div className="thought-bubble-text">
+                      <p>{character.description}</p>
+                      <span>✦ {character.ability.effectDescription}</span>
+                    </div>
+                  </div>
+                  <img
+                    key={character.id}
+                    src={character.image}
+                    alt={character.name}
+                    className="character-img"
+                  />
+                </div>
+                <h2 className="character-name">{character.name}</h2>
+              </div>
 
               <button className="ch-arrow" onClick={next}>
                 <img src="/images/next.png" className="ch-arrow-img" />
@@ -513,43 +531,21 @@ export default function LobbyPage() {
           ) : (
             <p style={{ color: "red" }}>Kunde inte ladda karaktärer.</p>
           )}
-
-          {/* Add bot button — host only */}
-          {isHost && !ready && players.length < 2 && (
-            <button
-              className="wm-modal-btn wm-modal-btn--cancel"
-              style={{ marginTop: "1px", background: "rgba(0, 0, 0, 0.45)" }}
-              onClick={async () => {
-                const res = await fetch(`/api/lobby/${realLobbyId}/add-bot`, {
-                  method: "POST",
-                });
-                if (!res.ok) {
-                  const data = await res.json();
-                  setMessage(data.error || "Kunde inte lägga till bot.");
-                }
-              }}
-            >
-              + Lägg till motståndare (Easy Bot)
-            </button>
-          )}
-
           {/* Game mode picker — host only */}
           {isHost && !ready && (
             <div className="game-mode-picker">
               <p className="game-mode-label">Välj spelläge</p>
               <div className="game-mode-btns">
                 <button
-                  className={`game-mode-btn ${
-                    gameMode === "standard" ? "active" : ""
-                  }`}
+                  className={`game-mode-btn ${gameMode === "standard" ? "active" : ""
+                    }`}
                   onClick={() => setGameMode("standard")}
                 >
                   Standard WordMaster
                 </button>
                 <button
-                  className={`game-mode-btn ${
-                    gameMode === "blitz" ? "active" : ""
-                  }`}
+                  className={`game-mode-btn ${gameMode === "blitz" ? "active" : ""
+                    }`}
                   onClick={() => setGameMode("blitz")}
                 >
                   Blitz WordMaster
@@ -587,7 +583,7 @@ export default function LobbyPage() {
                   const data = await response.json();
                   setMessage(
                     data.error ||
-                      "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
+                    "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
                   );
                   return;
                 }
