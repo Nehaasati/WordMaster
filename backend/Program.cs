@@ -462,14 +462,53 @@ app.MapPost("/api/classic/game/skip", (ClassicGameEngine engine) =>
         requiredLetter = engine.RequiredLetter
     });
 });
+// GET /api/lobby/{lobbyId}/joker/{playerId}
+// Returns the current active joker for a player (or null if none).
+app.MapGet("/api/lobby/{lobbyId}/joker/{playerId}", (
+    string lobbyId,
+    string playerId,
+    JokerService jokerService) =>
+{
+    var joker = jokerService.GetActiveJoker(lobbyId, playerId);
+    if (joker == null)
+        return Results.Ok(new { hasJoker = false, jokerLetter = (string?)null });
+ 
+    return Results.Ok(new
+    {
+        hasJoker    = true,
+        jokerLetter = joker.JokerLetter,
+        isUsed      = joker.IsUsed
+    });
+});
+ // POST /api/lobby/{lobbyId}/joker/{playerId}/apply
+// Called after a word is validated as correct.
+// Returns the score multiplier (1 = no bonus, 2 = double).
+app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/apply", (
+    string lobbyId,
+    string playerId,
+    ApplyJokerRequest request,
+    JokerService jokerService) =>
+{
+    var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word, request.UsedWildcard);
+    bool triggered = multiplier > 1;
 
+    return Results.Ok(new
+    {
+        multiplier = multiplier,
+        word = request.Word,
+        message = triggered
+            ? $"🃏 JOKER! Dubbla poäng för \"{request.Word}\"!"
+            : "No joker bonus."
+    });
+});
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 
 app.MapFallbackToFile("index.html");
 
 app.Run();
-
+public record ApplyJokerRequest(string Word, bool UsedWildcard);
+public record JokerActivateRequest(int CurrentScore);
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record SubmitWordRequest(string Word);
 public record StartGameRequest(string GameMode);
