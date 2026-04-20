@@ -1,4 +1,4 @@
-name: .NET
+name: Tests
 
 on:
   push:
@@ -67,12 +67,12 @@ jobs:
           name: app-publish
           path: out/
 
-      # Upload frontend (NOT backend/wwwroot)
+      # Upload the created frontend so that the test job can use it without needing to build it again.
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend
-          path: frontend
+          name: frontend-wwwroot
+          path: backend/wwwroot/
 
       # Validate Docker build
       - name: Validate Docker build
@@ -84,7 +84,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [ api ]   # UI disabled for now
+        suite: [ unit, api , ui ]
 
     steps:
       - uses: actions/checkout@v4
@@ -93,8 +93,8 @@ jobs:
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
         with:
-          name: frontend
-          path: frontend
+          name: frontend-wwwroot
+          path: backend/wwwroot/
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -119,6 +119,17 @@ jobs:
           cache: "npm"
           cache-dependency-path: Testing/package-lock.json
 
+        # Installera testverktyg för API/UI (hoppas över på unit-matrisen via villkor).
+      - name: Install system test dependencies
+        if: ${{ matrix.suite != 'unit' }}
+        working-directory: Testing/SystemTests
+        run: npm ci && npx playwright install
+
+      # Unit-testsvit med TRX-rapport.
+      - name: Run unit tests
+        if: ${{ matrix.suite == 'unit' }}
+        run: dotnet test --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults
+
       # Install API test deps
       - name: Install system test dependencies
         if: ${{ matrix.suite == 'api' }}
@@ -134,6 +145,16 @@ jobs:
           cd Testing/
           npm run test:api:ci
 
+      # UI-testsvit:
+      - name: Run UI tests
+        if: ${{ matrix.suite == 'ui' }}
+        run: |
+          dotnet run --project backend/backend.csproj --urls http://localhost:5024 &
+          sleep 8
+          cd Testing/
+          npm run test:ui
+
+        # download the generated test reports and screenshots as artifacts, even if the tests fail, to allow for debugging.
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -142,8 +163,10 @@ jobs:
           path: |
             TestResults/**
             Testing/test-results/**
+            Testing/playwright-report/**
           if-no-files-found: ignore
 
+  # Job 3: report - samlar in alla testresultat och publicerar en sammanfattning i pipeline-loggen.
   report:
     needs: tests
     if: always()
