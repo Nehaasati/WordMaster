@@ -238,8 +238,7 @@ export function useGameEngine(
           }
         }
 
-        // Update category
-        setCategories((prev) => ({
+        // Update categoryabilta
           ...prev,
           [categoryId]: {
             ...prev[categoryId],
