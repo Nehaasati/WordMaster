@@ -488,23 +488,23 @@ export default function LobbyPage() {
                 <img src="/images/prev.png" className="ch-arrow-img" />
               </button>
 
-<div className="characters">
-  <div className="character-wrapper">
-    <div className="thought-bubble">
-      <div className="thought-bubble-text">
-        <p>{character.description}</p>
-        <span>✦ {character.ability.effectDescription}</span>
-      </div>
-    </div>
-    <img
-      key={character.id}
-      src={character.image}
-      alt={character.name}
-      className="character-img"
-    />
-  </div>
-  <h2 className="character-name">{character.name}</h2>
-</div>
+             <div className="characters">
+             <div className="character-wrapper">
+             <div className="thought-bubble">
+             <div className="thought-bubble-text">
+             <p>{character.description}</p>
+             <span>✦ {character.ability.effectDescription}</span>
+            </div>
+           </div>
+          <img
+           key={character.id}
+          src={character.image}
+          alt={character.name}
+          className="character-img"
+            />
+         </div>
+        <h2 className="character-name">{character.name}</h2>
+       </div>
 
               <button className="ch-arrow" onClick={next}>
                 <img src="/images/next.png" className="ch-arrow-img" />
