@@ -411,6 +411,10 @@ height: 400px;
   font-style: 'Cinzel', serif;
   font-weight: 700;
 }
-
+.thought-bubble-text span {
+  font-size: 1.03rem;
+  font-style: 'Cinzel', serif;
+  color: #ededed;
+}
 
 
