@@ -49,6 +49,14 @@ Then('ska karaktärsbilden ändras', async ({ page }) => {
   expect(srcBefore).not.toBe(srcAfter);
 });
 
+Then('ska karaktärsbilden ändras igen', async ({ page }) => {
+  const img = page.getByTestId('character-image');
+  const srcBefore = await img.getAttribute('src');
+  await page.getByTestId('carousel-prev').click();
+  const srcAfter = await img.getAttribute('src');
+  expect(srcBefore).not.toBe(srcAfter);
+});
+
 When('värden väljer Blitz-läge', async ({ page }) => {
   await page.getByTestId('btn-mode-blitz').click();
 });
