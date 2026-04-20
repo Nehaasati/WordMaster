@@ -146,6 +146,10 @@ obj/
 # xUnit
 TestResults/
 
+# Mutation testing
+StrykerOutput/
+**/StrykerOutput/
+
 # Playwright
 test-results/
 playwright-report/

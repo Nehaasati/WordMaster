@@ -10,6 +10,7 @@
     "test:api:ci": "newman run Postman/WordMasterApi.postman_collection.json -e Postman/WordMasterAPI-Env.postman_environment.json --reporters cli,junit --reporter-junit-export test-results/newman-api.xml",
     "test:ui": "npm run bdd:gen && playwright test --project=ui",
     "test:unit": "dotnet test ../UnitTests/WordMaster.UnitTests/WordMaster.UnitTests.csproj",
+    "test:mutation": "dotnet tool restore && cd UnitTests/WordMaster.UnitTests && dotnet stryker --skip-version-check",
     "test:headed": "npm run bdd:gen && playwright test --project=ui --headed",
     "codegen": "playwright codegen http://127.0.0.1:5024",
     "test:perf:smoke": "node -e \"require('fs').mkdirSync('k6/results',{recursive:true})\" && k6 run --env TEST_PROFILE=smoke --summary-export k6/results/wordmaster-smoke-summary.json k6/wordmaster-multiplayer.js",
