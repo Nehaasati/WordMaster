@@ -1,20 +1,11 @@
-// ============================================================
-// ADD to backend/Program.cs
-// ============================================================
-// STEP 1: Add this line near other AddSingleton calls (before builder.Build())
-//   builder.Services.AddSingleton<JokerService>();
 
-
-// STEP 2: Add these 3 endpoints anywhere before app.Run()
-
-// POST /api/lobby/{lobbyId}/joker/{playerId}/activate
-// FREE — activates a joker card for a player, no point cost
 app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/activate", (
     string lobbyId,
     string playerId,
     JokerActivateRequest request,
     JokerService jokerService,
     GameEngine engine) =>
+    
 {
     var lobby = engine.GetLobby(lobbyId);
     if (lobby == null)
