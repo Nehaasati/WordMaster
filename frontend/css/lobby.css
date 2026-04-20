@@ -314,9 +314,9 @@ height: 400px;
 
 .game-mode-label {
   font-family: 'Cinzel', serif;
-  font-size: 0.9rem;
+  font-size:1rem;
   color: #d4b3ff;
-  margin-bottom: 8px;
+  margin-bottom: -3px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   text-shadow: 0 0 8px rgba(160, 80, 255, 0.5);
@@ -324,7 +324,7 @@ height: 400px;
 
 .game-mode-btns {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   justify-content: center;
 }
 
@@ -335,7 +335,7 @@ height: 400px;
   background: rgba(0, 0, 0, 0.45);
   color: #e8d5ff;
   font-family: 'Cinzel', serif;
-  font-size: 0.85rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: 0.2s ease;
   text-shadow: 0 0 6px rgba(200, 150, 255, 0.4);
