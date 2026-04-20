@@ -150,7 +150,6 @@ jobs:
         if: ${{ matrix.suite == 'ui' }}
         run: |
           dotnet run --project backend/backend.csproj --urls http://localhost:5024 &
-          npx wait-on http://localhost:5024
           sleep 8
           cd Testing
           npm run test:ui
