@@ -5,8 +5,8 @@ import { useGameEngine } from "../hooks/useGameEngine";
 import { useSignalRGame } from "../hooks/useSignalRGame";
 import { useSignalR } from "../hooks/SignalRContext";
  
-import { useJoker } from "../hooks/useJoker";
-import JokerButton from "../pages/JokerCard";
+import { useJoker } from "../interfaces/jokerCard";
+import JokerButton from "./JokerCard";
 import {
   handleRestart,
   handleFreeze,
@@ -224,11 +224,18 @@ const GamePage: React.FC = () => {
     validateWord,
     buildAvailablePool,
   } = useGameEngine(lobbyId, submitWord);
-
+  const jokerWildcardRef = useRef<boolean>(false); // Track if the next word used Joker wildcard
+  const jokerCategoriesRef = useRef<Set<string>>(new Set()); // Track categories with Joker words
   // Automatic focus shift to next category when one is completed
   const validStates = CATEGORY_LIST.map(
     (cat) => categories[cat.id]?.valid,
   ).join(",");
+  const { joker, jokerMsg, activateJoker, applyJoker } = useJoker(
+  lobbyId,
+  storedPlayerId,
+  score,
+  setScore
+  );
 
   useEffect(() => {
     const nextCat = CATEGORY_LIST.find((cat) => !categories[cat.id]?.valid);
@@ -323,6 +330,15 @@ const GamePage: React.FC = () => {
   };
 */
   const allDone = CATEGORY_LIST.every((c) => categories[c.id]?.valid);
+  const multiplier = await applyJoker(word, jokerWildcardRef.current);
+        if (jokerWildcardRef.current) {
+          console.log(`🃏 Joker wildcard used for "${word}" in category ${categoryId}!`);
+          jokerWildcardRef.current = false;
+        }
+        if (multiplier > 1) {
+          jokerCategoriesRef.current.add(categoryId);  // ← Mark this category as having Joker multiplier
+          console.log(`🃏 Joker activated for "${word}" in category ${categoryId}! Score will be doubled.`);
+        }
 
   //Send all done to backend
   useEffect(() => {
