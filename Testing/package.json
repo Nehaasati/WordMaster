@@ -8,13 +8,15 @@
     "test": "npm run test:unit && npm run test:api && npm run test:ui",
     "test:api": "newman run Postman/WordMasterApi.postman_collection.json -e Postman/WordMasterAPI-Env.postman_environment.json --reporters cli",
     "test:api:ci": "newman run Postman/WordMasterApi.postman_collection.json -e Postman/WordMasterAPI-Env.postman_environment.json --reporters cli,junit --reporter-junit-export test-results/newman-api.xml",
-    "test:ui": "npm run bdd:gen && playwright test --project=ui",
+    "test:ui": "npm run bdd:gen && npx playwright test --project=ui",
     "test:unit": "dotnet test ../UnitTests/WordMaster.UnitTests/WordMaster.UnitTests.csproj",
     "test:headed": "npm run bdd:gen && playwright test --project=ui --headed",
     "codegen": "playwright codegen http://127.0.0.1:5024"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
-    "playwright-bdd": "^8.5.0"
+    "@playwright/test": "^1.59.1"
+  },
+  "dependencies": {
+    "playwright-bdd": "^8.4.1"
   }
 }

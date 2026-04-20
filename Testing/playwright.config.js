@@ -13,8 +13,9 @@ export default defineConfig({
     timeout: 10000
   },
   reporter: [['list']],
+  workers: 1, // Run tests sequentially
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5024',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure'
