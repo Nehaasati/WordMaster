@@ -1,6 +1,8 @@
 name: Performance
 
 on:
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       target_url:
@@ -19,7 +21,48 @@ on:
     - cron: "0 2 * * *"
 
 jobs:
-  k6:
+  k6-smoke:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    env:
+      TARGET_URL: http://127.0.0.1:5024
+      TEST_PROFILE: smoke
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Start backend
+        run: |
+          dotnet run --project backend/backend.csproj --urls ${TARGET_URL} &
+          for i in {1..30}; do
+            if curl --fail --silent "${TARGET_URL}/api/health" > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend did not become healthy in time."
+          exit 1
+
+      - name: Run k6 smoke profile
+        run: >
+          k6 run
+          --env BASE_URL=${TARGET_URL}
+          --env TEST_PROFILE=${TEST_PROFILE}
+          Testing/k6/wordmaster-multiplayer.js
+
+  k6-deployed:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
       TARGET_URL: ${{ github.event.inputs.target_url || vars.RENDER_BASE_URL }}

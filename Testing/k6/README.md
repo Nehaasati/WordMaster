@@ -17,6 +17,7 @@ The goal is to measure latency, failure rate, and basic flow stability under loa
 
 ## Profiles
 
+- `smoke`: short, low-concurrency PR validation
 - `load`: lower concurrency, suitable for regular validation
 - `stress`: higher concurrency, intended for manual runs
 
@@ -104,6 +105,7 @@ Performance tests run in a separate workflow: `.github/workflows/performance.yml
 
 Supported triggers:
 
+- pull request smoke run against the PR backend
 - manual run with profile selection
 - nightly scheduled run
 

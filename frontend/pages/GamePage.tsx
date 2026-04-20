@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { StarData, Category } from "../interfaces/Gamepage";
+import type { ShopApiResponse, ShopState } from "../interfaces/Shop";
 import { useGameEngine } from "../hooks/useGameEngine";
 import { useSignalRGame } from "../hooks/useSignalRGame";
 import { useSignalR } from "../hooks/SignalRContext";
@@ -56,6 +57,39 @@ const CATEGORY_LIST: Category[] = [
   { id: "Animal", label: "Djur" },
   { id: "Object", label: "Sak" },
 ];
+
+const EMPTY_SHOP_STATE: ShopState = {
+  balance: 0,
+  earnedScore: 0,
+  spentScore: 0,
+  purchasedLetters: [],
+  powerups: {},
+  catalog: [],
+};
+
+const getCurrentPlayerId = () =>
+  localStorage.getItem("wordmaster-player-id") ??
+  localStorage.getItem("playerId") ??
+  "";
+
+const getShopErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Shop request failed";
+
+const parseShopApiResponse = async (
+  response: Response,
+): Promise<ShopApiResponse> => {
+  const raw = await response.text();
+  const data = raw ? JSON.parse(raw) : null;
+
+  if (!response.ok) {
+    throw new Error(
+      data?.title ?? data?.message ?? `Shop request failed (${response.status})`,
+    );
+  }
+
+  return data as ShopApiResponse;
+};
+
 const GamePage: React.FC = () => {
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
@@ -76,6 +110,10 @@ const GamePage: React.FC = () => {
   const [isHost, setIsHost] = useState(
     localStorage.getItem("isHost") === "true",
   );
+  const [shopState, setShopState] = useState<ShopState>(EMPTY_SHOP_STATE);
+  const [shopLoading, setShopLoading] = useState(Boolean(lobbyId));
+  const [shopError, setShopError] = useState("");
+  const shopSyncSeq = useRef(0);
 
   // Use SignalR hook for real-time events
   const { submitWord } = useSignalRGame(lobbyId, {
@@ -121,7 +159,7 @@ const GamePage: React.FC = () => {
       fetch(`/api/lobby/${lId}/save-score/${myId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ score: scoreRef.current }),
+        body: JSON.stringify({ score }),
       })
         .catch(() => {})
         .finally(() => {
@@ -210,12 +248,146 @@ const GamePage: React.FC = () => {
     categoryPoints,
     setCategoryPoints,
     bonusRef,
-    scoreRef,
     myWordsRef,
     opponentWordsRef,
     validateWord,
     buildAvailablePool,
   } = useGameEngine(lobbyId, submitWord);
+
+  const applyShopState = React.useCallback((state: ShopState) => {
+    setShopState(state);
+    setScore(state.balance);
+  }, [setScore]);
+
+  const requireShopSession = () => {
+    const playerId = getCurrentPlayerId();
+    if (!lobbyId || !playerId) {
+      throw new Error("Shop is only available after joining a lobby.");
+    }
+
+    return playerId;
+  };
+
+  const postShopAction = async (
+    endpoint: "purchase" | "consume-powerup",
+    body: Record<string, string>,
+  ) => {
+    const playerId = requireShopSession();
+    setShopError("");
+
+    const response = await fetch(
+      `/api/lobby/${lobbyId}/shop/${playerId}/${endpoint}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+
+    const data = await parseShopApiResponse(response);
+    applyShopState(data.state);
+    return data;
+  };
+
+  const purchaseShopItem = async (itemId: string) => {
+    await postShopAction("purchase", { itemId });
+  };
+
+  const consumePowerup = async (powerupId: string) => {
+    try {
+      await postShopAction("consume-powerup", { powerupId });
+      return true;
+    } catch (err) {
+      setShopError(getShopErrorMessage(err));
+      return false;
+    }
+  };
+
+  const getPowerupCount = (powerupId: string) =>
+    shopState.powerups[powerupId] ?? 0;
+
+  const calculateEarnedScore = React.useCallback(() => {
+    let total = 0;
+    for (const cat of CATEGORY_LIST) {
+      const catData = categories[cat.id];
+      if (!catData.valid) continue;
+      const points = categoryPoints[cat.id] ?? 10;
+      total += points;
+    }
+
+    return total + bonusRef.current;
+  }, [bonusRef, categories, categoryPoints]);
+
+  useEffect(() => {
+    if (!lobbyId) {
+      return;
+    }
+
+    let cancelled = false;
+    const loadShopState = async () => {
+      const playerId = getCurrentPlayerId();
+      if (!playerId) {
+        if (!cancelled) {
+          setShopLoading(false);
+          setShopError("Missing player session. Rejoin the lobby to use the shop.");
+        }
+        return;
+      }
+
+      setShopLoading(true);
+      setShopError("");
+
+      try {
+        const response = await fetch(`/api/lobby/${lobbyId}/shop/${playerId}`);
+        const data = await parseShopApiResponse(response);
+        if (!cancelled) {
+          applyShopState(data.state);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setShopError(getShopErrorMessage(err));
+        }
+      } finally {
+        if (!cancelled) {
+          setShopLoading(false);
+        }
+      }
+    };
+
+    loadShopState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyShopState, lobbyId]);
+
+  const purchasedLettersKey = shopState.purchasedLetters.join("|");
+
+  useEffect(() => {
+    const purchasedLetters = shopState.purchasedLetters;
+
+    setAllLetters((prev) => {
+      const currentShopLetters = prev
+        .filter((letter) => letter.source === "shop")
+        .map((letter) => letter.char)
+        .join("|");
+
+      if (currentShopLetters === purchasedLettersKey) {
+        return prev;
+      }
+
+      const nonShopLetters = prev.filter((letter) => letter.source !== "shop");
+      const shopLetters = purchasedLetters.map((char, index) => ({
+        id: `shop-${index}-${char}`,
+        char,
+        used: false,
+        isExtra: true,
+        source: "shop" as const,
+      }));
+
+      return [...nonShopLetters, ...shopLetters];
+    });
+  }, [purchasedLettersKey, allLetters.length, setAllLetters, shopState.purchasedLetters]);
 
   // Automatic focus shift to next category when one is completed
   const validStates = CATEGORY_LIST.map(
@@ -227,27 +399,47 @@ const GamePage: React.FC = () => {
     if (nextCat) {
       inputRefs.current[nextCat.id]?.focus();
     }
-  }, [validStates]);
+  }, [categories, validStates]);
 
   useEffect(() => {
     updateUsedLetters(categories, setAllLetters);
   }, [categories, setAllLetters]);
 
-  // Calculate score whenever categories, categoryPoints, or bonus changes
-  // Note: refs are intentionally excluded from dependencies as they don't trigger re-renders
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Calculate earned score, then let the backend apply shop spending.
   useEffect(() => {
-    let total = 0;
-    for (const cat of CATEGORY_LIST) {
-      const catData = categories[cat.id];
-      if (!catData.valid) continue;
-      const points = categoryPoints[cat.id] ?? 10;
-      total += points;
+    const earnedScore = calculateEarnedScore();
+    const playerId = getCurrentPlayerId();
+
+    if (!lobbyId || !playerId) {
+      setScore(earnedScore);
+      return;
     }
-    const newScore = total + bonusRef.current;
-    setScore(newScore);
-    scoreRef.current = newScore;
-  }, [categories, categoryPoints]);
+
+    const syncId = ++shopSyncSeq.current;
+    const syncShopScore = async () => {
+      try {
+        const response = await fetch(
+          `/api/lobby/${lobbyId}/shop/${playerId}/sync-score`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ earnedScore }),
+          },
+        );
+
+        const data = await parseShopApiResponse(response);
+        if (syncId === shopSyncSeq.current) {
+          applyShopState(data.state);
+        }
+      } catch (err) {
+        if (syncId === shopSyncSeq.current) {
+          setShopError(getShopErrorMessage(err));
+        }
+      }
+    };
+
+    syncShopScore();
+  }, [applyShopState, calculateEarnedScore, lobbyId, setScore]);
 
  const handleInputChange = (
    categoryId: string,
@@ -296,12 +488,31 @@ const GamePage: React.FC = () => {
     handleFreeze(setFrozen, setFreezeActive, setShowFreeze, setFreezeMsg);
   };
 
-  const handleFreezePowerupLocal = () => {
+  const handleFreezePowerupLocal = async () => {
+    if (!(await consumePowerup("freeze"))) return;
     handleFreezePowerup(lobbyId, connection, handleFreezeLocal);
+  };
+
+  const handleInkPowerupLocal = async () => {
+    if (!(await consumePowerup("black"))) return;
+
+    if (lobbyId && connection) {
+      connection
+        .invoke("UseInk", lobbyId)
+        .catch((err) => setShopError(getShopErrorMessage(err)));
+    } else {
+      setShowInk(true);
+      setInkActive(true);
+    }
   };
 
   const handleMixLocal = () => {
     handleMix(setAllLetters);
+  };
+
+  const handleMixPowerupLocal = async () => {
+    if (!(await consumePowerup("mix"))) return;
+    handleMixLocal();
   };
 
   const handleRestartLocal = async () => {
@@ -323,13 +534,36 @@ const GamePage: React.FC = () => {
         const playerId = localStorage.getItem("wordmaster-player-id");
         if (!playerId || !lobbyId) return;
 
+        const earnedScore = calculateEarnedScore();
+        const scoreResponse = await fetch(
+          `/api/lobby/${lobbyId}/shop/${playerId}/sync-score`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ earnedScore }),
+          },
+        ).catch((err) => {
+          console.error("Shop score sync before finish failed:", err);
+          return null;
+        });
+
+        if (!scoreResponse) return;
+
+        const shopData = await parseShopApiResponse(scoreResponse).catch((err) => {
+          setShopError(getShopErrorMessage(err));
+          return null;
+        });
+
+        if (!shopData) return;
+        applyShopState(shopData.state);
+
         // Send finish to backend
         await fetch(`/api/lobby/${lobbyId}/player-finished/${playerId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             categoriesCompleted: true, //
-            score: scoreRef.current,
+            score: shopData.state.balance,
           }),
         }).catch((err) => console.error("API Finish Error:", err));
 
@@ -339,7 +573,7 @@ const GamePage: React.FC = () => {
     };
     
     notifyFinished();
-  }, [allDone, stopped, lobbyId, scoreRef]);
+  }, [allDone, applyShopState, calculateEarnedScore, lobbyId, setStopped, stopped]);
 
   return (
     <div className="gp-scene" data-testid="game-page">
@@ -380,50 +614,41 @@ const GamePage: React.FC = () => {
         <button
           className="gp-btn gp-btn--freeze"
           onClick={handleFreezePowerupLocal}
+          disabled={stopped || getPowerupCount("freeze") <= 0}
           data-testid="btn-freeze"
         >
-          Freeze
+          Freeze ({getPowerupCount("freeze")})
         </button>
 
         <button
           className="gp-btn gp-btn--black"
-          onClick={() => connection?.invoke("UseInk", lobbyId)}
+          onClick={handleInkPowerupLocal}
+          disabled={stopped || getPowerupCount("black") <= 0}
           data-testid="btn-black"
         >
-          Bläck
+          Bläck ({getPowerupCount("black")})
         </button>
 
         <button
           className="gp-btn gp-btn--mix"
-          onClick={handleMixLocal}
+          onClick={handleMixPowerupLocal}
+          disabled={stopped || getPowerupCount("mix") <= 0}
           data-testid="btn-mix"
         >
-          Mix
+          Mix ({getPowerupCount("mix")})
         </button>
       </div>
 
       {/* Main content */}
       <ShopPanel
         score={score}
-        onBuyLetter={(letter: string, cost: number) => {
-          setScore((prev) => prev - cost);
-          setAllLetters((prev) => [
-            ...prev,
-            {
-              id:
-                Math.random().toString(36).substr(2, 9) +
-                Date.now().toString(36),
-              char: letter,
-              used: false,
-              isExtra: true,
-            },
-          ]);
-        }}
-        onBuyPowerup={(powerupId: string, cost: number) => {
-          setScore((prev) => prev - cost);
-          if (powerupId === "freeze") handleFreezeLocal();
-          if (powerupId === "mix") handleMixLocal();
-        }}
+        items={shopState.catalog}
+        powerups={shopState.powerups}
+        loading={shopLoading}
+        disabled={stopped || !lobbyId || !getCurrentPlayerId()}
+        error={shopError}
+        onBuyLetter={purchaseShopItem}
+        onBuyPowerup={purchaseShopItem}
       />
       <div className="gp-content">
         <div className="gp-left-spacer" />

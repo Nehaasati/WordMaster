@@ -23,6 +23,19 @@ const baseUrl = rawBaseUrl.replace(/\/+$/, '');
 const apiBaseUrl = `${baseUrl}/api`;
 const profile = (__ENV.TEST_PROFILE || 'load').toLowerCase();
 const profiles = {
+  smoke: {
+    stages: [
+      { duration: '10s', target: 1 },
+      { duration: '20s', target: 2 },
+      { duration: '10s', target: 0 },
+    ],
+    thresholds: {
+      http_req_failed: ['rate<0.01'],
+      http_req_duration: ['p(95)<1200', 'avg<700'],
+      checks: ['rate>0.99'],
+      workflow_failures: ['rate<0.02'],
+    },
+  },
   load: {
     stages: [
       { duration: '30s', target: 5 },

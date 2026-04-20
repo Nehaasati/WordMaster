@@ -257,6 +257,49 @@ app.MapPost("/api/lobby/{lobbyId}/save-score/{playerId}", (
     return Results.Ok(new { saved = true });
 });
 
+app.MapGet("/api/lobby/{lobbyId}/shop/{playerId}", (
+    string lobbyId,
+    string playerId,
+    GameEngine engine
+) =>
+{
+    var result = engine.GetShopState(lobbyId, playerId);
+    return ToShopResult(result);
+});
+
+app.MapPost("/api/lobby/{lobbyId}/shop/{playerId}/sync-score", (
+    string lobbyId,
+    string playerId,
+    ShopSyncScoreRequest request,
+    GameEngine engine
+) =>
+{
+    var result = engine.SyncShopScore(lobbyId, playerId, request.EarnedScore);
+    return ToShopResult(result);
+});
+
+app.MapPost("/api/lobby/{lobbyId}/shop/{playerId}/purchase", (
+    string lobbyId,
+    string playerId,
+    ShopPurchaseRequest request,
+    GameEngine engine
+) =>
+{
+    var result = engine.PurchaseShopItem(lobbyId, playerId, request.ItemId);
+    return ToShopResult(result);
+});
+
+app.MapPost("/api/lobby/{lobbyId}/shop/{playerId}/consume-powerup", (
+    string lobbyId,
+    string playerId,
+    ShopConsumePowerupRequest request,
+    GameEngine engine
+) =>
+{
+    var result = engine.ConsumePowerup(lobbyId, playerId, request.PowerupId);
+    return ToShopResult(result);
+});
+
 app.MapPost("/api/game/calculate-score", (
     CalculateScoreRequest request) =>
 {
@@ -468,6 +511,34 @@ app.MapHub<LobbyHub>("/lobbyHub");
 
 app.MapFallbackToFile("index.html");
 
+static IResult ToShopResult(ShopOperationResult result)
+{
+    if (result.Succeeded)
+    {
+        return Results.Ok(new ShopApiResponse(
+            result.Message,
+            result.State!,
+            result.Item,
+            result.PurchasedLetter?.ToString()));
+    }
+
+    var statusCode = result.Status switch
+    {
+        ShopOperationStatus.LobbyNotFound => StatusCodes.Status404NotFound,
+        ShopOperationStatus.PlayerNotFound => StatusCodes.Status404NotFound,
+        ShopOperationStatus.InvalidItem => StatusCodes.Status400BadRequest,
+        ShopOperationStatus.InvalidScore => StatusCodes.Status400BadRequest,
+        ShopOperationStatus.NotEnoughScore => StatusCodes.Status409Conflict,
+        ShopOperationStatus.AlreadyOwned => StatusCodes.Status409Conflict,
+        ShopOperationStatus.NotOwned => StatusCodes.Status409Conflict,
+        _ => StatusCodes.Status400BadRequest
+    };
+
+    return Results.Problem(
+        title: result.Message,
+        statusCode: statusCode);
+}
+
 app.Run();
 
 public record ValidateRequest(string Word, string Category, List<char> Letters);
@@ -478,6 +549,14 @@ public record CalculateScoreRequest(List<CategorySubmission> Categories);
 public record CreateLobbyRequest(string Name);
 public record FinishRequest(bool CategoriesCompleted, int Score = 0);
 public record SaveScoreRequest(int Score); 
+public record ShopSyncScoreRequest(int EarnedScore);
+public record ShopPurchaseRequest(string ItemId);
+public record ShopConsumePowerupRequest(string PowerupId);
+public record ShopApiResponse(
+    string Message,
+    ShopStateResponse State,
+    ShopCatalogItem? Item = null,
+    string? PurchasedLetter = null);
 
 // join this character with backend with thier ability
 public class JoinRequest
@@ -497,3 +576,5 @@ public record RoundStatusResponse(
 );
 
 public record RegisterConnectionRequest(string PlayerId, string ConnectionId);
+
+public partial class Program { }

@@ -11,7 +11,8 @@ on:
     - cron: "30 2 * * *"
 
 jobs:
-  zap-baseline:
+  zap-full:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,26 +29,27 @@ jobs:
             exit 1
           fi
 
-      - name: Run ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.15.0
+      - name: Run ZAP full scan
+        uses: zaproxy/action-full-scan@v0.12.0
         with:
           target: ${{ env.TARGET_URL }}
           docker_name: ghcr.io/zaproxy/zaproxy:stable
           allow_issue_writing: false
           fail_action: false
-          artifact_name: zap-baseline-report
+          artifact_name: zap-full-report
           cmd_options: "-a"
 
       - name: Publish workflow summary
         if: always()
         run: |
           echo "## Security Run" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Scan type: ZAP baseline" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Scan type: ZAP full scan" >> "$GITHUB_STEP_SUMMARY"
           echo "- Target URL: ${TARGET_URL}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Mode: passive baseline scan" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Artifact: zap-baseline-report" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Mode: manual full scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Artifact: zap-full-report" >> "$GITHUB_STEP_SUMMARY"
 
   multiplayer-abuse:
+    if: ${{ github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

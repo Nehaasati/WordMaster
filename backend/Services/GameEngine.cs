@@ -11,6 +11,10 @@ public class GameEngine
     private readonly Dictionary<string, Lobby> _lobbies = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, string> _inviteCodesToId = new(StringComparer.OrdinalIgnoreCase);
     private static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
+    private const string ShopItemTypeLetter = "letter";
+    private const string ShopItemTypePowerup = "powerup";
+
+    private static readonly IReadOnlyDictionary<string, ShopCatalogItem> ShopItems = CreateShopCatalog();
 
     // Weighted randomizer weights (trying to mirror frontend randomizeer here)
     private static readonly Dictionary<char, int> Weights = new()
@@ -281,6 +285,7 @@ public class GameEngine
             p.HasFinished = false;
             p.CategoriesCompleted = false;
             p.HasSubmitted = false;
+            ResetPlayerShopState(p);
         }
 
         // Clear restart votes
@@ -356,6 +361,176 @@ public class GameEngine
 
         return bot;
     }
+
+    public ShopOperationResult GetShopState(string lobbyId, string playerId)
+    {
+        var player = FindPlayer(lobbyId, playerId, out var error);
+        return player == null
+            ? error
+            : ShopOperationResult.Ok("Shop state loaded", CreateShopState(player));
+    }
+
+    public ShopOperationResult SyncShopScore(string lobbyId, string playerId, int earnedScore)
+    {
+        if (earnedScore < 0)
+        {
+            return ShopOperationResult.Fail(
+                ShopOperationStatus.InvalidScore,
+                "Earned score cannot be negative.");
+        }
+
+        var player = FindPlayer(lobbyId, playerId, out var error);
+        if (player == null)
+            return error;
+
+        player.EarnedScore = earnedScore;
+        UpdatePlayerScore(player);
+
+        return ShopOperationResult.Ok("Score synced", CreateShopState(player));
+    }
+
+    public ShopOperationResult PurchaseShopItem(string lobbyId, string playerId, string itemId)
+    {
+        var player = FindPlayer(lobbyId, playerId, out var error);
+        if (player == null)
+            return error;
+
+        if (string.IsNullOrWhiteSpace(itemId) ||
+            !ShopItems.TryGetValue(itemId.Trim(), out var item))
+        {
+            return ShopOperationResult.Fail(
+                ShopOperationStatus.InvalidItem,
+                $"Shop item '{itemId}' does not exist.");
+        }
+
+        var balance = GetShopBalance(player);
+        if (balance < item.Cost)
+        {
+            return ShopOperationResult.Fail(
+                ShopOperationStatus.NotEnoughScore,
+                $"Not enough score to buy '{item.Label}'.");
+        }
+
+        if (item.Type == ShopItemTypePowerup &&
+            player.Powerups.GetValueOrDefault(item.Id) > 0)
+        {
+            return ShopOperationResult.Fail(
+                ShopOperationStatus.AlreadyOwned,
+                $"Power-up '{item.Label}' is already owned.");
+        }
+
+        player.SpentScore += item.Cost;
+
+        char? purchasedLetter = null;
+        if (item.Type == ShopItemTypeLetter)
+        {
+            purchasedLetter = item.Id[0];
+            player.PurchasedLetters.Add(purchasedLetter.Value);
+        }
+        else
+        {
+            player.Powerups[item.Id] = player.Powerups.GetValueOrDefault(item.Id) + 1;
+        }
+
+        UpdatePlayerScore(player);
+
+        return ShopOperationResult.Ok(
+            $"Purchased '{item.Label}'.",
+            CreateShopState(player),
+            item,
+            purchasedLetter);
+    }
+
+    public ShopOperationResult ConsumePowerup(string lobbyId, string playerId, string powerupId)
+    {
+        var player = FindPlayer(lobbyId, playerId, out var error);
+        if (player == null)
+            return error;
+
+        if (string.IsNullOrWhiteSpace(powerupId) ||
+            !ShopItems.TryGetValue(powerupId.Trim(), out var item) ||
+            item.Type != ShopItemTypePowerup)
+        {
+            return ShopOperationResult.Fail(
+                ShopOperationStatus.InvalidItem,
+                $"Power-up '{powerupId}' does not exist.");
+        }
+
+        var ownedCount = player.Powerups.GetValueOrDefault(item.Id);
+        if (ownedCount <= 0)
+        {
+            return ShopOperationResult.Fail(
+                ShopOperationStatus.NotOwned,
+                $"Power-up '{item.Label}' has not been purchased.");
+        }
+
+        if (ownedCount == 1)
+            player.Powerups.Remove(item.Id);
+        else
+            player.Powerups[item.Id] = ownedCount - 1;
+
+        return ShopOperationResult.Ok(
+            $"Consumed '{item.Label}'.",
+            CreateShopState(player),
+            item);
+    }
+
+    private static IReadOnlyDictionary<string, ShopCatalogItem> CreateShopCatalog()
+    {
+        var items = new Dictionary<string, ShopCatalogItem>(StringComparer.OrdinalIgnoreCase);
+        foreach (var letter in new[] { 'A', 'E', 'I', 'O', 'U', 'Y', 'Å', 'Ä', 'Ö' })
+        {
+            var id = letter.ToString();
+            items[id] = new ShopCatalogItem(id, id, ShopItemTypeLetter, 5);
+        }
+
+        items["freeze"] = new ShopCatalogItem("freeze", "Freeze", ShopItemTypePowerup, 5);
+        items["black"] = new ShopCatalogItem("black", "Bläck", ShopItemTypePowerup, 5);
+        items["mix"] = new ShopCatalogItem("mix", "Svenska Alphabet", ShopItemTypePowerup, 100);
+
+        return items;
+    }
+
+    private Player? FindPlayer(string lobbyId, string playerId, out ShopOperationResult error)
+    {
+        error = ShopOperationResult.Fail(ShopOperationStatus.PlayerNotFound, "Player not found.");
+
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null)
+        {
+            error = ShopOperationResult.Fail(ShopOperationStatus.LobbyNotFound, "Lobby not found.");
+            return null;
+        }
+
+        var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+        return player;
+    }
+
+    private static ShopStateResponse CreateShopState(Player player) =>
+        new(
+            Balance: GetShopBalance(player),
+            EarnedScore: player.EarnedScore,
+            SpentScore: player.SpentScore,
+            PurchasedLetters: player.PurchasedLetters.ToList(),
+            Powerups: new Dictionary<string, int>(player.Powerups, StringComparer.OrdinalIgnoreCase),
+            Catalog: ShopItems.Values.ToList());
+
+    private static int GetShopBalance(Player player) =>
+        Math.Max(0, player.EarnedScore - player.SpentScore);
+
+    private static void UpdatePlayerScore(Player player)
+    {
+        player.Score = GetShopBalance(player);
+    }
+
+    private static void ResetPlayerShopState(Player player)
+    {
+        player.EarnedScore = 0;
+        player.SpentScore = 0;
+        player.Score = 0;
+        player.PurchasedLetters.Clear();
+        player.Powerups.Clear();
+    }
 }
 
 public class Lobby
@@ -401,6 +576,16 @@ public class Player
     // Player's CURRENT score in the game, can be updated as they submit valid words
     public int Score { get; set; }
 
+    // Score earned from valid words before shop purchases are deducted.
+    public int EarnedScore { get; set; }
+
+    // Total score spent in the shop during the current round.
+    public int SpentScore { get; set; }
+
+    public List<char> PurchasedLetters { get; set; } = new();
+
+    public Dictionary<string, int> Powerups { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     // Indicates if the player is READY to start the game. This can be used to ensure all players are ready before starting.
     public bool IsReady { get; set; }
 
@@ -424,4 +609,46 @@ public enum GameState
     WaitingForReady,
     PlayingRound,
     GameFinished
+}
+
+public record ShopCatalogItem(string Id, string Label, string Type, int Cost);
+
+public record ShopStateResponse(
+    int Balance,
+    int EarnedScore,
+    int SpentScore,
+    IReadOnlyList<char> PurchasedLetters,
+    IReadOnlyDictionary<string, int> Powerups,
+    IReadOnlyList<ShopCatalogItem> Catalog);
+
+public enum ShopOperationStatus
+{
+    Success,
+    LobbyNotFound,
+    PlayerNotFound,
+    InvalidItem,
+    InvalidScore,
+    NotEnoughScore,
+    AlreadyOwned,
+    NotOwned
+}
+
+public record ShopOperationResult(
+    ShopOperationStatus Status,
+    string Message,
+    ShopStateResponse? State = null,
+    ShopCatalogItem? Item = null,
+    char? PurchasedLetter = null)
+{
+    public bool Succeeded => Status == ShopOperationStatus.Success;
+
+    public static ShopOperationResult Ok(
+        string message,
+        ShopStateResponse state,
+        ShopCatalogItem? item = null,
+        char? purchasedLetter = null) =>
+        new(ShopOperationStatus.Success, message, state, item, purchasedLetter);
+
+    public static ShopOperationResult Fail(ShopOperationStatus status, string message) =>
+        new(status, message);
 }
