@@ -4,13 +4,13 @@ import { defineBddConfig } from 'playwright-bdd';
 const uiTestDir = defineBddConfig({
   features: 'e2e/features/**/*.feature',
   steps: ['e2e/steps/**/*.js', 'e2e/pages/**/*.js'],
-  outputDir: '.features-gen/tests'
+  outputDir: '.features-gen/ui'
 });
 
 export default defineConfig({
-  timeout: 30_000,
+  timeout: 30000,
   expect: {
-    timeout: 10_000
+    timeout: 10000
   },
   reporter: [['list']],
   use: {
