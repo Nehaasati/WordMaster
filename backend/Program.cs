@@ -501,6 +501,44 @@ app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/apply", (
             : "No joker bonus."
     });
 });
+// POST /api/lobby/{lobbyId}/joker/{playerId}/activate
+app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/activate", (
+    string lobbyId,
+    string playerId,
+    JokerActivateRequest request,
+    JokerService jokerService,
+    GameEngine engine) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    if (lobby == null)
+        return Results.NotFound(new { error = "Lobby not found" });
+
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.NotFound(new { error = "Player not found" });
+
+    // Check score
+    const int cost = 10;
+    if (request.CurrentScore < cost)
+        return Results.BadRequest(new { error = $"Inte tillräckligt med poäng. Joker kostar {cost} poäng." });
+
+    var joker = jokerService.ActivateJoker(lobbyId, playerId);
+    if (joker == null)
+        return Results.BadRequest(new { error = "Du har redan en aktiv Joker." });
+
+    // Deduct from player score
+    player.Score = request.CurrentScore - cost;
+
+    Console.WriteLine($"[Joker] {player.Name} activated Joker: {joker.JokerLetter}");
+
+    return Results.Ok(new
+    {
+        jokerLetter = joker.JokerLetter,
+        cost        = cost,
+        newScore    = player.Score,
+        message     = $"Bokstaven {joker.JokerLetter} är din Joker! Ord med denna bokstav ger dubbla poäng."
+    });
+});
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 
