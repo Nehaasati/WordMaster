@@ -1,16 +1,15 @@
-# Lobby creation Gherkin
+# Skapa Lobby UI-test
 
-Feature: Create Lobby
-  As a host player
-  I want to create a new lobby
-  So that I can start a multiplayer WordMaster match
+Feature: Skapa en lobby
+  Som värdspelare
+  Vill jag skapa en ny lobby
+  Så att jag kan starta ett WordMaster-spel
 
-  Background:
-    Given the backend is running
-
-  Scenario: Host successfully creates a lobby
-    When the host creates a lobby with name "Fatima" and character "ugglan"
-    Then the response should contain a lobbyId
-    And the response should contain a playerId
-    And the host should be marked as IsHost = true
-    And the lobby should be in state "WaitingForPlayers"
+  Scenario: Värden skapar en lobby framgångsrikt
+    Given att jag öppnar landningssidan
+    When jag klickar på skapa-lobby knappen
+    And jag anger spelarnamn "Fatima"
+    And jag klickar på skapa-lobby bekräfta-knappen
+    Then ska jag omdirigeras till lobbyn
+    And jag ska se texten "VÄLJ EN KARAKTÄR"
+    And jag ska se spelaren "Fatima" som värd

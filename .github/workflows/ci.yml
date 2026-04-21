@@ -1,4 +1,4 @@
-name: .NET
+name: Tests
 
 on:
   push:
@@ -67,12 +67,12 @@ jobs:
           name: app-publish
           path: out/
 
-      # Upload frontend (NOT backend/wwwroot)
+      # Upload frontend artifact
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend
-          path: frontend
+          name: frontend-wwwroot
+          path: backend/wwwroot/
 
       # Validate Docker build
       - name: Validate Docker build
@@ -84,7 +84,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [ api ]   # UI disabled for now
+        suite: [ unit, api , ui ]
 
     steps:
       - uses: actions/checkout@v4
@@ -93,8 +93,8 @@ jobs:
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
         with:
-          name: frontend
-          path: frontend
+          name: frontend-wwwroot
+          path: backend/wwwroot/
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -119,21 +119,34 @@ jobs:
           cache: "npm"
           cache-dependency-path: Testing/package-lock.json
 
-      # Install API test deps
+      # Install deps for API/UI tests
       - name: Install system test dependencies
-        if: ${{ matrix.suite == 'api' }}
-        working-directory: Testing/
-        run: npm ci
+        if: ${{ matrix.suite != 'unit' }}
+        working-directory: Testing
+        run: npm ci && npx playwright install
 
-      # Run API tests
+      # Unit tests
+      - name: Run unit tests
+        if: ${{ matrix.suite == 'unit' }}
+        run: dotnet test --logger "trx;LogFileName=unit-tests.trx" --results-directory TestResults
+
+      # API tests
       - name: Run API tests
         if: ${{ matrix.suite == 'api' }}
         run: |
           dotnet run --project backend/backend.csproj --urls http://127.0.0.1:5024 &
           sleep 8
-          cd Testing/
+          cd Testing
           npm run test:api:ci
 
+      # UI tests (Playwright will start backend automatically)
+      - name: Run UI tests
+        if: ${{ matrix.suite == 'ui' }}
+        run: |
+          cd Testing
+          npm run test:ui
+
+      # Upload artifacts
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -142,6 +155,7 @@ jobs:
           path: |
             TestResults/**
             Testing/test-results/**
+            Testing/playwright-report/**
           if-no-files-found: ignore
 
   report:
@@ -161,6 +175,6 @@ jobs:
         run: |
           echo "## CI Rapport" >> "$GITHUB_STEP_SUMMARY"
           echo "- Build-jobb: klart" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Testmatris: endast API körs just nu" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Testmatris: unit, api, ui körda" >> "$GITHUB_STEP_SUMMARY"
           echo "- Nedladdade artefakter:" >> "$GITHUB_STEP_SUMMARY"
           find artifacts -type f | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"

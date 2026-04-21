@@ -4,20 +4,28 @@ import { defineBddConfig } from 'playwright-bdd';
 const uiTestDir = defineBddConfig({
   features: 'e2e/features/**/*.feature',
   steps: ['e2e/steps/**/*.js', 'e2e/pages/**/*.js'],
-  outputDir: '.features-gen/tests'
+  outputDir: '.features-gen/ui'
 });
 
 export default defineConfig({
-  timeout: 30_000,
+  timeout: 30000,
   expect: {
-    timeout: 10_000
+    timeout: 10000
   },
   reporter: [['list']],
+  workers: 1, // Run tests sequentially
+
+  webServer: {
+    command: 'dotnet run --project ../backend/backend.csproj',
+    port: 5024,
+    reuseExistingServer: !process.env.CI,
+  },
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5024',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    video: 'retain-on-failure',
+    headless: !!process.env.CI
   },
   projects: [
     {

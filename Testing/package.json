@@ -23,6 +23,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
-    "playwright-bdd": "^8.5.0"
+    "playwright": "^1.59.1"
+  },
+  "dependencies": {
+    "playwright-bdd": "^8.4.1"
   }
 }

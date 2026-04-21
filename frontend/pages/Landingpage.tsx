@@ -15,6 +15,7 @@ const NameStep: React.FC<{
     <p className="wm-modal-label">Välj ett namn</p>
     <input
       className="wm-modal-input"
+      data-testid="name-input"
       placeholder="Skriv ditt namn ..."
       value={playerName}
       maxLength={20}
@@ -23,7 +24,7 @@ const NameStep: React.FC<{
   </>
 );
 
-// CREATE MODAL 
+// CREATE MODAL
 
 const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
   const navigate = useNavigate();
@@ -83,6 +84,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
         <div className="wm-modal-btns">
           <button
             className="wm-modal-btn wm-modal-btn--confirm"
+            data-testid="modal-create-confirm"
             onClick={handleCreateLobby}
             disabled={!playerName.trim()}
           >
@@ -149,6 +151,7 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
         <div className="wm-modal-btns">
           <button
             className="wm-modal-btn wm-modal-btn--confirm"
+            data-testid="modal-join-confirm"
             onClick={handleJoin}
             disabled={!code.trim() || !playerName.trim()}
           >
@@ -182,11 +185,19 @@ const LandingPage: React.FC = () => {
         <h1 className="wm-title">WORD MASTER</h1>
 
         <div className="wm-btn-group">
-          <button className="wm-btn" onClick={() => setModal("create")}>
+          <button
+            className="wm-btn"
+            data-testid="landing-create-btn"
+            onClick={() => setModal("create")}
+          >
             SKAPA EN LOBBY
           </button>
 
-          <button className="wm-btn" onClick={() => setModal("join")}>
+          <button
+            className="wm-btn"
+            data-testid="landing-join-lobby"
+            onClick={() => setModal("join")}
+          >
             GÅ MED I EN LOBBY
           </button>
         </div>
