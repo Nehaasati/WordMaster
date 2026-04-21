@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSignalR } from "../hooks/SignalRContext.ts";
+import confetti from "canvas-confetti";
 import "../css/ResultPage.css";
 
 interface PlayerResult {
@@ -84,6 +85,36 @@ export default function ResultPage() {
   const winner = players[0] ?? null;
   const isWinner = winner?.id === myPlayerId;
   const isTie = players.length === 2 && players[0]?.score === players[1]?.score;
+
+  // Confetti effect 
+  useEffect(() => {
+    if (!loading && !error && players.length > 0) {
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ["#7c3aed", "#4f46e5", "#fbbf24", "#10b981"],
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ["#7c3aed", "#4f46e5", "#fbbf24", "#10b981"],
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [loading, error, players]);
 
   return (
     <div className="rp-scene">
