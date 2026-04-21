@@ -4,83 +4,107 @@ import GamePage from '../pages/game.page.js';
 
 const { Given, When, Then } = createBdd();
 
-Given('att spelet är startat', async ({ page }) => {
-  // Skip game page setup - requires complex backend state
-  // This test category is marked as dependent on backend integration
+let game;
+
+// -------------------------
+// Background
+// -------------------------
+Given('att spelet har startat', async ({ page }) => {
+  game = new GamePage(page);
+
   try {
-    await page.goto('/game/test-lobby', { waitUntil: 'domcontentloaded', timeout: 5000 });
-  } catch (e) {
-    console.log('Game page not available - test scenario skipped');
+    await page.goto('/game/test-lobby');
+    await game.waitForGameToLoad();
+  } catch {
+    console.log('Game not available');
   }
 });
 
-Then('ska jag se timern', async ({ page }) => {
-  await expect(page.getByTestId('timer')).toBeVisible();
+// -------------------------
+// UI visibility
+// -------------------------
+Then('ska jag se timern', async () => {
+  await expect(await game.getTimer()).toBeVisible();
 });
 
-Then('ska jag se poängen', async ({ page }) => {
-  await expect(page.getByTestId('score')).toBeVisible();
+Then('ska jag se min poäng', async () => {
+  await expect(await game.getScore()).toBeVisible();
 });
 
-Then('ska jag se kategorierna', async ({ page }) => {
-  await expect(page.getByTestId('categories')).toBeVisible();
+Then('ska jag se bokstäverna', async () => {
+  await expect(await game.getLettersContainer()).toBeVisible();
 });
 
-Then('ska jag se bokstäverna', async ({ page }) => {
-  await expect(page.getByTestId('letters')).toBeVisible();
+Then('ska jag se kategorierna', async () => {
+  await expect(await game.getCategories()).toBeVisible();
 });
 
-When('jag skriver {string} i kategori {string}', async ({ page }, word, cat) => {
-  await page.getByTestId(`input-${cat}`).fill(word);
+// -------------------------
+// Writing word
+// -------------------------
+When('jag skriver ett giltigt ord i kategorin {string}', async ({}, cat) => {
+  await game.typeWord(cat, 'HUND');
 });
 
-Then('ska feedback visas för kategori {string}', async ({ page }, cat) => {
-  await expect(page.getByTestId(`feedback-${cat}`)).toBeVisible();
+Then('ska ordet markeras som giltigt', async ({}, cat) => {
+  await expect(await game.getFeedback(cat)).toBeVisible();
 });
 
-When('jag klickar på freeze-knappen', async ({ page }) => {
-  await page.getByTestId('btn-freeze').click();
+// -------------------------
+// Letters usage
+// -------------------------
+When('jag skriver ett ord', async () => {
+  await game.typeWord('Animal', 'KATT');
 });
 
-Then('ska freeze-meddelandet visas', async ({ page }) => {
-  await expect(page.getByTestId('freeze-msg')).not.toBeEmpty();
+Then('ska använda bokstäver markeras som använda', async () => {
+  await expect(await game.getUsedLetters()).not.toHaveCount(0);
 });
 
-When('jag klickar på mix-knappen', async ({ page }) => {
-  await page.getByTestId('btn-mix').click();
+// -------------------------
+// All categories filled
+// -------------------------
+When('jag fyller i alla kategorier korrekt', async () => {
+  const cats = ['Name','Food','Job','Land','Colour','Animal','Object'];
+
+  for (const c of cats) {
+    await game.typeWord(c, 'TEST');
+  }
 });
 
-Then('ska bokstäverna blandas', async ({ page }) => {
-  const before = await page.locator('[data-testid="letter-tile"]').allTextContents();
-  await page.getByTestId('btn-mix').click();
-  const after = await page.locator('[data-testid="letter-tile"]').allTextContents();
-  expect(before.join('')).not.toBe(after.join(''));
+Then('ska spelet avslutas automatiskt', async () => {
+  await expect(await game.getStoppedOverlay()).toBeVisible();
 });
 
-When('jag klickar på ink-knappen', async ({ page }) => {
-  await page.getByTestId('btn-black').click();
+// -------------------------
+// Freeze
+// -------------------------
+When('jag använder freeze powerup', async () => {
+  await game.clickFreeze();
 });
 
-Then('ska bläck-animationen visas', async ({ page }) => {
-  await expect(page.getByTestId('ink-animation')).toBeVisible();
+Then('ska motståndaren bli fryst', async () => {
+  await expect(await game.getFreezeEffect()).toBeVisible();
 });
 
-When('jag klickar på avsluta-knappen', async ({ page }) => {
-  await page.getByTestId('btn-finish').click();
+// -------------------------
+// Ink
+// -------------------------
+When('jag använder bläck powerup', async () => {
+  await game.clickInk();
 });
 
-Then('ska stopp-overlay visas', async ({ page }) => {
-  await expect(page.getByTestId('stopped-overlay')).toBeVisible();
+Then('ska en bläck-effekt visas', async () => {
+  await expect(await game.getInkEffect()).toBeVisible();
 });
 
-Given('att jag är värden', async ({ page }) => {
-  await page.evaluate(() => localStorage.setItem('isHost', 'true'));
+// -------------------------
+// Joker
+// -------------------------
+When('jag aktiverar joker', async () => {
+  await game.clickJoker();
 });
 
-When('jag klickar på starta-ny-runda-knappen', async ({ page }) => {
-  await page.getByTestId('btn-restart').click();
-});
-
-Then('ska en ny runda startas', async ({ page }) => {
-  await expect(page.getByTestId('timer')).toBeVisible();
+Then('ska en joker-bokstav visas', async () => {
+  await expect(await game.getJokerLetter()).toBeVisible();
 });

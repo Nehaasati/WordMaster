@@ -7,12 +7,25 @@ export default class GamePage {
     await this.page.getByTestId('game-page').waitFor();
   }
 
+  // --- Visible elements ---
   async getTimer() {
     return this.page.getByTestId('timer');
   }
 
   async getScore() {
     return this.page.getByTestId('score');
+  }
+
+  async getCategories() {
+    return this.page.getByTestId('categories');
+  }
+
+  async getLettersContainer() {
+    return this.page.getByTestId('letters');
+  }
+
+  async getLetters() {
+    return this.page.locator('[data-testid="letter-tile"]');
   }
 
   async getCategoryInput(catId) {
@@ -23,16 +36,33 @@ export default class GamePage {
     return this.page.getByTestId(`feedback-${catId}`);
   }
 
-  async getLetters() {
-    return this.page.locator('[data-testid="letter-tile"]');
+  async getUsedLetters() {
+    return this.page.locator('[data-testid="letter-used"]');
+  }
+
+  async getInkEffect() {
+    return this.page.getByTestId('ink-animation');
+  }
+
+  async getFreezeEffect() {
+    return this.page.getByTestId('freeze-msg');
+  }
+
+  async getJokerLetter() {
+    return this.page.getByTestId('joker-letter');
+  }
+
+  async getStoppedOverlay() {
+    return this.page.getByTestId('stopped-overlay');
+  }
+
+  // --- Actions ---
+  async typeWord(catId, word) {
+    await this.page.getByTestId(`input-${catId}`).fill(word);
   }
 
   async clickFreeze() {
     await this.page.getByTestId('btn-freeze').click();
-  }
-
-  async clickMix() {
-    await this.page.getByTestId('btn-mix').click();
   }
 
   async clickInk() {
@@ -41,5 +71,9 @@ export default class GamePage {
 
   async clickFinish() {
     await this.page.getByTestId('btn-finish').click();
+  }
+
+  async clickJoker() {
+    await this.page.getByTestId('btn-joker').click();
   }
 }

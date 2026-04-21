@@ -661,6 +661,7 @@ const GamePage: React.FC = () => {
 
         {lobbyId && (
           <JokerButton
+            data-testid="btn-joker"
             isActive={joker.isActive}
             jokerLetter={joker.jokerLetter}
             score={score}
@@ -714,7 +715,7 @@ const GamePage: React.FC = () => {
                   value={categories[cat.id].word}
                   onChange={(e) => handleInputChange(cat.id, e)}
                   disabled={categories[cat.id].valid || frozen || stopped}
-                  data-testid={`input-${cat.id}`}
+                  data-testid={`input-${cat.id}-valid`}
                 />
                 {categories[cat.id].valid && lobbyId && categoryPoints[cat.id] !== undefined && (
                   <span
@@ -751,11 +752,11 @@ const GamePage: React.FC = () => {
                       ? 'gp-letter--joker'
                       : ''
                   }`}
-                  data-testid="letter-tile"
+                  data-testid={letter.used ? "letter-used" : "letter-tile"}
                 >
                   {letter.char}
                   {joker.isActive && letter.char === joker.jokerLetter && (
-                    <span className="gp-joker-crown">🃏</span>
+                    <span data-testid="joker-letter" className="gp-joker-crown">🃏</span>
                   )}
                 </div>
             ))}
@@ -766,6 +767,7 @@ const GamePage: React.FC = () => {
       {/* Ink animation */}
       {showInk && (
         <video
+          data-testid="ink-animation"
           src="/videos/Bläck.webm"
           autoPlay
           muted
