@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSignalR } from "./SignalRContext";
 
@@ -140,7 +140,7 @@ export function useSignalRGame(
   // -------------------------
   // ACTIONS
   // -------------------------
-  const submitWord = (categoryId: string, word: string) => {
+  const submitWord = useCallback((categoryId: string, word: string) => {
     if (!connection || !lobbyId) return;
 
     const myId = localStorage.getItem("wordmaster-player-id") ?? "";
@@ -149,9 +149,9 @@ export function useSignalRGame(
     connection
       .invoke("SubmitWord", lobbyId, myId, categoryId, normalized)
       .catch((err) => console.error("SubmitWord error:", err));
-  };
+  }, [connection, lobbyId]);
 
-  const stopGame = () => {
+  const stopGame = useCallback(() => {
     if (!connection || !lobbyId) return;
 
     const playerId = localStorage.getItem("wordmaster-player-id") ?? "";
@@ -159,13 +159,13 @@ export function useSignalRGame(
     connection
       .invoke("StopGame", lobbyId, playerId)
       .catch((err) => console.error("StopGame error:", err));
-  };
-  const finishGame = () => {
+  }, [connection, lobbyId]);
+  const finishGame = useCallback(() => {
     if (!connection || !lobbyId) return;
     connection
       .invoke("FinishGame", lobbyId)
       .catch((err) => console.error("FinishGame error:", err));
-  };
+  }, [connection, lobbyId]);
 
   return { submitWord, stopGame, finishGame};
 }

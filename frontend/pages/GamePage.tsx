@@ -117,7 +117,7 @@ const GamePage: React.FC = () => {
   const earnedScoreRef = useRef(0);
 
   // Use SignalR hook for real-time events
-  const { submitWord, stopGame, finishGame } = useSignalRGame(lobbyId, {
+  const { submitWord, stopGame } = useSignalRGame(lobbyId, {
     onLobbyReset: async () => {
       console.log("Lobby reset → new round");
 
@@ -153,7 +153,7 @@ const GamePage: React.FC = () => {
     },
 
     onGameStopped: (lId: string, _stoppedBy: string, scores: Record<string, number>) => {
-      setGameStopped(true);
+      setGameStopped(false);
       setStopped(true);
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
       const finalScore = scores?.[myId] ?? scoreRef.current;
@@ -162,7 +162,7 @@ const GamePage: React.FC = () => {
       scoreRef.current = finalScore;
       void syncShopScore(finalScore);
       setTimeout(() => {
-        navigate(`/result/${lId}`, { state: { gameStopped: true } });
+        navigate(`/result/${lId}`, { state: { gameStopped: false } });
       }, 2500);
     },
     onHostChanged: (newHostId: string) => {
@@ -536,7 +536,7 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     const notifyFinished = async () => {
       if (allDone && !stopped) {
-        finishGame();
+        stopGame();
         const playerId = localStorage.getItem("wordmaster-player-id");
         if (!playerId || !lobbyId) return;
 
@@ -565,7 +565,7 @@ const GamePage: React.FC = () => {
     };
     
     notifyFinished();
-  }, [allDone, calculateEarnedScore, finishGame, lobbyId, setStopped, stopped, syncShopScore]);
+  }, [allDone, calculateEarnedScore, lobbyId, setStopped, stopGame, stopped, syncShopScore]);
 
   return (
     <div className="gp-scene" data-testid="game-page">
@@ -630,15 +630,6 @@ const GamePage: React.FC = () => {
           Mix ({getPowerupCount("mix")})
         </button>
 
-        {lobbyId && !stopped && (
-          <button
-            className="gp-btn gp-btn--stop"
-            onClick={() => stopGame()}
-            data-testid="btn-stop"
-          >
-            Stopp
-          </button>
-        )}
       </div>
 
       {/* Main content */}
