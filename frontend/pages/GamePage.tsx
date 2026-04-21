@@ -114,9 +114,10 @@ const GamePage: React.FC = () => {
   const [shopLoading, setShopLoading] = useState(Boolean(lobbyId));
   const [shopError, setShopError] = useState("");
   const shopSyncSeq = useRef(0);
+  const earnedScoreRef = useRef(0);
 
   // Use SignalR hook for real-time events
-  const { submitWord } = useSignalRGame(lobbyId, {
+  const { submitWord, stopGame, finishGame } = useSignalRGame(lobbyId, {
     onLobbyReset: async () => {
       console.log("Lobby reset → new round");
 
@@ -150,23 +151,19 @@ const GamePage: React.FC = () => {
         setTimeout(() => setToast(""), 3000);
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onGameStopped: (lId: string, _stoppedBy: string, _score: number) => {
+
+    onGameStopped: (lId: string, _stoppedBy: string, scores: Record<string, number>) => {
       setGameStopped(true);
       setStopped(true);
-
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-      fetch(`/api/lobby/${lId}/save-score/${myId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ score }),
-      })
-        .catch(() => {})
-        .finally(() => {
-          setTimeout(() => {
-            navigate(`/result/${lId}`, { state: { gameStopped: true } });
-          }, 2500);
-        });
+      const finalScore = scores?.[myId] ?? scoreRef.current;
+      earnedScoreRef.current = finalScore;
+      setScore(finalScore);
+      scoreRef.current = finalScore;
+      void syncShopScore(finalScore);
+      setTimeout(() => {
+        navigate(`/result/${lId}`, { state: { gameStopped: true } });
+      }, 2500);
     },
     onHostChanged: (newHostId: string) => {
       const myId = localStorage.getItem("wordmaster-player-id");
@@ -178,43 +175,28 @@ const GamePage: React.FC = () => {
         setIsHost(false);
       }
     },
-    onMatchEnded: (lId: string) => {
-      navigate(`/result/${lId}`);
-    },
-    onWordSubmitted: (senderId: string, category: string, word: string) => {
-      // Update opponent words for scoring
+    onMatchEnded: (lId: string, scores: Record<string, number>) => {
+      setStopped(true);
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-
-      // Update opponent words for scoring
-      const isMine = senderId === myId;
-      // Save words
-      if (isMine) {
-        // Save my word for scoring
-        myWordsRef.current[category] = word.toUpperCase();
-      } else {
-        if (!opponentWordsRef.current[category]) {
-          opponentWordsRef.current[category] = new Set();
-        }
-        // Save opponent word for scoring
-        opponentWordsRef.current[category].add(word.toUpperCase());
-      }
-
-      // Recalculate points EVERY TIME a word is submitted
-      const myWord = myWordsRef.current[category];
-      const opponentSet = opponentWordsRef.current[category] ?? new Set();
-      let points = 0;
-      if (!myWord || myWord.length < 2) {
-        points = 0; // invalid or empty
-      } else if (opponentSet.has(myWord)) {
-        points = 5; // same word as opponent -- // duplicate -- 5p
-      } else {
-        points = 10; // unique word
-      }
-
-      setCategoryPoints((prev) => ({
-        ...prev,
-        [category]: points,
-      }));
+      const finalScore = scores?.[myId] ?? scoreRef.current;
+      earnedScoreRef.current = finalScore;
+      setScore(finalScore);
+      scoreRef.current = finalScore;
+      void syncShopScore(finalScore);
+      setTimeout(() => {
+        navigate(`/result/${lId}`, { state: { gameStopped: false } });
+      }, 3000);
+    },
+    onWordSubmitted: (_senderId: string, _category: string, _word: string) => {
+    },
+    onScoreUpdate: (update: { totalScores: Record<string, number>; categoryPoints: Record<string, Record<string, number>> }) => {
+      const myId = localStorage.getItem("wordmaster-player-id") ?? "";
+      const myTotal = update.totalScores?.[myId] ?? 0;
+      earnedScoreRef.current = myTotal;
+      setScore(myTotal);
+      scoreRef.current = myTotal;
+      const myCategoryPoints = update.categoryPoints?.[myId] ?? {};
+      setCategoryPoints(myCategoryPoints);
     },
     // Added handlers for abilities (freeze and ink)
     onFreezeReceived: async () => {
@@ -247,9 +229,7 @@ const GamePage: React.FC = () => {
     setStopped,
     categoryPoints,
     setCategoryPoints,
-    bonusRef,
-    myWordsRef,
-    opponentWordsRef,
+    scoreRef,
     validateWord,
     buildAvailablePool,
   } = useGameEngine(lobbyId, submitWord);
@@ -257,7 +237,8 @@ const GamePage: React.FC = () => {
   const applyShopState = React.useCallback((state: ShopState) => {
     setShopState(state);
     setScore(state.balance);
-  }, [setScore]);
+    scoreRef.current = state.balance;
+  }, [scoreRef, setScore]);
 
   const requireShopSession = () => {
     const playerId = getCurrentPlayerId();
@@ -289,6 +270,32 @@ const GamePage: React.FC = () => {
     return data;
   };
 
+  const syncShopScore = React.useCallback(async (earnedScore: number) => {
+    const playerId = getCurrentPlayerId();
+    if (!lobbyId || !playerId) {
+      setScore(earnedScore);
+      scoreRef.current = earnedScore;
+      return null;
+    }
+
+    const syncId = ++shopSyncSeq.current;
+    const response = await fetch(
+      `/api/lobby/${lobbyId}/shop/${playerId}/sync-score`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ earnedScore }),
+      },
+    );
+
+    const data = await parseShopApiResponse(response);
+    if (syncId === shopSyncSeq.current) {
+      applyShopState(data.state);
+    }
+
+    return data;
+  }, [applyShopState, lobbyId, scoreRef, setScore]);
+
   const purchaseShopItem = async (itemId: string) => {
     await postShopAction("purchase", { itemId });
   };
@@ -307,16 +314,8 @@ const GamePage: React.FC = () => {
     shopState.powerups[powerupId] ?? 0;
 
   const calculateEarnedScore = React.useCallback(() => {
-    let total = 0;
-    for (const cat of CATEGORY_LIST) {
-      const catData = categories[cat.id];
-      if (!catData.valid) continue;
-      const points = categoryPoints[cat.id] ?? 10;
-      total += points;
-    }
-
-    return total + bonusRef.current;
-  }, [bonusRef, categories, categoryPoints]);
+    return earnedScoreRef.current;
+  }, []);
 
   useEffect(() => {
     if (!lobbyId) {
@@ -405,41 +404,17 @@ const GamePage: React.FC = () => {
     updateUsedLetters(categories, setAllLetters);
   }, [categories, setAllLetters]);
 
-  // Calculate earned score, then let the backend apply shop spending.
+  // Sync the server-calculated earned score so shop spending can be deducted.
   useEffect(() => {
     const earnedScore = calculateEarnedScore();
-    const playerId = getCurrentPlayerId();
+    if (earnedScore <= 0) return;
 
-    if (!lobbyId || !playerId) {
-      setScore(earnedScore);
-      return;
-    }
-
-    const syncId = ++shopSyncSeq.current;
-    const syncShopScore = async () => {
-      try {
-        const response = await fetch(
-          `/api/lobby/${lobbyId}/shop/${playerId}/sync-score`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ earnedScore }),
-          },
-        );
-
-        const data = await parseShopApiResponse(response);
-        if (syncId === shopSyncSeq.current) {
-          applyShopState(data.state);
-        }
-      } catch (err) {
-        if (syncId === shopSyncSeq.current) {
-          setShopError(getShopErrorMessage(err));
-        }
+    syncShopScore(earnedScore).catch((err) => {
+      if (shopSyncSeq.current > 0) {
+        setShopError(getShopErrorMessage(err));
       }
-    };
-
-    syncShopScore();
-  }, [applyShopState, calculateEarnedScore, lobbyId, setScore]);
+    });
+  }, [calculateEarnedScore, categoryPoints, syncShopScore]);
 
  const handleInputChange = (
    categoryId: string,
@@ -561,31 +536,18 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     const notifyFinished = async () => {
       if (allDone && !stopped) {
+        finishGame();
         const playerId = localStorage.getItem("wordmaster-player-id");
         if (!playerId || !lobbyId) return;
 
         const earnedScore = calculateEarnedScore();
-        const scoreResponse = await fetch(
-          `/api/lobby/${lobbyId}/shop/${playerId}/sync-score`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ earnedScore }),
-          },
-        ).catch((err) => {
+        const shopData = await syncShopScore(earnedScore).catch((err) => {
           console.error("Shop score sync before finish failed:", err);
-          return null;
-        });
-
-        if (!scoreResponse) return;
-
-        const shopData = await parseShopApiResponse(scoreResponse).catch((err) => {
           setShopError(getShopErrorMessage(err));
           return null;
         });
 
         if (!shopData) return;
-        applyShopState(shopData.state);
 
         // Send finish to backend
         await fetch(`/api/lobby/${lobbyId}/player-finished/${playerId}`, {
@@ -603,7 +565,7 @@ const GamePage: React.FC = () => {
     };
     
     notifyFinished();
-  }, [allDone, applyShopState, calculateEarnedScore, lobbyId, setStopped, stopped]);
+  }, [allDone, calculateEarnedScore, finishGame, lobbyId, setStopped, stopped, syncShopScore]);
 
   return (
     <div className="gp-scene" data-testid="game-page">
@@ -667,6 +629,16 @@ const GamePage: React.FC = () => {
         >
           Mix ({getPowerupCount("mix")})
         </button>
+
+        {lobbyId && !stopped && (
+          <button
+            className="gp-btn gp-btn--stop"
+            onClick={() => stopGame()}
+            data-testid="btn-stop"
+          >
+            Stopp
+          </button>
+        )}
       </div>
 
       {/* Main content */}
@@ -703,21 +675,12 @@ const GamePage: React.FC = () => {
                   disabled={categories[cat.id].valid || frozen || stopped}
                   data-testid={`input-${cat.id}`}
                 />
-                {categories[cat.id].valid && lobbyId && (
+                {categories[cat.id].valid && lobbyId && categoryPoints[cat.id] !== undefined && (
                   <span
-                    style={{
-                      color:
-                        (categoryPoints[cat.id] ?? 10) === 5
-                          ? "#ff8c00"
-                          : "#4caf50",
-                    }}
-                    title={
-                      (categoryPoints[cat.id] ?? 10) === 5
-                        ? "Samma ord som motståndaren – 5p"
-                        : "Unikt ord – 10p"
-                    }
+                    style={{ color: categoryPoints[cat.id] === 5 ? "#ff8c00" : "#4caf50" }}
+                    title={categoryPoints[cat.id] === 5 ? "Samma ord som motståndaren – 5p" : "Unikt ord – 10p"}
                   >
-                    {(categoryPoints[cat.id] ?? 10) === 5 ? "5p" : "10p"}
+                    {categoryPoints[cat.id] === 5 ? "5p" : "10p"}
                   </span>
                 )}
 

@@ -117,6 +117,7 @@ public class GameEngine
         // Classic mode does NOT require host or playerId
         // It simply starts the game for solo mode
         lobby.State = GameState.PlayingRound;
+        lobby.GameStartTime = DateTime.UtcNow;
         return true;
     }
 
@@ -130,6 +131,20 @@ public class GameEngine
 
         if (player != null)
             player.IsReady = true;
+    }
+    public void SaveSubmittedWord(string lobbyId, string playerId, string category, string word)
+    {
+        var lobby = GetLobby(lobbyId);
+        if (lobby == null) return;
+
+        if (!lobby.SubmittedWords.ContainsKey(playerId))
+            lobby.SubmittedWords[playerId] = new Dictionary<string, string>();
+
+        if (!lobby.WordTimestamps.ContainsKey(playerId))
+            lobby.WordTimestamps[playerId] = new Dictionary<string, DateTime>();
+
+        lobby.SubmittedWords[playerId][category] = word;
+        lobby.WordTimestamps[playerId][category] = DateTime.UtcNow;
     }
 
     public List<char> GenerateLetters(int count = 25)
@@ -190,6 +205,7 @@ public class GameEngine
     private void InitializeRounds(Lobby lobby)
     {
         lobby.State = GameState.PlayingRound;
+        lobby.GameStartTime = DateTime.UtcNow;
     }
 
     // Try to join a lobby by ID or invite code. Returns true if successful, false if lobby not found, full, or player already in lobby.
@@ -259,7 +275,7 @@ public class GameEngine
 
         // End the match immediately on the first player who actually finishes.
         lobby.MatchEnded = true;
-        lobby.State = GameState.GameFinished;
+        lobby.State = GameState.WaitingForReady;
 
         return true;
     }
@@ -274,6 +290,7 @@ public class GameEngine
         lobby.State = GameState.WaitingForReady;
         lobby.GameStarted = false;
         lobby.MatchEnded = false;
+        lobby.GameStartTime = null;
 
         // Generate new letters
         lobby.Letters = GenerateLetters();
@@ -288,8 +305,8 @@ public class GameEngine
             ResetPlayerShopState(p);
         }
 
-        // Clear restart votes
-        lobby.RestartVotes.Clear();
+        lobby.SubmittedWords.Clear();
+        lobby.WordTimestamps.Clear();
 
         return true;
     }
@@ -552,8 +569,9 @@ public class Lobby
     // Indicates if the match has ended
     public bool MatchEnded { get; set; }
 
-    // Track which players have voted to restart the game
-    public List<string> RestartVotes { get; set; } = new();
+    public Dictionary<string, Dictionary<string, string>> SubmittedWords { get; set; } = new();
+    public Dictionary<string, Dictionary<string, DateTime>> WordTimestamps { get; set; } = new();
+    public DateTime? GameStartTime { get; set; }
 }
 
 // Player class to represent a player in the lobby. This can be expanded with more properties as needed.
