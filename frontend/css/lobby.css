@@ -111,13 +111,15 @@ height: 400px;
     z-index: 10;
 }
 .ready-btn--host {
-    background-color: rgb(0, 200, 0);
+    background-color: rgb(166, 3, 3);
     margin-top: 15px;
+    color:white
 }
 
 .ready-btn--guest {
-    background-color: rgb(0, 200, 0);
+    background-color: rgb(166, 3, 3);
     margin-top: 80px;
+    color:white
 }
 
 .ready-btn.isReady-btn {
@@ -368,12 +370,13 @@ height: 400px;
 }
 .thought-bubble {
   position: absolute;
-  height: 180px;
-  top: -95px;
-  right: -460px;
-  width: 420px;
-   background: rgba(236, 236, 236, 0.35);
-  border-radius: 50%;
+  max-height: 300px;
+  top: -130px;
+  right: -450px;
+  min-width: 290px;
+  width: 400px;
+  background: rgba(11, 19, 74, 0.85);
+  border-radius: 120%;
   padding: 14px 12px;
   border: 3px solid #000;
   box-shadow: 3px 3px 0 #000;
@@ -407,12 +410,12 @@ height: 400px;
 }
 .thought-bubble-text p {
   margin: 0 0 4px 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-style: 'Cinzel', serif;
   font-weight: 700;
 }
 .thought-bubble-text span {
-  font-size: 1.03rem;
+  font-size: 1rem;
   font-style: 'Cinzel', serif;
   color: #ededed;
 }
