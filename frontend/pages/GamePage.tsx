@@ -244,7 +244,7 @@ const GamePage: React.FC = () => {
     setCategoryPoints,
     scoreRef,
     validateWord,
-    buildAvailablePool,
+    buildLetterSelection,
   } = useGameEngine(lobbyId, submitWord, applyJoker);
 
   const applyShopState = React.useCallback((state: ShopState) => {
@@ -451,41 +451,20 @@ const GamePage: React.FC = () => {
    if (frozen || stopped) return;
 
    const raw = e.target.value.toUpperCase();
+   const selection = buildLetterSelection(raw, categoryId);
 
-   // Build available pool BEFORE updating state
-   const pool = buildAvailablePool(categoryId);
+   setCategories((prev) => ({
+     ...prev,
+     [categoryId]: {
+       ...prev[categoryId],
+       word: selection.word,
+       letterIds: selection.letterIds,
+       valid: false,
+       feedback: "",
+     },
+   }));
 
-   // Filter out letters not in pool
-   let filtered = "";
-   const tempPool = [...pool];
-
-   for (const char of raw) {
-     const index = tempPool.indexOf(char);
-     if (index !== -1) {
-       filtered += char;
-       tempPool.splice(index, 1); // remove used letter
-     }
-   }
-
-   // Update UI immediately with filtered value
-   setCategories((prev) => {
-     const updated = {
-       ...prev,
-       [categoryId]: {
-         ...prev[categoryId],
-         word: filtered,
-         valid: false,
-         feedback: "",
-       },
-     };
-
-     // Validate AFTER state update
-     setTimeout(() => {
-       validateWord(filtered, categoryId);
-     }, 0);
-
-     return updated;
-   });
+   void validateWord(selection.word, categoryId, selection.letterIds);
   };
 
   const isFreezeImmune = async () => {
