@@ -55,7 +55,7 @@ public class CharacterService
         {
             Id   = "björnen",
             Name = "Björnen",
-            Description = "Björnen är stor och stark — immun mot Freeze-kaoset.",
+            Description = "Björnen är stor och stark immun mot Freeze-kaoset.",
             Ability = new CharacterAbility
             {
                 Type              = AbilityType.FreezeImmunity,
