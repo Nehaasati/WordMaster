@@ -125,6 +125,9 @@ const GamePage: React.FC = () => {
   const [shopError, setShopError] = useState("");
   const shopSyncSeq = useRef(0);
   const earnedScoreRef = useRef(0);
+  const previousValidRef = useRef<Record<string, boolean>>(
+    Object.fromEntries(CATEGORY_LIST.map((cat) => [cat.id, false])),
+  );
 
   // Use SignalR hook for real-time events
   const { submitWord, stopGame } = useSignalRGame(lobbyId, {
@@ -398,18 +401,32 @@ const GamePage: React.FC = () => {
     });
   }, [purchasedLettersKey, allLetters.length, setAllLetters, shopState.purchasedLetters]);
 
-  // Automatic focus shift to next category when one is completed
-  const validStates = CATEGORY_LIST.map(
-    (cat) => categories[cat.id]?.valid,
-  ).join(",");
-  ;
-
   useEffect(() => {
-    const nextCat = CATEGORY_LIST.find((cat) => !categories[cat.id]?.valid);
-    if (nextCat) {
-      inputRefs.current[nextCat.id]?.focus();
+    const firstIncomplete = CATEGORY_LIST.find(
+      (cat) => !categories[cat.id]?.valid,
+    );
+
+    if (firstIncomplete) {
+      inputRefs.current[firstIncomplete.id]?.focus();
     }
-  }, [categories, validStates]);
+  }, []);
+  useEffect(() => {
+    const previous = previousValidRef.current;
+
+    const completedCategory = CATEGORY_LIST.find(
+      (cat) => categories[cat.id]?.valid && !previous[cat.id],
+    );
+
+    if (completedCategory) {
+      const nextIncomplete = CATEGORY_LIST.find((cat) => !categories[cat.id]?.valid);
+
+      nextIncomplete?.id && inputRefs.current[nextIncomplete.id]?.focus();
+    }
+
+    previousValidRef.current = Object.fromEntries(
+      CATEGORY_LIST.map((cat) => [cat.id, Boolean(categories[cat.id]?.valid)]),
+    );
+  }, [categories]);
 
   useEffect(() => {
     updateUsedLetters(categories, setAllLetters);
