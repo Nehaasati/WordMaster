@@ -30,6 +30,7 @@ const NameModal: React.FC<{
 
         <p className="wm-modal-label">Välj ett namn</p>
         <input
+          data-testid="input-player-name"
           className="wm-modal-input"
           placeholder="Skriv ditt namn ..."
           value={playerName}
@@ -40,6 +41,7 @@ const NameModal: React.FC<{
         {/* Only show lobby code field for "join" mode */}
         {showCodeField && (
           <input
+            data-testid="input-lobby-code"
             className="wm-modal-input"
             placeholder="Enter lobby code..."
             value={code}
@@ -50,6 +52,7 @@ const NameModal: React.FC<{
 
         <div className="wm-modal-btns">
           <button
+            data-testid="btn-confirm-name"
             className="wm-modal-btn wm-modal-btn--confirm"
             disabled={!playerName.trim() || (showCodeField && !code.trim())}
             onClick={() =>
@@ -438,8 +441,8 @@ export default function LobbyPage() {
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
           <div className="player-box" style={{ marginBottom: "20px" }}>
-            <p style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 9px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>Dit namn: {playerName}</p>
             <p
+              data-testid="player-name"
               style={{
                 color: "#e6e315",
                 fontWeight: "800",
@@ -449,14 +452,23 @@ export default function LobbyPage() {
                 margin: "0px",
               }}
             >
-              Dit namn: {playerName}
+              Ditt namn: {playerName}
             </p>
           </div>
 
           <div className="players-list">
             {players.map((p, index) => (
-              <div key={p.id} className="player-box">
-                <p style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 8px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>
+              <div data-testid="player-item" key={p.id} className="player-box">
+                <p
+                  style={{
+                    color: "#e6e315",
+                    fontWeight: "800",
+                    fontFamily: "Inter, sans-serif",
+                    textShadow: "0 0 8px rgba(160, 80, 255, 0.8)",
+                    fontSize: "1rem",
+                    margin: "0px",
+                  }}
+                >
                   Spelare {index + 1}: {p.name} {p.isReady ? "Ja" : ""}
                 </p>
               </div>
@@ -484,25 +496,31 @@ export default function LobbyPage() {
               >
                 KOPIERA INBJUDNINGSLÄNK
               </button>
-          {/* Add bot button — host only */}
-          {isHost && !ready && players.length < 2 && (
-            <button
+              {/* Add bot button — host only */}
+              {isHost && !ready && players.length < 2 && (
+                <button
                   className="wm-modal-btn wm-modal-btn--cancel"
                   data-testid="btn-add-bot"
-              style={{ marginTop: "4px", background: "rgba(0, 0, 0, 0.45)" }}
-              onClick={async () => {
-                const res = await fetch(`/api/lobby/${realLobbyId}/add-bot`, {
-                  method: "POST",
-                });
-                if (!res.ok) {
-                  const data = await res.json();
-                  setMessage(data.error || "Kunde inte lägga till bot.");
-                }
-              }}
-            >
-              + Lägg till motståndare (Easy Bot)
-            </button>
-          )}
+                  style={{
+                    marginTop: "4px",
+                    background: "rgba(0, 0, 0, 0.45)",
+                  }}
+                  onClick={async () => {
+                    const res = await fetch(
+                      `/api/lobby/${realLobbyId}/add-bot`,
+                      {
+                        method: "POST",
+                      },
+                    );
+                    if (!res.ok) {
+                      const data = await res.json();
+                      setMessage(data.error || "Kunde inte lägga till bot.");
+                    }
+                  }}
+                >
+                  + Lägg till motståndare (Easy Bot)
+                </button>
+              )}
             </div>
           )}
 
@@ -556,19 +574,19 @@ export default function LobbyPage() {
               <p className="game-mode-label">Välj spelläge</p>
               <div className="game-mode-btns">
                 <button
-
-                  className={`game-mode-btn ${gameMode === "standard" ? "active" : ""
-                    }`} data-testid="btn-mode-standard"
-
+                  className={`game-mode-btn ${
+                    gameMode === "standard" ? "active" : ""
+                  }`}
+                  data-testid="btn-mode-standard"
                   onClick={() => setGameMode("standard")}
                 >
                   Standard WordMaster
                 </button>
                 <button
-
-                  className={`game-mode-btn ${gameMode === "blitz" ? "active" : ""
-                    }`} data-testid="btn-mode-blitz"
-
+                  className={`game-mode-btn ${
+                    gameMode === "blitz" ? "active" : ""
+                  }`}
+                  data-testid="btn-mode-blitz"
                   onClick={() => setGameMode("blitz")}
                 >
                   Blitz WordMaster
@@ -607,7 +625,7 @@ export default function LobbyPage() {
                   const data = await response.json();
                   setMessage(
                     data.error ||
-                    "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
+                      "Tyvärr är Lobbyn full och kan inte ta emot fler spelare.",
                   );
                   return;
                 }
@@ -654,6 +672,7 @@ export default function LobbyPage() {
           {/* Info box */}
           <div className="info-wrapper">
             <div
+              data-testid="info-box"
               ref={infoBoxRef}
               className={`info-box ${open ? "active" : ""}`}
             >
