@@ -62,7 +62,11 @@ app.MapPost("/api/word/validate", (
     GameEngine engine) =>
 {
     var (isValid, message) = engine.ValidateWord(request.Word, request.Category, request.Letters);
-    return Results.Ok(new { isValid, message });
+    var replacementLetters = isValid
+        ? engine.GenerateLetters(request.Word.Trim().Length)
+        : new List<char>();
+
+    return Results.Ok(new { isValid, message, replacementLetters });
 });
 
 /* -------------------------- LOBBY - endpoints -------------------------------------------------------*/
