@@ -14,7 +14,8 @@ public static class ScoreCalculator
         IDictionary<string, Dictionary<string, CategorySubmission>> submissions,
         string? stopperPlayerId = null,
         IDictionary<string, PlayerContext>? playerContexts = null,
-        CharacterService? characterService = null)
+        CharacterService? characterService = null,
+        IDictionary<string, Dictionary<string, int>>? categoryMultipliers = null)
     {
         var totalScores = new Dictionary<string, int>();
         var categoryPoints = new Dictionary<string, Dictionary<string, int>>();
@@ -42,22 +43,33 @@ public static class ScoreCalculator
                     validAnswers.Add((player.Key, NormalizeWord(sub.Word)));
                 }
             }
-        foreach (var (pid, word) in validAnswers)
+
+            foreach (var (pid, word) in validAnswers)
             {
                 int sameCount = validAnswers.Count(a => a.Word == word);
-                int basePts = sameCount > 1 ? 5 : 10;
-                categoryPoints[pid][category] = basePts;
-                totalScores[pid] += basePts;
+                int wordPoints = sameCount > 1 ? 5 : 10;
 
                 if (word.Length > 7)
-                    totalScores[pid] += 5;
+                    wordPoints += 5;
 
                 if (characterService != null && playerContexts != null &&
                     playerContexts.TryGetValue(pid, out var ctx))
                 {
                     double secondsTaken = ctx.SecondsTakenPerCategory.TryGetValue(category, out var s) ? s : 0;
-                    totalScores[pid] += characterService.CalculateAbilityBonus(ctx.CharacterId, word, secondsTaken);
+                    wordPoints += characterService.CalculateAbilityBonus(ctx.CharacterId, word, secondsTaken);
                 }
+
+                int multiplier = 1;
+                if (categoryMultipliers != null &&
+                    categoryMultipliers.TryGetValue(pid, out var playerMultipliers) &&
+                    playerMultipliers.TryGetValue(category, out var configuredMultiplier))
+                {
+                    multiplier = Math.Max(1, configuredMultiplier);
+                }
+
+                int categoryPts = wordPoints * multiplier;
+                categoryPoints[pid][category] = categoryPts;
+                totalScores[pid] += categoryPts;
             }
         }
 

@@ -5,7 +5,7 @@ interface JokerButtonProps {
   jokerLetter: string | null;
   score: number;
   stopped: boolean;
-  onActivate: () => void;
+  onActivate: (currentScore: number) => void;
 }
  
 const JokerButton: React.FC<JokerButtonProps> = ({
@@ -21,7 +21,7 @@ const JokerButton: React.FC<JokerButtonProps> = ({
   const handleClick = () => {
     console.log(`[JokerButton] Click - score=${score}, canAfford=${canAfford}, isActive=${isActive}, stopped=${stopped}, isDisabled=${isDisabled}`);
     if (!isDisabled) {
-      onActivate();
+      onActivate(score);
     } else {
       if (stopped) console.log('[JokerButton] Disabled: Game stopped');
       if (isActive) console.log('[JokerButton] Disabled: Joker already active');

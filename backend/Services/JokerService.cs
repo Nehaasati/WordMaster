@@ -68,7 +68,7 @@ public class JokerService
     /// If yes — marks the joker as used and returns the multiplier (2).
     /// If no  — returns multiplier 1.
     /// </summary>
-    public int ApplyJoker(string lobbyId, string playerId, string word, bool usedWildcard = false)
+    public int ApplyJoker(string lobbyId, string playerId, string word, string category, bool usedWildcard = false)
     {
         var joker = GetActiveJoker(lobbyId, playerId);
         if (joker == null) return 1;
@@ -81,7 +81,27 @@ public class JokerService
  
         // Consume the joker
         joker.IsUsed = true;
+        joker.UsedCategory = category;
         return 2; // double points
+    }
+
+    public int GetCategoryMultiplier(string lobbyId, string playerId, string category)
+    {
+        var key = MakeKey(lobbyId, playerId);
+        if (!_activeJokers.TryGetValue(key, out var joker))
+            return 1;
+
+        return joker.IsUsed &&
+               string.Equals(joker.UsedCategory, category, StringComparison.OrdinalIgnoreCase)
+            ? 2
+            : 1;
+    }
+
+    public void ClearLobby(string lobbyId)
+    {
+        var prefix = $"{lobbyId}:";
+        foreach (var key in _activeJokers.Keys.Where(key => key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList())
+            _activeJokers.Remove(key);
     }
  
     // ── Helper ────────────────────────────────────────────────

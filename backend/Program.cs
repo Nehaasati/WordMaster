@@ -331,6 +331,7 @@ app.MapPost("/api/lobby/{lobbyId}/restart", async (
     string lobbyId,
     string playerId,
     GameEngine engine,
+    JokerService jokerService,
     IHubContext<LobbyHub> hub
 ) =>
 {
@@ -351,6 +352,7 @@ app.MapPost("/api/lobby/{lobbyId}/restart", async (
         return Results.BadRequest("Only host can restart");
 
     engine.ResetLobbyForNewRound(lobbyId);
+    jokerService.ClearLobby(lobbyId);
 
     await hub.Clients.Group(lobbyId)
         .SendAsync("LobbyReset", lobbyId);
@@ -504,13 +506,15 @@ app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/apply", (
     ApplyJokerRequest request,
     JokerService jokerService) =>
 {
-    var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word, request.UsedWildcard);
+    var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word, request.Category, request.UsedWildcard);
     bool triggered = multiplier > 1;
 
     return Results.Ok(new
     {
         multiplier = multiplier,
+        jokerTriggered = triggered,
         word = request.Word,
+        category = request.Category,
         message = triggered
             ? $"🃏 JOKER! Dubbla poäng för \"{request.Word}\"!"
             : "No joker bonus."
@@ -532,18 +536,16 @@ app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/activate", (
     if (player == null)
         return Results.NotFound(new { error = "Player not found" });
 
-    // Check score
     const int cost = 10;
-    if (request.CurrentScore < cost)
+    if (player.Score < cost)
         return Results.BadRequest(new { error = $"Inte tillräckligt med poäng. Joker kostar {cost} poäng." });
 
     var joker = jokerService.ActivateJoker(lobbyId, playerId);
     if (joker == null)
         return Results.BadRequest(new { error = "Du har redan en aktiv Joker." });
 
-    // Deduct from player score
-    player.Score = request.CurrentScore - cost;
-
+    player.SpentScore += cost;
+    player.Score -= cost;
     Console.WriteLine($"[Joker] {player.Name} activated Joker: {joker.JokerLetter}");
 
     return Results.Ok(new
@@ -588,7 +590,7 @@ static IResult ToShopResult(ShopOperationResult result)
 }
 
 app.Run();
-public record ApplyJokerRequest(string Word, bool UsedWildcard=false);
+public record ApplyJokerRequest(string Word, string Category = "", bool UsedWildcard=false);
 public record JokerActivateRequest(int CurrentScore);
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record SubmitWordRequest(string Word);

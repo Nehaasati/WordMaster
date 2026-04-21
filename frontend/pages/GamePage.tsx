@@ -648,7 +648,13 @@ const GamePage: React.FC = () => {
             jokerLetter={joker.jokerLetter}
             score={score}
             stopped={stopped}
-            onActivate={activateJoker}
+            onActivate={(currentScore) => {
+              void activateJoker(currentScore).then((newScore) => {
+                if (newScore === null) return;
+                setScore(newScore);
+                scoreRef.current = newScore;
+              });
+            }}
           />
         )}
       </div>
@@ -695,10 +701,10 @@ const GamePage: React.FC = () => {
                 />
                 {categories[cat.id].valid && lobbyId && categoryPoints[cat.id] !== undefined && (
                   <span
-                    style={{ color: categoryPoints[cat.id] === 5 ? "#ff8c00" : "#4caf50" }}
-                    title={categoryPoints[cat.id] === 5 ? "Samma ord som motståndaren – 5p" : "Unikt ord – 10p"}
+                    style={{ color: categoryPoints[cat.id] <= 5 ? "#ff8c00" : "#4caf50" }}
+                    title="Poäng för ordet"
                   >
-                    {categoryPoints[cat.id] === 5 ? "5p" : "10p"}
+                    {categoryPoints[cat.id]}p
                   </span>
                 )}
 

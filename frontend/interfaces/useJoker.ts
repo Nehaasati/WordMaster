@@ -10,7 +10,7 @@ interface UseJokerReturn {
   joker: JokerState;
   jokerMsg: string;
   jokerCategoriesRef: React.MutableRefObject<Set<string>>;
-  activateJoker: () => Promise<void>;
+  activateJoker: (currentScore: number) => Promise<number | null>;
   applyJoker: (word: string, categoryId: string) => Promise<number>;
 }
 
@@ -33,16 +33,15 @@ export function useJoker(
     setTimeout(() => setJokerMsg(''), 3500);
   };
 
-  // ── Activate — FREE, no point cost ───────────────────────
-  const activateJoker = useCallback(async () => {
+  const activateJoker = useCallback(async (currentScore: number): Promise<number | null> => {
     if (!lobbyId || !playerId) {
       showMsg('Inget lobby eller spelare hittades.');
-      return;
+      return null;
     }
 
     if (joker.isActive) {
       showMsg('Du har redan en aktiv Joker!');
-      return;
+      return null;
     }
 
     try {
@@ -51,24 +50,25 @@ export function useJoker(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ currentScore: 0 }) // score not used anymore
+          body: JSON.stringify({ currentScore })
         }
       );
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         showMsg(err.error || 'Kunde inte aktivera Joker.');
-        return;
+        return null;
       }
 
       const data = await res.json();
-      // FREE — do NOT deduct score
       setJoker({ jokerLetter: data.jokerLetter, isActive: true, isUsed: false });
       showMsg(`🃏 Joker aktiverad! Bokstav: ${data.jokerLetter} — dubbla poäng!`);
       console.log('[Joker] Activated:', data.jokerLetter);
+      return data.newScore ?? null;
     } catch (err) {
       console.error('[Joker] Activation error:', err);
       showMsg('Fel vid aktivering av Joker.');
+      return null;
     }
   }, [lobbyId, playerId, joker.isActive]);
 
@@ -92,7 +92,7 @@ export function useJoker(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ word, usedWildcard: false }),
+          body: JSON.stringify({ word, category: categoryId, usedWildcard: false }),
         }
       );
 

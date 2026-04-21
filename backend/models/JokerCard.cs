@@ -18,6 +18,9 @@ public class JokerCard
  
     // Has this joker been used yet?
     public bool IsUsed { get; set; } = false;
+
+    // Category where the joker bonus was consumed.
+    public string? UsedCategory { get; set; }
  
     // When was the joker activated?
     public DateTime ActivatedAt { get; set; } = DateTime.UtcNow;
