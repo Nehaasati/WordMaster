@@ -555,15 +555,19 @@ export default function LobbyPage() {
               <p className="game-mode-label">Välj spelläge</p>
               <div className="game-mode-btns">
                 <button
+
                   className={`game-mode-btn ${gameMode === "standard" ? "active" : ""
-                    }`}
+                    }`} data-testid="btn-mode-standard"
+
                   onClick={() => setGameMode("standard")}
                 >
                   Standard WordMaster
                 </button>
                 <button
+
                   className={`game-mode-btn ${gameMode === "blitz" ? "active" : ""
-                    }`}
+                    }`} data-testid="btn-mode-blitz"
+
                   onClick={() => setGameMode("blitz")}
                 >
                   Blitz WordMaster
