@@ -228,7 +228,8 @@ app.MapPost("/api/lobby/{lobbyId}/player-finished/{playerId}", (
     }
 
     engine.PlayerFinished(lobbyId, playerId);
-    return Results.Ok(new { finished = true });
+    var matchEnded = lobby?.MatchEnded ?? false;
+    return Results.Ok(new { finished = true, matchEnded });
 });
 app.MapPost("/api/lobby/{lobbyId}/save-score/{playerId}", (
     string lobbyId,
