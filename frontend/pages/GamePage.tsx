@@ -78,7 +78,7 @@ const GamePage: React.FC = () => {
   );
 
   // Use SignalR hook for real-time events
-  const { submitWord } = useSignalRGame(lobbyId, {
+  const { submitWord, stopGame, finishGame } = useSignalRGame(lobbyId, {
     onLobbyReset: async () => {
       console.log("Lobby reset → new round");
 
@@ -112,23 +112,17 @@ const GamePage: React.FC = () => {
         setTimeout(() => setToast(""), 3000);
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onGameStopped: (lId: string, _stoppedBy: string, _score: number) => {
+
+    onGameStopped: (lId: string, _stoppedBy: string, scores: Record<string, number>) => {
       setGameStopped(true);
       setStopped(true);
-
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-      fetch(`/api/lobby/${lId}/save-score/${myId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ score: scoreRef.current }),
-      })
-        .catch(() => {})
-        .finally(() => {
-          setTimeout(() => {
-            navigate(`/result/${lId}`, { state: { gameStopped: true } });
-          }, 2500);
-        });
+      const finalScore = scores?.[myId] ?? scoreRef.current;
+      setScore(finalScore);
+      scoreRef.current = finalScore;
+      setTimeout(() => {
+        navigate(`/result/${lId}`, { state: { gameStopped: true } });
+      }, 2500);
     },
     onHostChanged: (newHostId: string) => {
       const myId = localStorage.getItem("wordmaster-player-id");
@@ -140,43 +134,25 @@ const GamePage: React.FC = () => {
         setIsHost(false);
       }
     },
-    onMatchEnded: (lId: string) => {
-      navigate(`/result/${lId}`);
-    },
-    onWordSubmitted: (senderId: string, category: string, word: string) => {
-      // Update opponent words for scoring
+    onMatchEnded: (lId: string, scores: Record<string, number>) => {
+      setStopped(true);
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-
-      // Update opponent words for scoring
-      const isMine = senderId === myId;
-      // Save words
-      if (isMine) {
-        // Save my word for scoring
-        myWordsRef.current[category] = word.toUpperCase();
-      } else {
-        if (!opponentWordsRef.current[category]) {
-          opponentWordsRef.current[category] = new Set();
-        }
-        // Save opponent word for scoring
-        opponentWordsRef.current[category].add(word.toUpperCase());
-      }
-
-      // Recalculate points EVERY TIME a word is submitted
-      const myWord = myWordsRef.current[category];
-      const opponentSet = opponentWordsRef.current[category] ?? new Set();
-      let points = 0;
-      if (!myWord || myWord.length < 2) {
-        points = 0; // invalid or empty
-      } else if (opponentSet.has(myWord)) {
-        points = 5; // same word as opponent -- // duplicate -- 5p
-      } else {
-        points = 10; // unique word
-      }
-
-      setCategoryPoints((prev) => ({
-        ...prev,
-        [category]: points,
-      }));
+      const finalScore = scores?.[myId] ?? scoreRef.current;
+      setScore(finalScore);
+      scoreRef.current = finalScore;
+      setTimeout(() => {
+        navigate(`/result/${lId}`, { state: { gameStopped: false } });
+      }, 3000);
+    },
+    onWordSubmitted: (_senderId: string, _category: string, _word: string) => {
+    },
+    onScoreUpdate: (update: { totalScores: Record<string, number>; categoryPoints: Record<string, Record<string, number>> }) => {
+      const myId = localStorage.getItem("wordmaster-player-id") ?? "";
+      const myTotal = update.totalScores?.[myId] ?? 0;
+      setScore(myTotal);
+      scoreRef.current = myTotal;
+      const myCategoryPoints = update.categoryPoints?.[myId] ?? {};
+      setCategoryPoints(myCategoryPoints);
     },
     // Added handlers for abilities (freeze and ink)
     onFreezeReceived: () => {
@@ -209,10 +185,7 @@ const GamePage: React.FC = () => {
     setStopped,
     categoryPoints,
     setCategoryPoints,
-    bonusRef,
     scoreRef,
-    myWordsRef,
-    opponentWordsRef,
     validateWord,
     buildAvailablePool,
   } = useGameEngine(lobbyId, submitWord);
@@ -236,18 +209,6 @@ const GamePage: React.FC = () => {
   // Calculate score whenever categories, categoryPoints, or bonus changes
   // Note: refs are intentionally excluded from dependencies as they don't trigger re-renders
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    let total = 0;
-    for (const cat of CATEGORY_LIST) {
-      const catData = categories[cat.id];
-      if (!catData.valid) continue;
-      const points = categoryPoints[cat.id] ?? 10;
-      total += points;
-    }
-    const newScore = total + bonusRef.current;
-    setScore(newScore);
-    scoreRef.current = newScore;
-  }, [categories, categoryPoints]);
 
  const handleInputChange = (
    categoryId: string,
@@ -320,21 +281,15 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     const notifyFinished = async () => {
       if (allDone && !stopped) {
+        finishGame();
         const playerId = localStorage.getItem("wordmaster-player-id");
-        if (!playerId || !lobbyId) return;
-
-        // Send finish to backend
-        await fetch(`/api/lobby/${lobbyId}/player-finished/${playerId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            categoriesCompleted: true, //
-            score: scoreRef.current,
-          }),
-        }).catch((err) => console.error("API Finish Error:", err));
-
-        // Prevent double sending
-        setStopped(true);
+        if (playerId && lobbyId) {
+          fetch(`/api/lobby/${lobbyId}/player-finished/${playerId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ categoriesCompleted: true, score: score }),
+          }).catch((err) => console.error("API Finish Error:", err));
+        }
       }
     };
     
@@ -400,6 +355,16 @@ const GamePage: React.FC = () => {
         >
           Mix
         </button>
+
+        {lobbyId && !stopped && (
+          <button
+            className="gp-btn gp-btn--stop"
+            onClick={() => stopGame()}
+            data-testid="btn-stop"
+          >
+            Stopp
+          </button>
+        )}
       </div>
 
       {/* Main content */}
@@ -448,21 +413,12 @@ const GamePage: React.FC = () => {
                   disabled={categories[cat.id].valid || frozen || stopped}
                   data-testid={`input-${cat.id}`}
                 />
-                {categories[cat.id].valid && lobbyId && (
+                {categories[cat.id].valid && lobbyId && categoryPoints[cat.id] !== undefined && (
                   <span
-                    style={{
-                      color:
-                        (categoryPoints[cat.id] ?? 10) === 5
-                          ? "#ff8c00"
-                          : "#4caf50",
-                    }}
-                    title={
-                      (categoryPoints[cat.id] ?? 10) === 5
-                        ? "Samma ord som motståndaren – 5p"
-                        : "Unikt ord – 10p"
-                    }
+                    style={{ color: categoryPoints[cat.id] === 5 ? "#ff8c00" : "#4caf50" }}
+                    title={categoryPoints[cat.id] === 5 ? "Samma ord som motståndaren – 5p" : "Unikt ord – 10p"}
                   >
-                    {(categoryPoints[cat.id] ?? 10) === 5 ? "5p" : "10p"}
+                    {categoryPoints[cat.id] === 5 ? "5p" : "10p"}
                   </span>
                 )}
 
