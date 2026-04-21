@@ -1,6 +1,8 @@
 name: Performance
 
 on:
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       target_url:
@@ -13,13 +15,73 @@ on:
         default: load
         type: choice
         options:
+          - smoke
           - load
           - stress
   schedule:
     - cron: "0 2 * * *"
 
 jobs:
-  k6:
+  k6-smoke:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    env:
+      TARGET_URL: http://127.0.0.1:5024
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Start backend
+        run: |
+          dotnet run --project backend/backend.csproj --urls ${TARGET_URL} &
+          for i in {1..30}; do
+            if curl --fail --silent "${TARGET_URL}/api/health" > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend did not become healthy in time."
+          exit 1
+
+      - name: Run k6 smoke profile
+        run: npm --prefix Testing run test:perf:smoke
+        env:
+          BASE_URL: ${{ env.TARGET_URL }}
+
+      - name: Publish workflow summary
+        if: always()
+        run: |
+          echo "## Performance PR Smoke" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Target URL: ${TARGET_URL}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Profile: smoke" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Script: npm --prefix Testing run test:perf:smoke" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload performance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-smoke-results-${{ github.run_id }}
+          path: Testing/k6/results/**
+          if-no-files-found: ignore
+
+  k6-deployed:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     env:
       TARGET_URL: ${{ github.event.inputs.target_url || vars.RENDER_BASE_URL }}
@@ -38,16 +100,15 @@ jobs:
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
 
-      - name: Create results directory
-        run: mkdir -p Testing/k6/results
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
 
       - name: Run k6 ${TEST_PROFILE} profile
-        run: >
-          k6 run
-          --env BASE_URL=${TARGET_URL}
-          --env TEST_PROFILE=${TEST_PROFILE}
-          --summary-export Testing/k6/results/summary.json
-          Testing/k6/wordmaster-multiplayer.js
+        run: npm --prefix Testing run "test:perf:${TEST_PROFILE}"
+        env:
+          BASE_URL: ${{ env.TARGET_URL }}
 
       - name: Publish workflow summary
         if: always()
@@ -55,10 +116,8 @@ jobs:
           echo "## Performance Run" >> "$GITHUB_STEP_SUMMARY"
           echo "- Target URL: ${TARGET_URL}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Profile: ${TEST_PROFILE}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Script: Testing/k6/wordmaster-multiplayer.js" >> "$GITHUB_STEP_SUMMARY"
-          if [ -f Testing/k6/results/summary.json ]; then
-            echo "- Summary export: Testing/k6/results/summary.json" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          echo "- Script: npm --prefix Testing run test:perf:${TEST_PROFILE}" >> "$GITHUB_STEP_SUMMARY"
+          find Testing/k6/results -type f 2>/dev/null | sed 's/^/- Artifact: /' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload performance artifacts
         if: always()

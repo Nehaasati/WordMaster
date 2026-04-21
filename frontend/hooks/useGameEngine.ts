@@ -57,19 +57,7 @@ export function useGameEngine(
 
   // Refs for scoring + abilities
   const scoreRef = useRef(0);
-  const bonusRef = useRef(0);
 
-  // Track words for scoring
-  const myWordsRef = useRef<Record<string, string>>({});
-  const opponentWordsRef = useRef<Record<string, Set<string>>>({});
-
-  // Track round start time (for abilities)
-  const roundStartTime = useRef(0);
-
-  // set initial round start time after first render
-  useEffect(() => {
-    roundStartTime.current = Date.now();
-  }, []);
 
   // -----------------------------
   // TIMER
@@ -102,8 +90,6 @@ export function useGameEngine(
               isExtra: false,
             })),
           );
-
-          roundStartTime.current = Date.now();
         }
       } catch {
         console.error("Failed to fetch letters");
@@ -133,59 +119,6 @@ export function useGameEngine(
     }
 
     return pool;
-  };
-
-  // -----------------------------
-  // CHARACTER ABILITY BONUS
-  // -----------------------------
-  const calculateAbilityBonus = async (word: string): Promise<number> => {
-    try {
-      // Time taken for this word
-      const secondsTaken = (Date.now() - roundStartTime.current) / 1000;
-
-      // Get characterId from localStorage
-      const characterId = localStorage.getItem("characterId");
-
-      // Debug logs for ability calculation
-      console.log("Ability Debug => characterId:", characterId);
-      console.log("Ability Debug => word:", word);
-      console.log("Ability Debug => secondsTaken:", secondsTaken);
-
-      // If missing => ability cannot work
-      if (!characterId) {
-        console.warn("No characterId found in localStorage. Ability disabled.");
-        return 0;
-      }
-
-      // Send ability request to backend
-      const res = await fetch("/api/character/ability", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          characterId, // MUST be the backend ID: "ugglan", "björnen", etc.
-          word,
-          secondsTaken,
-        }),
-      });
-
-      // Debug log for response status
-       console.log("Ability Debug → response status:", res.status);
-
-      // Backend returns 404 → character not found → ability = 0
-      if (!res.ok) {
-        console.warn("Ability request failed:", res.status);
-        return 0;
-      }
-
-      // Extract bonus
-      const data = await res.json();
-      // Debug log for backend response
-       console.log("Ability Debug ==> backend response:", data);
-      return data.bonusPoints ?? 0;
-    } catch (err) {
-      console.error("Ability bonus error:", err);
-      return 0;
-    }
   };
 
   // -----------------------------
@@ -225,9 +158,6 @@ export function useGameEngine(
       }
 
       if (data.isValid) {
-        // Ability bonus
-        const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
-        bonusRef.current += bonus;
 
         // Update category
         setCategories((prev) => ({
@@ -267,13 +197,10 @@ export function useGameEngine(
 
   const resetRound = () => {
     scoreRef.current = 0;
-    bonusRef.current = 0;
     setScore(0);
     setStopped(false);
     setTimeLeft(0);
     setCategoryPoints({});
-    myWordsRef.current = {};
-    opponentWordsRef.current = {};
   };
 
   // -----------------------------
@@ -295,13 +222,9 @@ export function useGameEngine(
     score,
     setScore,
     scoreRef,
-    bonusRef,
 
     categoryPoints,
     setCategoryPoints,
-
-    myWordsRef,
-    opponentWordsRef,
 
     validateWord,
     buildAvailablePool,

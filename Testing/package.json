@@ -9,12 +9,17 @@
     "test:api": "newman run Postman/WordMasterApi.postman_collection.json -e Postman/WordMasterAPI-Env.postman_environment.json --reporters cli",
     "test:api:ci": "newman run Postman/WordMasterApi.postman_collection.json -e Postman/WordMasterAPI-Env.postman_environment.json --reporters cli,junit --reporter-junit-export test-results/newman-api.xml",
     "test:ui": "npm run bdd:gen && playwright test --project=ui",
-    "test:unit": "dotnet test ./UnitTests/WordMaster.UnitTests/WordMaster.UnitTests.csproj",
+    "test:unit": "dotnet test ../UnitTests/WordMaster.UnitTests/WordMaster.UnitTests.csproj",
+    "test:mutation": "dotnet tool restore && cd UnitTests/WordMaster.UnitTests && dotnet stryker --skip-version-check",
     "test:headed": "npm run bdd:gen && playwright test --project=ui --headed",
     "codegen": "playwright codegen http://127.0.0.1:5024",
-    "test:perf:load": "k6 run --env TEST_PROFILE=load k6/wordmaster-multiplayer.js",
-    "test:perf:stress": "k6 run --env TEST_PROFILE=stress k6/wordmaster-multiplayer.js",
-    "test:security:multiplayer": "node security/multiplayer-abuse.js"
+    "test:perf:smoke": "node -e \"require('fs').mkdirSync('k6/results',{recursive:true})\" && k6 run --env TEST_PROFILE=smoke --summary-export k6/results/wordmaster-smoke-summary.json k6/wordmaster-multiplayer.js",
+    "test:perf:load": "node -e \"require('fs').mkdirSync('k6/results',{recursive:true})\" && k6 run --env TEST_PROFILE=load --summary-export k6/results/wordmaster-load-summary.json k6/wordmaster-multiplayer.js",
+    "test:perf:stress": "node -e \"require('fs').mkdirSync('k6/results',{recursive:true})\" && k6 run --env TEST_PROFILE=stress --summary-export k6/results/wordmaster-stress-summary.json k6/wordmaster-multiplayer.js",
+    "test:security": "npm run test:security:abuse && npm run test:security:zap",
+    "test:security:abuse": "node security/multiplayer-abuse.js",
+    "test:security:multiplayer": "npm run test:security:abuse",
+    "test:security:zap": "node security/run-zap-baseline.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

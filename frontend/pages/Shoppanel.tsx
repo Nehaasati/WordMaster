@@ -1,54 +1,80 @@
 import React, { useState } from "react";
 import type { ShopProps } from "../interfaces/Shop";
 import "../css/Shoppanel.css";
-const VOWELS = [
-  { id: 'A', label: 'A', cost: 5 },
-  { id: 'E', label: 'E', cost: 5 },
-  { id: 'I', label: 'I', cost: 5 },
-  { id: 'O', label: 'O', cost: 5 },
-  { id: 'U', label: 'U', cost: 5 },
-  { id: 'Y', label: 'Y', cost: 5 },
-  { id: 'Å', label: 'Å', cost: 5 },
-  { id: 'Ä', label: 'Ä', cost: 5 },
-  { id: 'Ö', label: 'Ö', cost: 5 },
-]
-const POWERUPS = [
-  { id: 'freeze', label: 'Freeze', cost: 5 },
-  { id: 'black',  label: 'Bläck',  cost: 5 },
-  { id: 'mix',    label: 'Svenska Alphabet',    cost: 100 },
-]
-const ShopPanel: React.FC<ShopProps> = ({ score, onBuyLetter, onBuyPowerup }) => {
-  const [owned, setOwned] = useState<string[]>([])
-  const [toast, setToast] = useState('')
-  const [toastOk, setToastOk] = useState(true)
-const showToast = (msg: string, ok: boolean) => {
-    setToast(msg); setToastOk(ok)
-    setTimeout(() => setToast(''), 2000)
-  }
-const buyLetter = (id: string, cost: number) => {
-    if (score < cost) { showToast('Not enough 💰!', false); return }
-    onBuyLetter(id, cost)
-    showToast(`+${id} added!`, true)
-  }
-const buyPowerup = (id: string, cost: number) => {
-    if (score < cost) { showToast('Not enough 💰!', false); return }
-    setOwned(prev => [...prev, id])
-    onBuyPowerup(id, cost)
-    showToast(`${id} ready!`, true)
-  }
-return (
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Shop action failed";
+
+const ShopPanel: React.FC<ShopProps> = ({
+  score,
+  items,
+  powerups,
+  loading = false,
+  disabled = false,
+  error = "",
+  onBuyLetter,
+  onBuyPowerup,
+}) => {
+  const [toast, setToast] = useState("");
+  const [toastOk, setToastOk] = useState(true);
+  const [pendingItemId, setPendingItemId] = useState("");
+
+  const vowels = items.filter((item) => item.type === "letter");
+  const powerupItems = items.filter((item) => item.type === "powerup");
+
+  const showToast = (msg: string, ok: boolean) => {
+    setToast(msg);
+    setToastOk(ok);
+    setTimeout(() => setToast(""), 2000);
+  };
+
+  const buyLetter = async (id: string, cost: number, label: string) => {
+    if (score < cost) {
+      showToast("Not enough 💰!", false);
+      return;
+    }
+
+    setPendingItemId(id);
+    try {
+      await onBuyLetter(id);
+      showToast(`+${label} added!`, true);
+    } catch (err) {
+      showToast(getErrorMessage(err), false);
+    } finally {
+      setPendingItemId("");
+    }
+  };
+
+  const buyPowerup = async (id: string, cost: number, label: string) => {
+    if (score < cost) {
+      showToast("Not enough 💰!", false);
+      return;
+    }
+
+    setPendingItemId(id);
+    try {
+      await onBuyPowerup(id);
+      showToast(`${label} ready!`, true);
+    } catch (err) {
+      showToast(getErrorMessage(err), false);
+    } finally {
+      setPendingItemId("");
+    }
+  };
+
+  return (
     <div className="shop-panel" data-testid="shop-panel">
       <div className="shop-title">🏪 Shop</div>
       <div className="shop-balance">💰 {score} kr</div>
 
-      <div className="shop-section-title">Swedish Vowels — 5💰</div>
+      <div className="shop-section-title">Swedish Vowels</div>
       <div className="shop-vowel-grid">
-        {VOWELS.map(item => (
+        {vowels.map((item) => (
           <button
             key={item.id}
             className="shop-vowel-btn"
-            disabled={score < item.cost}
-            onClick={() => buyLetter(item.id, item.cost)}
+            disabled={disabled || loading || pendingItemId === item.id || score < item.cost}
+            onClick={() => buyLetter(item.id, item.cost, item.label)}
             data-testid={`shop-buy-${item.id}`}
           >
             <span className="shop-vowel-letter">{item.label}</span>
@@ -56,25 +82,27 @@ return (
           </button>
         ))}
       </div>
-<div className="shop-section-title">Power-ups — 5💰 once</div>
+<div className="shop-section-title">Power-ups</div>
       <div className="shop-items">
-        {POWERUPS.map(item => {
-          const isOwned = owned.includes(item.id)
+        {powerupItems.map((item) => {
+          const ownedCount = powerups[item.id] ?? 0;
+          const isOwned = ownedCount > 0;
           return (
             <div className="shop-item" key={item.id}>
               <span className="shop-item-label">{item.label}</span>
               <button
                 className={`shop-buy-btn ${isOwned ? 'shop-buy-btn--owned' : ''}`}
-                disabled={isOwned || score < item.cost}
-                onClick={() => buyPowerup(item.id, item.cost)}
+                disabled={disabled || loading || isOwned || pendingItemId === item.id || score < item.cost}
+                onClick={() => buyPowerup(item.id, item.cost, item.label)}
                 data-testid={`shop-buy-${item.id}`}
               >
-                {isOwned ? '✓' : `${item.cost}💰`}
+                {isOwned ? `✓ ${ownedCount}` : `${item.cost}💰`}
               </button>
             </div>
           )
         })}
       </div>
+ {error && <div className="shop-toast shop-toast--error">{error}</div>}
  {toast && <div className={`shop-toast ${toastOk ? '' : 'shop-toast--error'}`}>{toast}</div>}
     </div>
   )

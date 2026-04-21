@@ -8,7 +8,65 @@
   flex-direction: column;
   overflow: hidden;
   font-family: 'Cinzel', serif;
+  background: #000;
+  animation: gpSceneReveal 1150ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+.gp-scene::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,255,255,0.08), transparent 32%),
+    #000;
+  animation: gpPageFadeIn 1150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes gpPageFadeIn {
+  0% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.96;
+  }
+  72% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes gpSceneReveal {
+  0% {
+    opacity: 0.72;
+    filter: brightness(0.45) saturate(0.75);
+    transform: translateY(10px) scale(1.015);
+  }
+  60% {
+    opacity: 1;
+    filter: brightness(0.82) saturate(0.9);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-scene {
+    animation-duration: 160ms;
+  }
+
+  .gp-scene::after {
+    animation-duration: 160ms;
+  }
+}
+
 /* ── BACKGROUND ── */
 .gp-bg {
   position: absolute;

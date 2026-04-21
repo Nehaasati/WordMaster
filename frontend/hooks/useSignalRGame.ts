@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSignalR } from "./SignalRContext";
 
@@ -7,9 +7,10 @@ export function useSignalRGame(
   handlers: {
     onLobbyReset?: () => void;
     onPlayerLeft?: (playerId: string) => void;
-    onGameStopped?: (lobbyId: string, stoppedBy: string, score: number) => void;
+    onGameStopped?: (lobbyId: string, stoppedBy: string, scores: Record<string, number>) => void;
     onHostChanged?: (newHostId: string) => void;
-    onMatchEnded?: (lobbyId: string) => void;
+    onMatchEnded?: (lobbyId: string, scores: Record<string, number>) => void;
+    onScoreUpdate?: (update: { totalScores: Record<string, number>; categoryPoints: Record<string, Record<string, number>> }) => void;
     onWordSubmitted?: (
       senderId: string,
       category: string,
@@ -58,11 +59,7 @@ export function useSignalRGame(
     // -------------------------
 
     const handleLobbyReset = () => {
-      if (navigatingRef.current) return;
-      navigatingRef.current = true;
-
       handlersRef.current.onLobbyReset?.();
-      navigate(`/lobby/${lobbyId}`);
     };
 
     const handlePlayerLeft = (playerId: string) => {
@@ -72,23 +69,23 @@ export function useSignalRGame(
     const handleGameStopped = (
       lId: string,
       stoppedBy: string,
-      score: number,
+      scores: Record<string, number>,
     ) => {
       if (navigatingRef.current) return;
       navigatingRef.current = true;
 
-      handlersRef.current.onGameStopped?.(lId, stoppedBy, score);
+      handlersRef.current.onGameStopped?.(lId, stoppedBy, scores);
     };
 
     const handleHostChanged = (newHostId: string) => {
       handlersRef.current.onHostChanged?.(newHostId);
     };
 
-    const handleMatchEnded = (lId: string) => {
+    const handleMatchEnded = (lId: string, scores: Record<string, number>) => {
       if (navigatingRef.current) return;
       navigatingRef.current = true;
 
-      handlersRef.current.onMatchEnded?.(lId);
+      handlersRef.current.onMatchEnded?.(lId, scores);
     };
 
     const handleWordSubmitted = (
@@ -107,6 +104,10 @@ export function useSignalRGame(
     const handleInkReceived = () => {
       handlersRef.current.onInkReceived?.();
     };
+    const handleScoreUpdate = (update: { totalScores: Record<string, number>; categoryPoints: Record<string, Record<string, number>> }) => {
+      if (navigatingRef.current) return;
+      handlersRef.current.onScoreUpdate?.(update);
+    };
     // -------------------------
     // REGISTER EVENTS
     // -------------------------
@@ -118,6 +119,7 @@ export function useSignalRGame(
     connection.on("WordSubmitted", handleWordSubmitted);
     connection.on("FreezeReceived", handleFreezeReceived);
     connection.on("InkReceived", handleInkReceived);
+    connection.on("ScoreUpdate", handleScoreUpdate);
 
     // -------------------------
     // CLEANUP (IMPORTANT)
@@ -131,13 +133,14 @@ export function useSignalRGame(
       connection.off("WordSubmitted", handleWordSubmitted);
       connection.off("FreezeReceived", handleFreezeReceived);
       connection.off("InkReceived", handleInkReceived);
+      connection.off("ScoreUpdate", handleScoreUpdate);
     };
   }, [connection, lobbyId, navigate]);
 
   // -------------------------
   // ACTIONS
   // -------------------------
-  const submitWord = (categoryId: string, word: string) => {
+  const submitWord = useCallback((categoryId: string, word: string) => {
     if (!connection || !lobbyId) return;
 
     const myId = localStorage.getItem("wordmaster-player-id") ?? "";
@@ -146,17 +149,23 @@ export function useSignalRGame(
     connection
       .invoke("SubmitWord", lobbyId, myId, categoryId, normalized)
       .catch((err) => console.error("SubmitWord error:", err));
-  };
+  }, [connection, lobbyId]);
 
-  const stopGame = (score: number) => {
+  const stopGame = useCallback(() => {
     if (!connection || !lobbyId) return;
 
     const playerId = localStorage.getItem("wordmaster-player-id") ?? "";
 
     connection
-      .invoke("StopGame", lobbyId, playerId, Math.round(score))
+      .invoke("StopGame", lobbyId, playerId)
       .catch((err) => console.error("StopGame error:", err));
-  };
+  }, [connection, lobbyId]);
+  const finishGame = useCallback(() => {
+    if (!connection || !lobbyId) return;
+    connection
+      .invoke("FinishGame", lobbyId)
+      .catch((err) => console.error("FinishGame error:", err));
+  }, [connection, lobbyId]);
 
-  return { submitWord, stopGame };
+  return { submitWord, stopGame, finishGame};
 }

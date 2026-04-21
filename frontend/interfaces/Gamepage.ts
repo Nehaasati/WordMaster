@@ -4,7 +4,7 @@ export interface Letter {
   char: string;
   used: boolean;
   isExtra: boolean;
-  source?: "initial" | "extra" | "replacement" | "ability";
+  source?: "initial" | "extra" | "replacement" | "ability" | "shop";
 }
 export interface CategoryData {
   id: string;
