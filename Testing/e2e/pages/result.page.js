@@ -11,15 +11,23 @@ export default class ResultPage {
     return this.page.getByTestId('winner-text');
   }
 
-  async getTieText() {
-    return this.page.getByTestId('tie-result');
+  async getScoreboard() {
+    return this.page.locator('.rp-scoreboard');
   }
 
-  async clickRestartVote() {
-    await this.page.getByTestId('btn-restart-vote').click();
+  async getTieText() {
+    return this.page.getByText('Oavgjort!');
+  }
+
+  async getPlayerMe() {
+    return this.page.getByText('(du)');
+  }
+
+  async clickRestart() {
+    await this.page.getByTestId('btn-restart').click();
   }
 
   async clickBackMenu() {
-    await this.page.getByTestId('btn-back-menu').click();
+    await this.page.getByText('Tillbaka till menyn').click();
   }
 }
