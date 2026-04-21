@@ -1,7 +1,7 @@
 using WordMaster.Services;
 using Xunit;
 
-namespace WordMaster.Tests.Services;
+namespace WordMaster.Tests;
 
 public class ScoreCalculatorTests
 {
@@ -121,5 +121,76 @@ public class ScoreCalculatorTests
 
         Assert.Equal(70, result2.TotalScores["Emil"]); // 7 unika ord 70 p
         Assert.Equal(60, result2.TotalScores["Luis"]);   // 1 unikt ord 10 p + 50 p bonus poäng = 60 p
+    }
+
+    [Fact]
+    public void Calculate_DoublesFullWordScore_WhenCategoryMultiplierIsApplied()
+    {
+        var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>
+        {
+            ["Emil"] = new()
+            {
+                ["Food"] = new("Cheesecake", true)
+            },
+            ["Luis"] = new()
+            {
+                ["Animal"] = new("Hund", true)
+            }
+        };
+        var playerContexts = new Dictionary<string, ScoreCalculator.PlayerContext>
+        {
+            ["Emil"] = new("ugglan", new Dictionary<string, double>()),
+            ["Luis"] = new("", new Dictionary<string, double>())
+        };
+        var multipliers = new Dictionary<string, Dictionary<string, int>>
+        {
+            ["Emil"] = new()
+            {
+                ["Food"] = 2
+            }
+        };
+
+        var result = ScoreCalculator.Calculate(
+            submissions,
+            playerContexts: playerContexts,
+            characterService: new CharacterService(),
+            categoryMultipliers: multipliers);
+
+        Assert.Equal(36, result.CategoryPoints["Emil"]["Food"]);
+        Assert.Equal(36, result.TotalScores["Emil"]);
+        Assert.Equal(10, result.CategoryPoints["Luis"]["Animal"]);
+        Assert.Equal(10, result.TotalScores["Luis"]);
+    }
+
+    [Fact]
+    public void Calculate_DoublesDuplicateCategoryPoints_WhenCategoryMultiplierIsApplied()
+    {
+        var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>
+        {
+            ["Emil"] = new()
+            {
+                ["Animal"] = new("Katt", true)
+            },
+            ["Luis"] = new()
+            {
+                ["Animal"] = new("Katt", true)
+            }
+        };
+        var multipliers = new Dictionary<string, Dictionary<string, int>>
+        {
+            ["Emil"] = new()
+            {
+                ["Animal"] = 2
+            }
+        };
+
+        var result = ScoreCalculator.Calculate(
+            submissions,
+            categoryMultipliers: multipliers);
+
+        Assert.Equal(10, result.CategoryPoints["Emil"]["Animal"]);
+        Assert.Equal(10, result.TotalScores["Emil"]);
+        Assert.Equal(5, result.CategoryPoints["Luis"]["Animal"]);
+        Assert.Equal(5, result.TotalScores["Luis"]);
     }
 }
