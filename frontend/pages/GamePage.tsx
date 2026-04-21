@@ -410,12 +410,6 @@ const GamePage: React.FC = () => {
       inputRefs.current[firstIncomplete.id]?.focus();
     }
   }, []);
-  // Automatic focus shift to next category when one is completed
-  const validStates = CATEGORY_LIST.map(
-    (cat) => categories[cat.id]?.valid,
-  ).join(",");
-  ;
-
   useEffect(() => {
     const previous = previousValidRef.current;
 
