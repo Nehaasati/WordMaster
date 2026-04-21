@@ -1,6 +1,6 @@
 using WordMaster.Services;
 
-namespace WordMaster.Tests.Services;
+namespace WordMaster.Tests;
 
 public class JokerServiceTests
 {

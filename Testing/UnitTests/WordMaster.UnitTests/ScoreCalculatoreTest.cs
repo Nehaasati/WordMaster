@@ -1,7 +1,7 @@
 using WordMaster.Services;
 using Xunit;
 
-namespace WordMaster.Tests.Services;
+namespace WordMaster.Tests;
 
 public class ScoreCalculatorTests
 {
