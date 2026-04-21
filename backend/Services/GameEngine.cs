@@ -13,6 +13,14 @@ public class GameEngine
     private static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
     private const string ShopItemTypeLetter = "letter";
     private const string ShopItemTypePowerup = "powerup";
+    private readonly object _letterGenerationLock = new();
+    private readonly Queue<char> _demoLetterQueue = new(new[]
+    {
+        'E', 'M', 'I', 'L', 'S', 'K', 'A', 'L', 'B', 'A',
+        'G', 'G', 'E', 'V', 'A', 'K', 'T', 'Z', 'I', 'M',
+        'B', 'A', 'B', 'W', 'E',
+        'G', 'U', 'L', 'H', 'U', 'N', 'D', 'B', 'O', 'R', 'D'
+    });
 
     private static readonly IReadOnlyDictionary<string, ShopCatalogItem> ShopItems = CreateShopCatalog();
 
@@ -149,21 +157,27 @@ public class GameEngine
 
     public List<char> GenerateLetters(int count = 25)
     {
-        var random = new Random();
-        var letters = new List<char>();
-
-        var weightedPool = new List<char>();
-        foreach (var c in Alphabet)
+        lock (_letterGenerationLock)
         {
-            int w = Weights.TryGetValue(c, out int weight) ? weight : 2;
-            for (int i = 0; i < w; i++) weightedPool.Add(c);
-        }
+            var random = new Random();
+            var letters = new List<char>();
 
-        for (int i = 0; i < count; i++)
-        {
-            letters.Add(weightedPool[random.Next(weightedPool.Count)]);
+            var weightedPool = new List<char>();
+            foreach (var c in Alphabet)
+            {
+                int w = Weights.TryGetValue(c, out int weight) ? weight : 2;
+                for (int i = 0; i < w; i++) weightedPool.Add(c);
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                letters.Add(_demoLetterQueue.Count > 0
+                    ? _demoLetterQueue.Dequeue()
+                    : weightedPool[random.Next(weightedPool.Count)]);
+            }
+
+            return letters;
         }
-        return letters;
     }
 
     public (bool IsValid, string Message) ValidateWord(string word, string category, List<char> availableLetters)

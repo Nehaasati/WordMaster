@@ -265,7 +265,7 @@ export function useGameEngine(
         const serverReplacement =
           serverReplacementLetters[replacementIndex]?.toUpperCase();
         const replacementChar =
-          serverReplacement && !consumedChars.has(serverReplacement)
+          serverReplacement
             ? serverReplacement
             : getRandomReplacementLetter(consumedChars);
 
