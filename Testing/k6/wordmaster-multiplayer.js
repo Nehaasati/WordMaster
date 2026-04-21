@@ -23,6 +23,19 @@ const baseUrl = rawBaseUrl.replace(/\/+$/, '');
 const apiBaseUrl = `${baseUrl}/api`;
 const profile = (__ENV.TEST_PROFILE || 'load').toLowerCase();
 const profiles = {
+  smoke: {
+    stages: [
+      { duration: '10s', target: 1 },
+      { duration: '20s', target: 2 },
+      { duration: '10s', target: 0 },
+    ],
+    thresholds: {
+      http_req_failed: ['rate<0.01'],
+      http_req_duration: ['p(95)<1200', 'avg<700'],
+      checks: ['rate>0.99'],
+      workflow_failures: ['rate<0.02'],
+    },
+  },
   load: {
     stages: [
       { duration: '30s', target: 5 },
@@ -70,6 +83,14 @@ function postJson(url, payload, tags) {
       ...tags,
     },
   });
+}
+
+function safeJson(response) {
+  try {
+    return response.json();
+  } catch {
+    return null;
+  }
 }
 
 function recordCreateLobbyFailureStatus(status) {
@@ -128,7 +149,7 @@ function createLobby() {
         return false;
       }
 
-      const body = r.json();
+      const body = safeJson(r);
       return !!body.lobbyId && !!body.playerId;
     },
   });
@@ -139,7 +160,7 @@ function createLobby() {
     return null;
   }
 
-  const body = response.json();
+  const body = safeJson(response);
   return {
     lobbyId: body.lobbyId,
     hostId: body.playerId,
@@ -161,7 +182,7 @@ function joinLobby(lobbyId) {
         return false;
       }
 
-      return !!r.json().player?.id;
+      return !!safeJson(r)?.player?.id;
     },
   });
 
@@ -169,7 +190,7 @@ function joinLobby(lobbyId) {
     return null;
   }
 
-  return response.json().player.id;
+  return safeJson(response).player.id;
 }
 
 function readyPlayer(lobbyId, playerId, role) {
@@ -225,6 +246,104 @@ function leaveLobby(lobbyId, playerId, role) {
   });
 }
 
+function getShopState(lobbyId, playerId, role) {
+  const response = http.get(
+    `${apiBaseUrl}/lobby/${lobbyId}/shop/${playerId}`,
+    {
+      tags: {
+        name: 'shop_state',
+        endpoint: 'shop_state',
+        role,
+      },
+    }
+  );
+
+  const ok = check(response, {
+    [`${role} shop state returned 200`]: (r) => r.status === 200,
+    [`${role} shop state includes catalog`]: (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      return Array.isArray(safeJson(r)?.state?.catalog);
+    },
+  });
+
+  return ok ? safeJson(response)?.state : null;
+}
+
+function syncShopScore(lobbyId, playerId, role, earnedScore) {
+  const response = postJson(
+    `${apiBaseUrl}/lobby/${lobbyId}/shop/${playerId}/sync-score`,
+    { earnedScore },
+    {
+      endpoint: 'shop_sync_score',
+      role,
+    }
+  );
+
+  const ok = check(response, {
+    [`${role} shop score sync returned 200`]: (r) => r.status === 200,
+    [`${role} shop balance reflects synced score`]: (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      return safeJson(r)?.state?.earnedScore === earnedScore;
+    },
+  });
+
+  return ok ? safeJson(response)?.state : null;
+}
+
+function purchaseShopItem(lobbyId, playerId, role, itemId) {
+  const response = postJson(
+    `${apiBaseUrl}/lobby/${lobbyId}/shop/${playerId}/purchase`,
+    { itemId },
+    {
+      endpoint: 'shop_purchase',
+      role,
+      itemId,
+    }
+  );
+
+  const ok = check(response, {
+    [`${role} purchase ${itemId} returned 200`]: (r) => r.status === 200,
+    [`${role} purchase ${itemId} returned item`]: (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      return safeJson(r)?.item?.id?.toLowerCase() === itemId.toLowerCase();
+    },
+  });
+
+  return ok ? safeJson(response)?.state : null;
+}
+
+function consumeShopPowerup(lobbyId, playerId, role, powerupId) {
+  const response = postJson(
+    `${apiBaseUrl}/lobby/${lobbyId}/shop/${playerId}/consume-powerup`,
+    { powerupId },
+    {
+      endpoint: 'shop_consume_powerup',
+      role,
+      powerupId,
+    }
+  );
+
+  return check(response, {
+    [`${role} consume ${powerupId} returned 200`]: (r) => r.status === 200,
+    [`${role} consume ${powerupId} clears owned count`]: (r) => {
+      if (r.status !== 200) {
+        return false;
+      }
+
+      return (safeJson(r)?.state?.powerups?.[powerupId] || 0) === 0;
+    },
+  });
+}
+
 export function setup() {
   const healthResponse = http.get(`${apiBaseUrl}/health`, {
     tags: {
@@ -272,6 +391,26 @@ export default function () {
     }
 
     if (!startGame(lobbyId, hostId)) {
+      return;
+    }
+
+    if (!getShopState(lobbyId, hostId, 'host')) {
+      return;
+    }
+
+    if (!syncShopScore(lobbyId, hostId, 'host', 15)) {
+      return;
+    }
+
+    if (!purchaseShopItem(lobbyId, hostId, 'host', 'A')) {
+      return;
+    }
+
+    if (!purchaseShopItem(lobbyId, hostId, 'host', 'freeze')) {
+      return;
+    }
+
+    if (!consumeShopPowerup(lobbyId, hostId, 'host', 'freeze')) {
       return;
     }
 

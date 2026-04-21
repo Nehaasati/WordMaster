@@ -2044,7 +2044,7 @@
               "exec": [
                 "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
                 "pm.test(\"Ett giltigt ord ger 10 poäng\", () => {",
-                "    pm.expect(pm.response.json().score).to.eql(60);",
+                "    pm.expect(pm.response.json().score).to.eql(10);",
                 "});"
               ]
             }
@@ -2164,7 +2164,7 @@
               "exec": [
                 "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
                 "pm.test(\"Långt ord (>7 bokstäver) ger 15 poäng\", () => {",
-                "    pm.expect(pm.response.json().score).to.eql(65);",
+                "    pm.expect(pm.response.json().score).to.eql(15);",
                 "});"
               ]
             }
@@ -2204,7 +2204,7 @@
               "exec": [
                 "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
                 "pm.test(\"Ord med exakt 7 bokstäver ger inte bonus\", () => {",
-                "    pm.expect(pm.response.json().score).to.eql(60);",
+                "    pm.expect(pm.response.json().score).to.eql(10);",
                 "});"
               ]
             }
@@ -2243,8 +2243,8 @@
               "type": "text/javascript",
               "exec": [
                 "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
-                "pm.test(\"7 giltiga ord ger 70 poäng (7 x 10p) => giltiga ord 70p + bonus 5p + 50p extra = 125p\", () => {",
-                "    pm.expect(pm.response.json().score).to.eql(125);",
+                "pm.test(\"7 giltiga ord ger 75 poäng (7 x 10p = 70 + 5p bonus för Albanien)\", () => {",
+                "    pm.expect(pm.response.json().score).to.eql(75);",
                 "});"
               ]
             }

@@ -1,17 +1,18 @@
 # Security Tests
 
-This folder documents the automated security checks for WordMaster.
+This folder contains the security checks for WordMaster. The same scripts are used locally and by `.github/workflows/security.yml`.
 
 ## Current coverage
 
-The current security workflow has two parts:
+The current security coverage has two parts:
 
-- ZAP baseline scan against the deployed application
-- multiplayer abuse checks against the deployed API
+- ZAP baseline scan against the target application
+- multiplayer and shop abuse checks against the target API
 
-Workflow:
+Scripts:
 
-- `.github/workflows/security.yml`
+- `Testing/security/run-zap-baseline.js`
+- `Testing/security/multiplayer-abuse.js`
 
 ## ZAP baseline scan
 
@@ -24,6 +25,27 @@ The ZAP baseline scan is a passive security scan. It is intended to catch common
 
 This is a safe first step for CI/CD because it does not run an aggressive active attack against the application.
 
+Run from the repository root:
+
+```powershell
+$env:BASE_URL='http://127.0.0.1:5024'
+npm --prefix Testing run test:security:zap
+```
+
+The runner uses Docker and writes these reports to `Testing/security/results`:
+
+- `zap-baseline-report.html`
+- `zap-baseline-report.json`
+- `zap-baseline-report.md`
+
+By default, WARN-level ZAP findings are reported without failing the command. Set `ZAP_STRICT=true` when the command should fail on ZAP warnings or failures:
+
+```powershell
+$env:BASE_URL='https://wordmaster-05vy.onrender.com'
+$env:ZAP_STRICT='true'
+npm --prefix Testing run test:security:zap
+```
+
 ## Multiplayer abuse checks
 
 The multiplayer abuse script targets game-specific risks that a baseline web scan will not catch well.
@@ -34,22 +56,47 @@ Current checks:
 - forged score update against another player
 - forced leave request against another player
 - host action spoofing using a known host playerId
+- forged shop score sync against another player
+- forged shop purchase against another player
+- forged shop power-up consume against another player
+- negative shop score rejection
 
 Script:
 
 - `Testing/security/multiplayer-abuse.js`
 
+Run from the repository root:
+
+```powershell
+$env:BASE_URL='http://127.0.0.1:5024'
+npm --prefix Testing run test:security:abuse
+```
+
+The abuse script writes these reports to `Testing/security/results`:
+
+- `multiplayer-abuse-report.json`
+- `multiplayer-abuse-report.md`
+
+By default, abuse findings are reported without failing the command. Set `FAIL_ON_FINDINGS=true` when findings should produce a non-zero exit code:
+
+```powershell
+$env:BASE_URL='https://wordmaster-05vy.onrender.com'
+$env:FAIL_ON_FINDINGS='true'
+npm --prefix Testing run test:security:abuse
+```
+
 ## Triggers
 
-- manual run from GitHub Actions
-- nightly scheduled run
+- pull request: local multiplayer and shop abuse checks against a temporary backend
+- manual workflow: ZAP baseline and abuse checks against `target_url` or `RENDER_BASE_URL`
+- nightly schedule: ZAP baseline and abuse checks against `RENDER_BASE_URL`
 
 ## Notes
 
-- The scan runs against the deployed environment, not localhost.
-- Findings are attached as workflow artifacts.
-- The workflow is separate from the main CI pipeline on purpose, so security scanning does not slow down regular build and test feedback.
-- Multiplayer checks currently report findings without failing the workflow by default.
+- Set `BASE_URL` to choose localhost, Render, or another target.
+- Findings are written under `Testing/security/results`.
+- ZAP requires Docker.
+- Multiplayer checks currently report findings without failing by default.
 
 ## Maintainer
 

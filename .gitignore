@@ -81,6 +81,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+backend/wwwroot/
 
 # Gatsby files
 .cache/
@@ -144,6 +145,10 @@ obj/
 *.lscache
 # xUnit
 TestResults/
+
+# Mutation testing
+StrykerOutput/
+**/StrykerOutput/
 
 # Playwright
 test-results/

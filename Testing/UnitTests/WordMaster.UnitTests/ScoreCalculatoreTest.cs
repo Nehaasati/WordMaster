@@ -6,7 +6,7 @@ namespace WordMaster.Tests.Services;
 public class ScoreCalculatorTests
 {
     [Fact]
-    public void CalculateScores_Gives10PointsForUniqueValidWord()
+    public void Calculate_Gives10PointsForUniqueValidWord()
     {
         var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>
         {
@@ -20,14 +20,14 @@ public class ScoreCalculatorTests
             }
         };
 
-        var result = ScoreCalculator.CalculateScores(submissions);
+        var result = ScoreCalculator.Calculate(submissions);
 
-        Assert.Equal(10, result["Emil"]);
-        Assert.Equal(10, result["Luis"]);
+        Assert.Equal(10, result.TotalScores["Emil"]);
+        Assert.Equal(10, result.TotalScores["Luis"]);
     }
 
     [Fact]
-    public void CalculateScores_Gives5PointsForDuplicateValidWord()
+    public void Calculate_Gives5PointsForDuplicateValidWord()
     {
         var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>
         {
@@ -41,14 +41,14 @@ public class ScoreCalculatorTests
             }
         };
 
-        var result = ScoreCalculator.CalculateScores(submissions);
+        var result = ScoreCalculator.Calculate(submissions);
 
-        Assert.Equal(5, result["Emil"]); 
-        Assert.Equal(5, result["Luis"]);   
+        Assert.Equal(5, result.TotalScores["Emil"]); 
+        Assert.Equal(5, result.TotalScores["Luis"]);   
     }
 
     [Fact]
-    public void CalculateScores_GivesLengthBonus_WhenWordIsLongerThan7Characters()
+    public void Calculate_GivesLengthBonus_WhenWordIsLongerThan7Characters()
     {
         var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>
         {
@@ -62,14 +62,14 @@ public class ScoreCalculatorTests
             }
         };
 
-        var result = ScoreCalculator.CalculateScores(submissions);
+        var result = ScoreCalculator.Calculate(submissions);
 
-        Assert.Equal(15, result["Emil"]);   // 10 unikt + 5 bonus
-        Assert.Equal(10, result["Luis"]);
+        Assert.Equal(15, result.TotalScores["Emil"]);   // 10 unikt + 5 bonus
+        Assert.Equal(10, result.TotalScores["Luis"]);
     }
 
     [Fact]
-    public void CalculateScores_DoesNotGiveLengthBonus_WhenWordHasExactly7Characters()
+    public void Calculate_DoesNotGiveLengthBonus_WhenWordHasExactly7Characters()
     {
         var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>
         {
@@ -83,15 +83,15 @@ public class ScoreCalculatorTests
             }
         };
 
-        var result = ScoreCalculator.CalculateScores(submissions);
+        var result = ScoreCalculator.Calculate(submissions);
 
-        Assert.Equal(10, result["Emil"]);
-        Assert.Equal(10, result["Luis"]);
+        Assert.Equal(10, result.TotalScores["Emil"]);
+        Assert.Equal(10, result.TotalScores["Luis"]);
     }
 
 
     [Fact]
-    public void CalculateScores_Gives50Bonus_WhenExactlyOnePlayerCompletedAllCategories()
+    public void Calculate_Gives50Bonus_ToPlayerWhoPressedStopp()
     {
         var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>
         {
@@ -111,9 +111,15 @@ public class ScoreCalculatorTests
             }
         };
 
-        var result = ScoreCalculator.CalculateScores(submissions);
+        var result = ScoreCalculator.Calculate(submissions, stopperPlayerId: "Emil");
 
-        Assert.Equal(120, result["Emil"]); 
-        Assert.Equal(10, result["Luis"]);   // bara djur ger poäng
+        Assert.Equal(120, result.TotalScores["Emil"]); // 7 unika ord 70 p + 50 p bonus poäng = 120 p
+        Assert.Equal(10, result.TotalScores["Luis"]);   //1 unikt ord 10 p
+
+
+        var result2 = ScoreCalculator.Calculate(submissions, stopperPlayerId: "Luis");
+
+        Assert.Equal(70, result2.TotalScores["Emil"]); // 7 unika ord 70 p
+        Assert.Equal(60, result2.TotalScores["Luis"]);   // 1 unikt ord 10 p + 50 p bonus poäng = 60 p
     }
 }
