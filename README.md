@@ -45,10 +45,9 @@ The goal is to:
 Find valid words
 Match categories
 Submit as many correct words as possible
+
 🛒 Shop & Power-ups
-
 During the game, players can use points in the shop:
-
 🔤 Buy extra letters (including Swedish vowels like Å, Ä, Ö)
 ❄️ Freeze – temporarily blocks the opponent
 🎴 Joker Card
