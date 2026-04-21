@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { StarData, Category } from "../interfaces/Gamepage";
+import type { ShopApiResponse, ShopState } from "../interfaces/Shop";
 import { useGameEngine } from "../hooks/useGameEngine";
 import { useSignalRGame } from "../hooks/useSignalRGame";
 import { useSignalR } from "../hooks/SignalRContext";
@@ -59,11 +60,44 @@ const CATEGORY_LIST: Category[] = [
   { id: "Animal", label: "Djur" },
   { id: "Object", label: "Sak" },
 ];
+
+const EMPTY_SHOP_STATE: ShopState = {
+  balance: 0,
+  earnedScore: 0,
+  spentScore: 0,
+  purchasedLetters: [],
+  powerups: {},
+  catalog: [],
+};
+
+const getCurrentPlayerId = () =>
+  localStorage.getItem("wordmaster-player-id") ??
+  localStorage.getItem("playerId") ??
+  "";
+
+const getShopErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Shop request failed";
+
+const parseShopApiResponse = async (
+  response: Response,
+): Promise<ShopApiResponse> => {
+  const raw = await response.text();
+  const data = raw ? JSON.parse(raw) : null;
+
+  if (!response.ok) {
+    throw new Error(
+      data?.title ?? data?.message ?? `Shop request failed (${response.status})`,
+    );
+  }
+
+  return data as ShopApiResponse;
+};
+
 const GamePage: React.FC = () => {
 
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const storedPlayerId = localStorage.getItem('wordmaster-player-id') ?? '';
-  const { joker, jokerMsg, jokerCategoriesRef, activateJoker, applyJoker } = useJoker(
+  const { joker, jokerMsg, activateJoker, applyJoker } = useJoker(
   lobbyId,
   storedPlayerId,
   );
@@ -86,9 +120,14 @@ const GamePage: React.FC = () => {
   const [isHost, setIsHost] = useState(
     localStorage.getItem("isHost") === "true",
   );
+  const [shopState, setShopState] = useState<ShopState>(EMPTY_SHOP_STATE);
+  const [shopLoading, setShopLoading] = useState(Boolean(lobbyId));
+  const [shopError, setShopError] = useState("");
+  const shopSyncSeq = useRef(0);
+  const earnedScoreRef = useRef(0);
 
   // Use SignalR hook for real-time events
-  const { submitWord } = useSignalRGame(lobbyId, {
+  const { submitWord, stopGame } = useSignalRGame(lobbyId, {
     onLobbyReset: async () => {
       console.log("Lobby reset → new round");
 
@@ -122,23 +161,19 @@ const GamePage: React.FC = () => {
         setTimeout(() => setToast(""), 3000);
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onGameStopped: (lId: string, _stoppedBy: string, _score: number) => {
-      setGameStopped(true);
-      setStopped(true);
 
+    onGameStopped: (lId: string, _stoppedBy: string, scores: Record<string, number>) => {
+      setGameStopped(false);
+      setStopped(true);
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-      fetch(`/api/lobby/${lId}/save-score/${myId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ score: scoreRef.current }),
-      })
-        .catch(() => {})
-        .finally(() => {
-          setTimeout(() => {
-            navigate(`/result/${lId}`, { state: { gameStopped: true } });
-          }, 2500);
-        });
+      const finalScore = scores?.[myId] ?? scoreRef.current;
+      earnedScoreRef.current = finalScore;
+      setScore(finalScore);
+      scoreRef.current = finalScore;
+      void syncShopScore(finalScore);
+      setTimeout(() => {
+        navigate(`/result/${lId}`, { state: { gameStopped: false } });
+      }, 2500);
     },
     onHostChanged: (newHostId: string) => {
       const myId = localStorage.getItem("wordmaster-player-id");
@@ -150,47 +185,32 @@ const GamePage: React.FC = () => {
         setIsHost(false);
       }
     },
-    onMatchEnded: (lId: string) => {
-      navigate(`/result/${lId}`);
-    },
-    onWordSubmitted: (senderId: string, category: string, word: string) => {
-      // Update opponent words for scoring
+    onMatchEnded: (lId: string, scores: Record<string, number>) => {
+      setStopped(true);
       const myId = localStorage.getItem("wordmaster-player-id") ?? "";
-
-      // Update opponent words for scoring
-      const isMine = senderId === myId;
-      // Save words
-      if (isMine) {
-        // Save my word for scoring
-        myWordsRef.current[category] = word.toUpperCase();
-      } else {
-        if (!opponentWordsRef.current[category]) {
-          opponentWordsRef.current[category] = new Set();
-        }
-        // Save opponent word for scoring
-        opponentWordsRef.current[category].add(word.toUpperCase());
-      }
-
-      // Recalculate points EVERY TIME a word is submitted
-      const myWord = myWordsRef.current[category];
-      const opponentSet = opponentWordsRef.current[category] ?? new Set();
-      let points = 0;
-      if (!myWord || myWord.length < 2) {
-        points = 0; // invalid or empty
-      } else if (opponentSet.has(myWord)) {
-        points = 5; // same word as opponent -- // duplicate -- 5p
-      } else {
-        points = 10; // unique word
-      }
-
-      setCategoryPoints((prev) => ({
-        ...prev,
-        [category]: points,
-      }));
+      const finalScore = scores?.[myId] ?? scoreRef.current;
+      earnedScoreRef.current = finalScore;
+      setScore(finalScore);
+      scoreRef.current = finalScore;
+      void syncShopScore(finalScore);
+      setTimeout(() => {
+        navigate(`/result/${lId}`, { state: { gameStopped: false } });
+      }, 3000);
+    },
+    onWordSubmitted: (_senderId: string, _category: string, _word: string) => {
+    },
+    onScoreUpdate: (update: { totalScores: Record<string, number>; categoryPoints: Record<string, Record<string, number>> }) => {
+      const myId = localStorage.getItem("wordmaster-player-id") ?? "";
+      const myTotal = update.totalScores?.[myId] ?? 0;
+      earnedScoreRef.current = myTotal;
+      setScore(myTotal);
+      scoreRef.current = myTotal;
+      const myCategoryPoints = update.categoryPoints?.[myId] ?? {};
+      setCategoryPoints(myCategoryPoints);
     },
     // Added handlers for abilities (freeze and ink)
-    onFreezeReceived: () => {
-      handleFreezeLocal(); // your existing freeze UI logic
+    onFreezeReceived: async () => {
+      await handleFreezeReceivedLocal();
     },
 
     onInkReceived: () => {
@@ -206,26 +226,177 @@ const GamePage: React.FC = () => {
 
   // Use the game engine hook for state management
   const {
-  categories,
-  setCategories,
-  resetCategories,
-  resetRound,
-  allLetters,
-  setAllLetters,
-  timeLeft,
-  score,
-  setScore,
-  stopped,
-  setStopped,
-  categoryPoints,
-  setCategoryPoints,
-  bonusRef,
-  scoreRef,
-  myWordsRef,
-  opponentWordsRef,
-  validateWord,
-  buildAvailablePool,
-} = useGameEngine(lobbyId, submitWord, applyJoker);
+    categories,
+    setCategories,
+    resetCategories,
+    resetRound,
+    allLetters,
+    setAllLetters,
+    timeLeft,
+    score,
+    setScore,
+    stopped,
+    setStopped,
+    categoryPoints,
+    setCategoryPoints,
+    scoreRef,
+    validateWord,
+    buildAvailablePool,
+  } = useGameEngine(lobbyId, submitWord, applyJoker);
+
+  const applyShopState = React.useCallback((state: ShopState) => {
+    setShopState(state);
+    setScore(state.balance);
+    scoreRef.current = state.balance;
+  }, [scoreRef, setScore]);
+
+  const requireShopSession = () => {
+    const playerId = getCurrentPlayerId();
+    if (!lobbyId || !playerId) {
+      throw new Error("Shop is only available after joining a lobby.");
+    }
+
+    return playerId;
+  };
+
+  const postShopAction = async (
+    endpoint: "purchase" | "consume-powerup",
+    body: Record<string, string>,
+  ) => {
+    const playerId = requireShopSession();
+    setShopError("");
+
+    const response = await fetch(
+      `/api/lobby/${lobbyId}/shop/${playerId}/${endpoint}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+
+    const data = await parseShopApiResponse(response);
+    applyShopState(data.state);
+    return data;
+  };
+
+  const syncShopScore = React.useCallback(async (earnedScore: number) => {
+    const playerId = getCurrentPlayerId();
+    if (!lobbyId || !playerId) {
+      setScore(earnedScore);
+      scoreRef.current = earnedScore;
+      return null;
+    }
+
+    const syncId = ++shopSyncSeq.current;
+    const response = await fetch(
+      `/api/lobby/${lobbyId}/shop/${playerId}/sync-score`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ earnedScore }),
+      },
+    );
+
+    const data = await parseShopApiResponse(response);
+    if (syncId === shopSyncSeq.current) {
+      applyShopState(data.state);
+    }
+
+    return data;
+  }, [applyShopState, lobbyId, scoreRef, setScore]);
+
+  const purchaseShopItem = async (itemId: string) => {
+    await postShopAction("purchase", { itemId });
+  };
+
+  const consumePowerup = async (powerupId: string) => {
+    try {
+      await postShopAction("consume-powerup", { powerupId });
+      return true;
+    } catch (err) {
+      setShopError(getShopErrorMessage(err));
+      return false;
+    }
+  };
+
+  const getPowerupCount = (powerupId: string) =>
+    shopState.powerups[powerupId] ?? 0;
+
+  const calculateEarnedScore = React.useCallback(() => {
+    return earnedScoreRef.current;
+  }, []);
+
+  useEffect(() => {
+    if (!lobbyId) {
+      return;
+    }
+
+    let cancelled = false;
+    const loadShopState = async () => {
+      const playerId = getCurrentPlayerId();
+      if (!playerId) {
+        if (!cancelled) {
+          setShopLoading(false);
+          setShopError("Missing player session. Rejoin the lobby to use the shop.");
+        }
+        return;
+      }
+
+      setShopLoading(true);
+      setShopError("");
+
+      try {
+        const response = await fetch(`/api/lobby/${lobbyId}/shop/${playerId}`);
+        const data = await parseShopApiResponse(response);
+        if (!cancelled) {
+          applyShopState(data.state);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setShopError(getShopErrorMessage(err));
+        }
+      } finally {
+        if (!cancelled) {
+          setShopLoading(false);
+        }
+      }
+    };
+
+    loadShopState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyShopState, lobbyId]);
+
+  const purchasedLettersKey = shopState.purchasedLetters.join("|");
+
+  useEffect(() => {
+    const purchasedLetters = shopState.purchasedLetters;
+
+    setAllLetters((prev) => {
+      const currentShopLetters = prev
+        .filter((letter) => letter.source === "shop")
+        .map((letter) => letter.char)
+        .join("|");
+
+      if (currentShopLetters === purchasedLettersKey) {
+        return prev;
+      }
+
+      const nonShopLetters = prev.filter((letter) => letter.source !== "shop");
+      const shopLetters = purchasedLetters.map((char, index) => ({
+        id: `shop-${index}-${char}`,
+        char,
+        used: false,
+        isExtra: true,
+        source: "shop" as const,
+      }));
+
+      return [...nonShopLetters, ...shopLetters];
+    });
+  }, [purchasedLettersKey, allLetters.length, setAllLetters, shopState.purchasedLetters]);
 
   // Automatic focus shift to next category when one is completed
   const validStates = CATEGORY_LIST.map(
@@ -238,34 +409,23 @@ const GamePage: React.FC = () => {
     if (nextCat) {
       inputRefs.current[nextCat.id]?.focus();
     }
-  }, [validStates]);
+  }, [categories, validStates]);
 
   useEffect(() => {
     updateUsedLetters(categories, setAllLetters);
   }, [categories, setAllLetters]);
 
-  // Calculate score whenever categories, categoryPoints, or bonus changes
-  // Note: refs are intentionally excluded from dependencies as they don't trigger re-renders
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Sync the server-calculated earned score so shop spending can be deducted.
   useEffect(() => {
-    let total = 0;
-    for (const cat of CATEGORY_LIST) {
-      const catData = categories[cat.id];
-      if (!catData.valid) continue;
+    const earnedScore = calculateEarnedScore();
+    if (earnedScore <= 0) return;
 
-      let wordScore = categoryPoints[cat.id] ?? 10;
-
-      // Apply Joker doubling if this category triggered Joker
-      if (jokerCategoriesRef.current.has(cat.id)) {
-        wordScore *= 2;
+    syncShopScore(earnedScore).catch((err) => {
+      if (shopSyncSeq.current > 0) {
+        setShopError(getShopErrorMessage(err));
       }
-
-      total += wordScore;
-    }
-    const newScore = total + bonusRef.current;
-    setScore(newScore);
-    scoreRef.current = newScore;
-  }, [categories, categoryPoints]);
+    });
+  }, [calculateEarnedScore, categoryPoints, syncShopScore]);
 
  const handleInputChange = (
    categoryId: string,
@@ -309,17 +469,66 @@ const GamePage: React.FC = () => {
 
      return updated;
    });
- };
+  };
+
+  const isFreezeImmune = async () => {
+    const characterId = localStorage.getItem("characterId");
+    if (!characterId) return false;
+
+    try {
+      const res = await fetch(`/api/character/${characterId}/freeze-immune`);
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      return data.isFreezeImmune === true;
+    } catch (err) {
+      console.error("Freeze immunity check failed:", err);
+      return false;
+    }
+  };
+
   const handleFreezeLocal = () => {
     handleFreeze(setFrozen, setFreezeActive, setShowFreeze, setFreezeMsg);
   };
 
-  const handleFreezePowerupLocal = () => {
+  const handleFreezeReceivedLocal = async () => {
+    if (await isFreezeImmune()) {
+      setFrozen(false);
+      setFreezeActive(false);
+      setShowFreeze(false);
+      setFreezeMsg("Björnen blockerade freeze!");
+      setTimeout(() => setFreezeMsg(""), 2000);
+      return;
+    }
+
+    handleFreezeLocal();
+  };
+
+  const handleFreezePowerupLocal = async () => {
+    if (!(await consumePowerup("freeze"))) return;
     handleFreezePowerup(lobbyId, connection, handleFreezeLocal);
+  };
+
+  const handleInkPowerupLocal = async () => {
+    if (!(await consumePowerup("black"))) return;
+
+    if (lobbyId && connection) {
+      connection
+        .invoke("UseInk", lobbyId)
+        .catch((err) => setShopError(getShopErrorMessage(err)));
+    } else {
+      setShowInk(true);
+      setInkActive(true);
+    }
   };
 
   const handleMixLocal = () => {
     handleMix(setAllLetters);
+  };
+
+  const handleMixPowerupLocal = async () => {
+    if (!(await consumePowerup("mix"))) return;
+    handleMixLocal();
   };
 
   const handleRestartLocal = async () => {
@@ -339,8 +548,18 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     const notifyFinished = async () => {
       if (allDone && !stopped) {
+        stopGame();
         const playerId = localStorage.getItem("wordmaster-player-id");
         if (!playerId || !lobbyId) return;
+
+        const earnedScore = calculateEarnedScore();
+        const shopData = await syncShopScore(earnedScore).catch((err) => {
+          console.error("Shop score sync before finish failed:", err);
+          setShopError(getShopErrorMessage(err));
+          return null;
+        });
+
+        if (!shopData) return;
 
         // Send finish to backend
         await fetch(`/api/lobby/${lobbyId}/player-finished/${playerId}`, {
@@ -348,7 +567,7 @@ const GamePage: React.FC = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             categoriesCompleted: true, //
-            score: scoreRef.current,
+            score: shopData.state.balance,
           }),
         }).catch((err) => console.error("API Finish Error:", err));
 
@@ -358,7 +577,7 @@ const GamePage: React.FC = () => {
     };
     
     notifyFinished();
-  }, [allDone, stopped, lobbyId, scoreRef]);
+  }, [allDone, calculateEarnedScore, lobbyId, setStopped, stopGame, stopped, syncShopScore]);
 
   return (
     <div className="gp-scene" data-testid="game-page">
@@ -396,9 +615,33 @@ const GamePage: React.FC = () => {
 
       {/* Powerups */}
       <div className="gp-powerups">
-        <button className="gp-btn gp-btn--freeze" onClick={handleFreezePowerupLocal} data-testid="btn-freeze">Freeze</button>
-        <button className="gp-btn gp-btn--black" onClick={() => connection?.invoke("UseInk", lobbyId)} data-testid="btn-black">Bläck</button>
-        <button className="gp-btn gp-btn--mix" onClick={handleMixLocal} data-testid="btn-mix">Mix</button>
+        <button
+          className="gp-btn gp-btn--freeze"
+          onClick={handleFreezePowerupLocal}
+          disabled={stopped || getPowerupCount("freeze") <= 0}
+          data-testid="btn-freeze"
+        >
+          Freeze ({getPowerupCount("freeze")})
+        </button>
+
+        <button
+          className="gp-btn gp-btn--black"
+          onClick={handleInkPowerupLocal}
+          disabled={stopped || getPowerupCount("black") <= 0}
+          data-testid="btn-black"
+        >
+          Bläck ({getPowerupCount("black")})
+        </button>
+
+        <button
+          className="gp-btn gp-btn--mix"
+          onClick={handleMixPowerupLocal}
+          disabled={stopped || getPowerupCount("mix") <= 0}
+          data-testid="btn-mix"
+        >
+          Mix ({getPowerupCount("mix")})
+        </button>
+
         {lobbyId && (
           <JokerButton
             isActive={joker.isActive}
@@ -419,25 +662,13 @@ const GamePage: React.FC = () => {
       {/* Main content */}
       <ShopPanel
         score={score}
-        onBuyLetter={(letter: string, cost: number) => {
-          setScore((prev) => prev - cost);
-          setAllLetters((prev) => [
-            ...prev,
-            {
-              id:
-                Math.random().toString(36).substr(2, 9) +
-                Date.now().toString(36),
-              char: letter,
-              used: false,
-              isExtra: true,
-            },
-          ]);
-        }}
-        onBuyPowerup={(powerupId: string, cost: number) => {
-          setScore((prev) => prev - cost);
-          if (powerupId === "freeze") handleFreezeLocal();
-          if (powerupId === "mix") handleMixLocal();
-        }}
+        items={shopState.catalog}
+        powerups={shopState.powerups}
+        loading={shopLoading}
+        disabled={stopped || !lobbyId || !getCurrentPlayerId()}
+        error={shopError}
+        onBuyLetter={purchaseShopItem}
+        onBuyPowerup={purchaseShopItem}
       />
       <div className="gp-content">
         <div className="gp-left-spacer" />
@@ -462,21 +693,12 @@ const GamePage: React.FC = () => {
                   disabled={categories[cat.id].valid || frozen || stopped}
                   data-testid={`input-${cat.id}`}
                 />
-                {categories[cat.id].valid && lobbyId && (
+                {categories[cat.id].valid && lobbyId && categoryPoints[cat.id] !== undefined && (
                   <span
-                    style={{
-                      color:
-                        (categoryPoints[cat.id] ?? 10) === 5
-                          ? "#ff8c00"
-                          : "#4caf50",
-                    }}
-                    title={
-                      (categoryPoints[cat.id] ?? 10) === 5
-                        ? "Samma ord som motståndaren – 5p"
-                        : "Unikt ord – 10p"
-                    }
+                    style={{ color: categoryPoints[cat.id] === 5 ? "#ff8c00" : "#4caf50" }}
+                    title={categoryPoints[cat.id] === 5 ? "Samma ord som motståndaren – 5p" : "Unikt ord – 10p"}
                   >
-                    {(categoryPoints[cat.id] ?? 10) === 5 ? "5p" : "10p"}
+                    {categoryPoints[cat.id] === 5 ? "5p" : "10p"}
                   </span>
                 )}
 

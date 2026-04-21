@@ -3,87 +3,69 @@ namespace WordMaster.Services;
 public static class ScoreCalculator
 {
     public sealed record CategorySubmission(string Word, bool IsValid);
+    public sealed record PlayerContext(string CharacterId, Dictionary<string, double> SecondsTakenPerCategory);
 
-    public static Dictionary<string, int> CalculateScores (IDictionary<string, Dictionary<string, CategorySubmission>> submissions)
+    public sealed record ScoreResult(
+        Dictionary<string, int> TotalScores,
+        Dictionary<string, Dictionary<string, int>> CategoryPoints
+    );
+
+    public static ScoreResult Calculate(
+        IDictionary<string, Dictionary<string, CategorySubmission>> submissions,
+        string? stopperPlayerId = null,
+        IDictionary<string, PlayerContext>? playerContexts = null,
+        CharacterService? characterService = null)
     {
-        var scores = new Dictionary<string, int>();
+        var totalScores = new Dictionary<string, int>();
+        var categoryPoints = new Dictionary<string, Dictionary<string, int>>();
 
         foreach (var player in submissions.Keys)
         {
-            scores[player] = 0;
+            totalScores[player] = 0;
+            categoryPoints[player] = new Dictionary<string, int>();
         }
 
-                                                        // en Dictionary har en KEY och en Value
         var categories = submissions.Values
-        .SelectMany(playerCategories => playerCategories.Keys)  // hämta keys för varje element och ge en lista/platta ut
-        .Distinct()                                             // ta bort dubletter
-        .ToList();                                              // ge en lista
+            .SelectMany(p => p.Keys)
+            .Distinct()
+            .ToList();
 
         foreach (var category in categories)
         {
-            var validAnswers = new List<(string Player, string Word)>();
+            var validAnswers = new List<(string PlayerId, string Word)>();
             foreach (var player in submissions)
             {
-                if (player.Value.TryGetValue(category, out var submission))
+                if (player.Value.TryGetValue(category, out var sub) &&
+                    sub.IsValid &&
+                    !string.IsNullOrWhiteSpace(sub.Word))
                 {
-                    if (submission.IsValid && !string.IsNullOrWhiteSpace(submission.Word))
-                    {
-                        var normalizedWord = NormalizeWord(submission.Word);
-                        validAnswers.Add((player.Key, normalizedWord));
-                    }
+                    validAnswers.Add((player.Key, NormalizeWord(sub.Word)));
                 }
             }
-            foreach (var answer in validAnswers)
+        foreach (var (pid, word) in validAnswers)
             {
-                int sameWordCount = validAnswers.Count(a => a.Word == answer.Word);
-                if (sameWordCount > 1)
+                int sameCount = validAnswers.Count(a => a.Word == word);
+                int basePts = sameCount > 1 ? 5 : 10;
+                categoryPoints[pid][category] = basePts;
+                totalScores[pid] += basePts;
+
+                if (word.Length > 7)
+                    totalScores[pid] += 5;
+
+                if (characterService != null && playerContexts != null &&
+                    playerContexts.TryGetValue(pid, out var ctx))
                 {
-                    scores[answer.Player] += 5;
+                    double secondsTaken = ctx.SecondsTakenPerCategory.TryGetValue(category, out var s) ? s : 0;
+                    totalScores[pid] += characterService.CalculateAbilityBonus(ctx.CharacterId, word, secondsTaken);
                 }
-                else
-                {
-                    scores[answer.Player] += 10;
-                }
-                if (answer.Word.Length > 7)
-                {
-                    scores[answer.Player] += 5;
-                }
-                
             }
         }
 
-        var completedPlayers = new List<string>();
+        if (stopperPlayerId != null && totalScores.ContainsKey(stopperPlayerId))
+            totalScores[stopperPlayerId] += 50;
 
-        foreach (var player in submissions)
-        {
-            bool hasCompletedAll = true;
-
-            foreach (var category in categories)
-            {
-                if (!player.Value.TryGetValue(category, out var submission) ||
-                    !submission.IsValid ||
-                    string.IsNullOrWhiteSpace(submission.Word))
-                {
-                    hasCompletedAll = false;
-                    break;
-                }
-            }
-
-            if (hasCompletedAll)
-            {
-                completedPlayers.Add(player.Key);
-            }
-        }
-
-        if (completedPlayers.Count == 1)
-        {
-            scores[completedPlayers[0]] += 50;
-        }
-
-        return scores;
+        return new ScoreResult(totalScores, categoryPoints);
     }
-    private static string NormalizeWord(string word)
-    {
-        return word.Trim().ToUpperInvariant();
-    }
+
+    private static string NormalizeWord(string word) => word.Trim().ToUpperInvariant();
 }

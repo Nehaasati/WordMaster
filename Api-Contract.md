@@ -188,6 +188,106 @@ Calculates score for a single player's submissions.
 
 ---
 
+# Shop Endpoints
+
+Shop state is stored per player inside the current lobby round. `earnedScore` is the score from valid words before purchases, `spentScore` is the amount spent in the shop, and `balance` is the current spendable score.
+
+## GET `/api/lobby/{lobbyId}/shop/{playerId}`
+Returns the player's shop state and catalog.
+
+### 📤 Response (200 OK)
+```json
+{
+  "message": "Shop state loaded",
+  "state": {
+    "balance": 5,
+    "earnedScore": 10,
+    "spentScore": 5,
+    "purchasedLetters": ["A"],
+    "powerups": {
+      "freeze": 1
+    },
+    "catalog": [
+      { "id": "A", "label": "A", "type": "letter", "cost": 5 },
+      { "id": "freeze", "label": "Freeze", "type": "powerup", "cost": 5 }
+    ]
+  }
+}
+```
+
+---
+
+## POST `/api/lobby/{lobbyId}/shop/{playerId}/sync-score`
+Synchronizes the player's earned score before the backend applies shop spending.
+
+### 📥 Request
+```json
+{
+  "earnedScore": 20
+}
+```
+
+### 📤 Response (200 OK)
+Returns the same response shape as `GET /shop/{playerId}`.
+
+---
+
+## POST `/api/lobby/{lobbyId}/shop/{playerId}/purchase`
+Purchases a shop item if the player has enough backend-tracked balance.
+
+### 📥 Request
+```json
+{
+  "itemId": "A"
+}
+```
+
+### 📤 Response (200 OK)
+```json
+{
+  "message": "Purchased 'A'.",
+  "purchasedLetter": "A",
+  "item": { "id": "A", "label": "A", "type": "letter", "cost": 5 },
+  "state": {
+    "balance": 15,
+    "earnedScore": 20,
+    "spentScore": 5,
+    "purchasedLetters": ["A"],
+    "powerups": {},
+    "catalog": [
+      { "id": "A", "label": "A", "type": "letter", "cost": 5 }
+    ]
+  }
+}
+```
+
+### Errors
+- **400 Bad Request**: Unknown item.
+- **404 Not Found**: Lobby or player not found.
+- **409 Conflict**: Not enough score, or the one-slot power-up is already owned.
+
+---
+
+## POST `/api/lobby/{lobbyId}/shop/{playerId}/consume-powerup`
+Consumes one owned power-up before applying its effect through the game UI or SignalR.
+
+### 📥 Request
+```json
+{
+  "powerupId": "freeze"
+}
+```
+
+### 📤 Response (200 OK)
+Returns the updated shop state.
+
+### Errors
+- **400 Bad Request**: Unknown power-up.
+- **404 Not Found**: Lobby or player not found.
+- **409 Conflict**: Power-up has not been purchased.
+
+---
+
 # 🎭 Characters & Abilities
 
 ## GET `/api/character`

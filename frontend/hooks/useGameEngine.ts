@@ -67,7 +67,6 @@ export function useGameEngine(
   // Track round start time (for abilities)
   const roundStartTime = useRef(0);
 
-  // set initial round start time after first render
   useEffect(() => {
     roundStartTime.current = Date.now();
   }, []);
@@ -141,47 +140,28 @@ export function useGameEngine(
   // -----------------------------
   const calculateAbilityBonus = async (word: string): Promise<number> => {
     try {
-      // Time taken for this word
       const secondsTaken = (Date.now() - roundStartTime.current) / 1000;
-
-      // Get characterId from localStorage
       const characterId = localStorage.getItem("characterId");
 
-      // Debug logs for ability calculation
-      console.log("Ability Debug => characterId:", characterId);
-      console.log("Ability Debug => word:", word);
-      console.log("Ability Debug => secondsTaken:", secondsTaken);
-
-      // If missing => ability cannot work
       if (!characterId) {
-        console.warn("No characterId found in localStorage. Ability disabled.");
         return 0;
       }
 
-      // Send ability request to backend
       const res = await fetch("/api/character/ability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          characterId, // MUST be the backend ID: "ugglan", "björnen", etc.
+          characterId,
           word,
           secondsTaken,
         }),
       });
 
-      // Debug log for response status
-       console.log("Ability Debug → response status:", res.status);
-
-      // Backend returns 404 → character not found → ability = 0
       if (!res.ok) {
-        console.warn("Ability request failed:", res.status);
         return 0;
       }
 
-      // Extract bonus
       const data = await res.json();
-      // Debug log for backend response
-       console.log("Ability Debug ==> backend response:", data);
       return data.bonusPoints ?? 0;
     } catch (err) {
       console.error("Ability bonus error:", err);
@@ -193,79 +173,75 @@ export function useGameEngine(
   // VALIDATE WORD
   // -----------------------------
   const validateWord = async (word: string, categoryId: string) => {
-  if (word.length < 2) return;
+    if (word.length < 2) return;
 
-  if (!checkWordWithLetters(word, categoryId, categories, allLetters)) {
-    return;
-  }
-
-  const availablePool = buildAvailablePool(categoryId);
-
-  try {
-    const res = await fetch("/api/word/validate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        Word: word.trim(),
-        Category: categoryId,
-        Letters: availablePool,
-      }),
-    });
-
-    const raw = await res.text();
-    let data: ValidateResponse;
-
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      console.error("Invalid JSON");
+    if (!checkWordWithLetters(word, categoryId, categories, allLetters)) {
       return;
     }
 
-    if (data.isValid) {
-      // Ability bonus
-      const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
-      bonusRef.current += bonus;
+    const availablePool = buildAvailablePool(categoryId);
 
-      // Joker multiplier — apply BEFORE updating category state
-      if (applyJokerFn) {
-        const multiplier = await applyJokerFn(word, categoryId);
-        if (multiplier > 1) {
-          console.log(`🃏 Joker triggered for "${word}" in ${categoryId}`);
-        }
+    try {
+      const res = await fetch("/api/word/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          Word: word.trim(),
+          Category: categoryId,
+          Letters: availablePool,
+        }),
+      });
+
+      const raw = await res.text();
+      let data: ValidateResponse;
+
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        console.error("Invalid JSON");
+        return;
       }
 
-      // Update category
-      setCategories((prev) => ({
-        ...prev,
-        [categoryId]: {
-          ...prev[categoryId],
-          valid: true,
-          word,
-          feedback: "",
-        },
-      }));
+      if (data.isValid) {
+        const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
+        bonusRef.current += bonus;
 
-      // Submit to SignalR
-      submitWord?.(categoryId, word);
-    } else {
-      setCategories((prev) => ({
-        ...prev,
-        [categoryId]: {
-          ...prev[categoryId],
-          valid: false,
-          word,
-          feedback: data.message || "Invalid",
-        },
-      }));
+        if (applyJokerFn) {
+          const multiplier = await applyJokerFn(word, categoryId);
+          if (multiplier > 1) {
+            console.log(`Joker triggered for "${word}" in ${categoryId}`);
+          }
+        }
+
+        setCategories((prev) => ({
+          ...prev,
+          [categoryId]: {
+            ...prev[categoryId],
+            valid: true,
+            word,
+            feedback: "",
+          },
+        }));
+
+        submitWord?.(categoryId, word);
+      } else {
+        setCategories((prev) => ({
+          ...prev,
+          [categoryId]: {
+            ...prev[categoryId],
+            valid: false,
+            word,
+            feedback: data.message || "Invalid",
+          },
+        }));
+      }
+    } catch (err) {
+      console.error("Validation error:", err);
     }
-  } catch (err) {
-    console.error("Validation error:", err);
-  }
-};;
+  };
 
   // -----------------------------
   // RESET FUNCTIONS

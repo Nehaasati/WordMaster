@@ -81,6 +81,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+backend/wwwroot/
 
 # Gatsby files
 .cache/
@@ -145,6 +146,10 @@ obj/
 # xUnit
 TestResults/
 
+# Mutation testing
+StrykerOutput/
+**/StrykerOutput/
+
 # Playwright
 test-results/
 playwright-report/
@@ -154,4 +159,6 @@ playwright/.cache/
 *.xml
 
 Testing/.features-gen/
+Testing/k6/results/
+Testing/security/results/
 MyNotes.md

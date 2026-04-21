@@ -1,0 +1,134 @@
+name: Security
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: Base URL for the deployed app
+        required: false
+        type: string
+  schedule:
+    - cron: "30 2 * * *"
+
+jobs:
+  abuse-pr:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      TARGET_URL: http://127.0.0.1:5024
+      FAIL_ON_FINDINGS: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Start backend
+        run: |
+          dotnet run --project backend/backend.csproj --urls ${TARGET_URL} &
+          for i in {1..30}; do
+            if curl --fail --silent "${TARGET_URL}/api/health" > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend did not become healthy in time."
+          exit 1
+
+      - name: Run local abuse checks
+        run: npm --prefix Testing run test:security:abuse
+        env:
+          BASE_URL: ${{ env.TARGET_URL }}
+          FAIL_ON_FINDINGS: ${{ env.FAIL_ON_FINDINGS }}
+
+      - name: Publish workflow summary
+        if: always()
+        run: |
+          echo "## Security PR Abuse Checks" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Target URL: ${TARGET_URL}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Fail on findings: ${FAIL_ON_FINDINGS}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f Testing/security/results/multiplayer-abuse-report.md ]; then
+            cat Testing/security/results/multiplayer-abuse-report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload security artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-pr-results-${{ github.run_id }}
+          path: Testing/security/results/**
+          if-no-files-found: ignore
+
+  deployed-security:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      TARGET_URL: ${{ github.event.inputs.target_url || vars.RENDER_BASE_URL }}
+      FAIL_ON_FINDINGS: false
+      ZAP_STRICT: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Validate target URL
+        run: |
+          if [ -z "${TARGET_URL}" ]; then
+            echo "TARGET_URL is empty. Set the RENDER_BASE_URL repository variable or provide a manual workflow input."
+            exit 1
+          fi
+
+      - name: Run ZAP baseline scan
+        run: npm --prefix Testing run test:security:zap
+        env:
+          BASE_URL: ${{ env.TARGET_URL }}
+          ZAP_STRICT: ${{ env.ZAP_STRICT }}
+
+      - name: Run multiplayer and shop abuse checks
+        if: always()
+        run: npm --prefix Testing run test:security:abuse
+        env:
+          BASE_URL: ${{ env.TARGET_URL }}
+          FAIL_ON_FINDINGS: ${{ env.FAIL_ON_FINDINGS }}
+
+      - name: Publish workflow summary
+        if: always()
+        run: |
+          echo "## Security Run" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Target URL: ${TARGET_URL}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ZAP strict: ${ZAP_STRICT}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Fail on abuse findings: ${FAIL_ON_FINDINGS}" >> "$GITHUB_STEP_SUMMARY"
+          find Testing/security/results -type f 2>/dev/null | sed 's/^/- Artifact: /' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f Testing/security/results/multiplayer-abuse-report.md ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            cat Testing/security/results/multiplayer-abuse-report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload security artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-results-${{ github.run_id }}
+          path: Testing/security/results/**
+          if-no-files-found: ignore

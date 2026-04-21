@@ -4,6 +4,14 @@ using WordMaster.Services;
 // This hub is used for real-time updates in the lobby (e.g., when players join or leave).
 public class LobbyHub : Hub
 {
+  private readonly GameEngine _engine;
+  private readonly CharacterService _characterService;
+
+  public LobbyHub(GameEngine engine, CharacterService characterService)
+  {
+    _engine = engine;
+    _characterService = characterService;
+  }
   public override async Task OnConnectedAsync()
   {
     // Log the new connection for debugging purposes
@@ -59,19 +67,33 @@ public class LobbyHub : Hub
 
   public async Task FinishGame(string lobbyId)
   {
-    await Clients.Group(lobbyId).SendAsync("MatchEnded", lobbyId);
-
-    Console.WriteLine($"Lobby {lobbyId} has finished by a player.");
+    var result = ComputeScores(lobbyId, stopperPlayerId: null);
+    PersistScores(lobbyId, result.TotalScores);
+    await Clients.Group(lobbyId).SendAsync("MatchEnded", lobbyId, result.TotalScores);
+    Console.WriteLine($"Lobby {lobbyId} finished.");
   }
-  public async Task StopGame(string lobbyId, string stoppedByPlayerId, int score)
+  public async Task StopGame(string lobbyId, string stoppedByPlayerId)
   {
-    await Clients.Group(lobbyId).SendAsync("GameStopped", lobbyId, stoppedByPlayerId, score);
-    Console.WriteLine($"Lobby {lobbyId}: Player {stoppedByPlayerId} stopped the game with score {score}.");
+    var result = ComputeScores(lobbyId, stopperPlayerId: stoppedByPlayerId);
+    PersistScores(lobbyId, result.TotalScores);
+    await Clients.Group(lobbyId).SendAsync("GameStopped", lobbyId, stoppedByPlayerId, result.TotalScores);
+    Console.WriteLine($"Lobby {lobbyId}: Player {stoppedByPlayerId} stopped the game.");
   }
   public async Task SubmitWord(string lobbyId, string playerId, string category, string word)
   {
-      await Clients.Group(lobbyId).SendAsync("WordSubmitted", playerId, category, word.Trim().ToUpperInvariant());
-      Console.WriteLine($"Lobby {lobbyId}: Player {playerId} submitted '{word}' in '{category}'");
+    var normalized = word.Trim().ToUpperInvariant();
+    _engine.SaveSubmittedWord(lobbyId, playerId, category, normalized);
+
+    await Clients.Group(lobbyId).SendAsync("WordSubmitted", playerId, category, normalized);
+
+    var result = ComputeScores(lobbyId, stopperPlayerId: null);
+    await Clients.Group(lobbyId).SendAsync("ScoreUpdate", new
+    {
+      totalScores = result.TotalScores,
+      categoryPoints = result.CategoryPoints
+    });
+
+    Console.WriteLine($"Lobby {lobbyId}: Player {playerId} submitted '{normalized}' in '{category}'");
   }
 
   // A signalR to manage restart the game/ new round
@@ -80,11 +102,6 @@ public class LobbyHub : Hub
     await Clients.Group(lobbyId).SendAsync("LobbyReset", lobbyId);
   }
 
-  // A signalR to notify when a player votes to restart
-  public async Task PlayerRestartVote(string lobbyId, string playerId)
-  {
-    await Clients.Group(lobbyId).SendAsync("PlayerRestartVote", playerId);
-  }
 
   // A signalR to manage the lobby state when one player leavs the lobby
   public async Task PlayerLeft(string lobbyId, string playerId)
@@ -96,6 +113,54 @@ public class LobbyHub : Hub
   public async Task HostChanged(string lobbyId, string newHostId)
   {
     await Clients.Group(lobbyId).SendAsync("HostChanged", newHostId);
+  }
+  private ScoreCalculator.ScoreResult ComputeScores(string lobbyId, string? stopperPlayerId)
+  {
+    var lobby = _engine.GetLobby(lobbyId);
+    if (lobby == null)
+      return new ScoreCalculator.ScoreResult(
+        new Dictionary<string, int>(),
+        new Dictionary<string, Dictionary<string, int>>()
+      );
+
+    var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>();
+    var playerContexts = new Dictionary<string, ScoreCalculator.PlayerContext>();
+    var gameStart = lobby.GameStartTime ?? DateTime.UtcNow;
+
+    foreach (var player in lobby.Players)
+    {
+      var words = lobby.SubmittedWords.TryGetValue(player.Id, out var w)
+        ? w : new Dictionary<string, string>();
+      var timestamps = lobby.WordTimestamps.TryGetValue(player.Id, out var t)
+        ? t : new Dictionary<string, DateTime>();
+
+      var catSubs = new Dictionary<string, ScoreCalculator.CategorySubmission>();
+      var secondsPerCat = new Dictionary<string, double>();
+
+      foreach (var kvp in words)
+      {
+        catSubs[kvp.Key] = new ScoreCalculator.CategorySubmission(kvp.Value, true);
+        if (timestamps.TryGetValue(kvp.Key, out var ts))
+          secondsPerCat[kvp.Key] = (ts - gameStart).TotalSeconds;
+      }
+
+      submissions[player.Id] = catSubs;
+      playerContexts[player.Id] = new ScoreCalculator.PlayerContext(player.CharacterId, secondsPerCat);
+    }
+
+    return ScoreCalculator.Calculate(submissions, stopperPlayerId, playerContexts, _characterService);
+  }
+
+  private void PersistScores(string lobbyId, Dictionary<string, int> scores)
+  {
+    var lobby = _engine.GetLobby(lobbyId);
+    if (lobby == null) return;
+
+    foreach (var player in lobby.Players)
+    {
+      if (scores.TryGetValue(player.Id, out var score))
+        player.Score = score;
+    }
   }
 
 }
