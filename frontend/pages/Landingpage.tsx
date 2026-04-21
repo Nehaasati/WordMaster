@@ -76,7 +76,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
 
   return (
     <div className="wm-modal-overlay" onClick={handleBackdrop}>
-      <div className="wm-modal">
+      <div className="wm-modal" data-testid="create-modal">
         <h2 className="wm-modal-title">Create Lobby</h2>
 
         <NameStep playerName={playerName} onPlayerNameChange={setPlayerName} />
@@ -92,6 +92,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose }) => {
           </button>
 
           <button
+            data-testid="modal-create-cancel"
             className="wm-modal-btn wm-modal-btn--cancel"
             onClick={onClose}
           >
@@ -135,12 +136,13 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
 
   return (
     <div className="wm-modal-overlay" onClick={handleBackdrop}>
-      <div className="wm-modal">
+      <div className="wm-modal" data-testid="join-modal">
         <h2 className="wm-modal-title">Join Lobby</h2>
 
         <NameStep playerName={playerName} onPlayerNameChange={setPlayerName} />
 
         <input
+          data-testid="join-code-input"
           className="wm-modal-input"
           placeholder="Enter lobby code..."
           value={code}
@@ -159,6 +161,7 @@ const JoinModal: React.FC<JoinModalProps> = ({ onClose }) => {
           </button>
 
           <button
+            data-testid="modal-join-cancel"
             className="wm-modal-btn wm-modal-btn--cancel"
             onClick={onClose}
           >
