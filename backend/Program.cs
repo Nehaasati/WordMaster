@@ -11,7 +11,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 builder.Services.AddControllers();                 // ← ADD servicess 
 builder.Services.AddSingleton<CharacterService>();
-
+builder.Services.AddSingleton<JokerService>();
 // Load the word dictionary
 var wordDictionary = WordDictionaryLoader.LoadFromFiles
     (
@@ -331,6 +331,7 @@ app.MapPost("/api/lobby/{lobbyId}/restart", async (
     string lobbyId,
     string playerId,
     GameEngine engine,
+    JokerService jokerService,
     IHubContext<LobbyHub> hub
 ) =>
 {
@@ -351,6 +352,7 @@ app.MapPost("/api/lobby/{lobbyId}/restart", async (
         return Results.BadRequest("Only host can restart");
 
     engine.ResetLobbyForNewRound(lobbyId);
+    jokerService.ClearLobby(lobbyId);
 
     await hub.Clients.Group(lobbyId)
         .SendAsync("LobbyReset", lobbyId);
@@ -477,7 +479,83 @@ app.MapPost("/api/classic/game/skip", (ClassicGameEngine engine) =>
         requiredLetter = engine.RequiredLetter
     });
 });
+// GET /api/lobby/{lobbyId}/joker/{playerId}
+// Returns the current active joker for a player (or null if none).
+app.MapGet("/api/lobby/{lobbyId}/joker/{playerId}", (
+    string lobbyId,
+    string playerId,
+    JokerService jokerService) =>
+{
+    var joker = jokerService.GetActiveJoker(lobbyId, playerId);
+    if (joker == null)
+        return Results.Ok(new { hasJoker = false, jokerLetter = (string?)null });
+ 
+    return Results.Ok(new
+    {
+        hasJoker    = true,
+        jokerLetter = joker.JokerLetter,
+        isUsed      = joker.IsUsed
+    });
+});
+ // POST /api/lobby/{lobbyId}/joker/{playerId}/apply
+// Called after a word is validated as correct.
+// Returns the score multiplier (1 = no bonus, 2 = double).
+app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/apply", (
+    string lobbyId,
+    string playerId,
+    ApplyJokerRequest request,
+    JokerService jokerService) =>
+{
+    var multiplier = jokerService.ApplyJoker(lobbyId, playerId, request.Word, request.Category, request.UsedWildcard);
+    bool triggered = multiplier > 1;
 
+    return Results.Ok(new
+    {
+        multiplier = multiplier,
+        jokerTriggered = triggered,
+        word = request.Word,
+        category = request.Category,
+        message = triggered
+            ? $"🃏 JOKER! Dubbla poäng för \"{request.Word}\"!"
+            : "No joker bonus."
+    });
+});
+// POST /api/lobby/{lobbyId}/joker/{playerId}/activate
+app.MapPost("/api/lobby/{lobbyId}/joker/{playerId}/activate", (
+    string lobbyId,
+    string playerId,
+    JokerActivateRequest request,
+    JokerService jokerService,
+    GameEngine engine) =>
+{
+    var lobby = engine.GetLobby(lobbyId);
+    if (lobby == null)
+        return Results.NotFound(new { error = "Lobby not found" });
+
+    var player = lobby.Players.FirstOrDefault(p => p.Id == playerId);
+    if (player == null)
+        return Results.NotFound(new { error = "Player not found" });
+
+    const int cost = 10;
+    if (player.Score < cost)
+        return Results.BadRequest(new { error = $"Inte tillräckligt med poäng. Joker kostar {cost} poäng." });
+
+    var joker = jokerService.ActivateJoker(lobbyId, playerId);
+    if (joker == null)
+        return Results.BadRequest(new { error = "Du har redan en aktiv Joker." });
+
+    player.SpentScore += cost;
+    player.Score -= cost;
+    Console.WriteLine($"[Joker] {player.Name} activated Joker: {joker.JokerLetter}");
+
+    return Results.Ok(new
+    {
+        jokerLetter = joker.JokerLetter,
+        cost        = cost,
+        newScore    = player.Score,
+        message     = $"Bokstaven {joker.JokerLetter} är din Joker! Ord med denna bokstav ger dubbla poäng."
+    });
+});
 // Map the SignalR hub for real-time lobby updates
 app.MapHub<LobbyHub>("/lobbyHub");
 
@@ -512,7 +590,8 @@ static IResult ToShopResult(ShopOperationResult result)
 }
 
 app.Run();
-
+public record ApplyJokerRequest(string Word, string Category = "", bool UsedWildcard=false);
+public record JokerActivateRequest(int CurrentScore);
 public record ValidateRequest(string Word, string Category, List<char> Letters);
 public record SubmitWordRequest(string Word);
 public record StartGameRequest(string GameMode);
