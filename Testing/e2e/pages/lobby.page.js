@@ -27,4 +27,28 @@ export default class LobbyPage {
     // Target the player row in the players-list containing the name
     return this.page.locator('.players-list').locator(`text=${name}`).locator('..');
   }
+  async getLobbyCode() {
+  return this.page.getByTestId('lobby-code').innerText();
+}
+
+async joinWithCode(code) {
+  await this.page.getByTestId('input-join-code').fill(code);
+  await this.page.getByTestId('btn-join-lobby').click();
+}
+
+async clickReady() {
+  await this.page.getByTestId('btn-ready').click();
+}
+
+async startGame() {
+  await this.page.getByTestId('btn-start-game').click();
+}
+
+async waitForGameStart() {
+  await this.page.getByTestId('game-page').waitFor();
+}
+
+async waitForReturnToLobby() {
+  await this.page.getByTestId('lobby-page').waitFor();
+}
 }
