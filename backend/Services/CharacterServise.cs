@@ -16,51 +16,51 @@ public class CharacterService
         {
             Id   = "ugglan",
             Name = "Ugglan",
-            Description = "The wise owl rewards long words.",
+            Description = "Den kloka ugglan belönar långa ord.",
             Ability = new CharacterAbility
             {
                 Type             = AbilityType.LongWordBonus,
                 BonusPoints      = 3,
                 ThresholdLength  = 5,        // word must be LONGER than 5 letters
-                EffectDescription = "+3 bonus points for words longer than 5 letters"
+                EffectDescription = "+3 bonuspoäng för ord längre än 5 bokstäver"
             }
         },
         new Character
         {
             Id   = "leopard",
             Name = "Leopard",
-            Description = "Lightning fast — rewards quick answers.",
+            Description = "Blixtsnabb: belönar snabba svar.",
             Ability = new CharacterAbility
             {
                 Type              = AbilityType.FastAnswerBonus,
                 BonusPoints       = 3,
                 ThresholdSeconds  = 60,      // word must be submitted within 60 seconds
-                EffectDescription = "+3 bonus points for words submitted within 60 seconds"
+                EffectDescription = "+3 bonuspoäng för ord som skickas in inom 60"
             }
         },
         new Character
         {
             Id   = "musen",
             Name = "Musen",
-            Description = "Small but mighty — loves short words.",
+            Description = "Liten men kraftfull — älskar korta ord.",
             Ability = new CharacterAbility
             {
                 Type             = AbilityType.ShortWordBonus,
                 BonusPoints      = 1,
                 ThresholdLength  = 4,        // word must be SHORTER than 4 letters
-                EffectDescription = "+1 bonus point for words shorter than 4 letters"
+                EffectDescription = "+1 bonuspoäng för ord kortare än 4 bokstäver"
             }
         },
         new Character
         {
             Id   = "björnen",
             Name = "Björnen",
-            Description = "The bear shrugs off freeze attacks.",
+            Description = "Björnen är stor och stark immun mot Freeze-kaoset.",
             Ability = new CharacterAbility
             {
                 Type              = AbilityType.FreezeImmunity,
                 BonusPoints       = 0,
-                EffectDescription = "Immune to the Freeze chaos event"
+                EffectDescription = "Immun mot Freeze-kaoset"
             }
         }
     };
