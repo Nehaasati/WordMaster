@@ -53,12 +53,13 @@ During the game, players can use points in the shop:
 🎴 Joker Card
 Gives a random letter
 If used in a word → double points
-⚔️ Player Interaction
 
+⚔️ Player Interaction
 Players can:
 Attack each other using power-ups (e.g. Freeze)
 Gain advantages through shop items
 Strategically use Joker cards
+
 🏁 Game End
 The game ends when:
 A player finishes all categories or
