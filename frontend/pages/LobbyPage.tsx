@@ -139,12 +139,10 @@ export default function LobbyPage() {
      (prevents incorrect host/guest behavior)
  */
   useEffect(() => {
-    
     if (entryMode === "invite" && !fromResult) {
       localStorage.removeItem("playerId");
       localStorage.removeItem("isHost");
     }
-    
   }, [entryMode, fromResult]);
 
   // Player name handling
@@ -181,9 +179,8 @@ export default function LobbyPage() {
         }
       } catch (err) {
         console.error("Error fetching characters:", err);
-      } finally {
-        setLoadingCharacters(false);
       }
+      setLoadingCharacters(false);
     };
     fetchCharacters();
   }, []);
@@ -441,20 +438,40 @@ export default function LobbyPage() {
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
           <div className="player-box" style={{ marginBottom: "20px" }}>
-            <p style={{ color: "#e6e315", fontWeight: "800",fontFamily: "Inter, sans-serif", textShadow: "0 0 9px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>Dit namn: {playerName}</p>
+            <p
+              style={{
+                color: "#e6e315",
+                fontWeight: "800",
+                fontFamily: "Inter, sans-serif",
+                textShadow: "0 0 9px rgba(160, 80, 255, 0.8)",
+                fontSize: "1rem",
+                margin: "0px",
+              }}
+            >
+              Dit namn: {playerName}
+            </p>
           </div>
 
           <div className="players-list">
             {players.map((p, index) => (
               <div key={p.id} className="player-box">
-                <p  style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 8px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>
+                <p
+                  style={{
+                    color: "#e6e315",
+                    fontWeight: "800",
+                    fontFamily: "Inter, sans-serif",
+                    textShadow: "0 0 8px rgba(160, 80, 255, 0.8)",
+                    fontSize: "1rem",
+                    margin: "0px",
+                  }}
+                >
                   Spelare {index + 1}: {p.name} {p.isReady ? "Ja" : ""}
                 </p>
               </div>
             ))}
           </div>
 
-          {realLobbyId && isHost &&(
+          {realLobbyId && isHost && (
             <div className="lobby-info">
               <p className="wm-modal-label">
                 LOBBY ID:{" "}
@@ -470,6 +487,7 @@ export default function LobbyPage() {
 
               <button
                 onClick={copyToClipboard}
+                data-testid="btn-copy-invite"
                 className="wm-modal-btn wm-modal-btn--cancel"
               >
                 KOPIERA INBJUDNINGSLÄNK
@@ -484,7 +502,11 @@ export default function LobbyPage() {
             </p>
           ) : character ? (
             <div className="character-carousel">
-              <button className="ch-arrow" onClick={prev}>
+              <button
+                className="ch-arrow"
+                data-testid="carousel-prev"
+                onClick={prev}
+              >
                 <img src="/images/prev.png" className="ch-arrow-img" />
               </button>
 
@@ -505,7 +527,11 @@ export default function LobbyPage() {
                 </div>
               </div>
 
-              <button className="ch-arrow" onClick={next}>
+              <button
+                className="ch-arrow"
+                data-testid="carousel-next"
+                onClick={next}
+              >
                 <img src="/images/next.png" className="ch-arrow-img" />
               </button>
             </div>
@@ -517,6 +543,7 @@ export default function LobbyPage() {
           {isHost && !ready && players.length < 2 && (
             <button
               className="wm-modal-btn wm-modal-btn--cancel"
+              data-testid="btn-add-bot"
               style={{ marginTop: "1px", background: "rgba(0, 0, 0, 0.45)" }}
               onClick={async () => {
                 const res = await fetch(`/api/lobby/${realLobbyId}/add-bot`, {
@@ -541,6 +568,7 @@ export default function LobbyPage() {
                   className={`game-mode-btn ${
                     gameMode === "standard" ? "active" : ""
                   }`}
+                  data-testid="btn-mode-standard"
                   onClick={() => setGameMode("standard")}
                 >
                   Standard WordMaster
@@ -549,6 +577,7 @@ export default function LobbyPage() {
                   className={`game-mode-btn ${
                     gameMode === "blitz" ? "active" : ""
                   }`}
+                  data-testid="btn-mode-blitz"
                   onClick={() => setGameMode("blitz")}
                 >
                   Blitz WordMaster
@@ -562,6 +591,7 @@ export default function LobbyPage() {
           {/* Ready / Start button */}
           <button
             className={`ready-btn ${ready ? "isReady-btn" : ""} ${isHost ? "ready-btn--host" : "ready-btn--guest"}`}
+            data-testid="btn-ready"
             onClick={async () => {
               // FIRST CLICK → not ready yet
               if (!ready) {
@@ -654,6 +684,7 @@ export default function LobbyPage() {
               ref={infoBtnRef}
               type="button"
               className="info-icon"
+              data-testid="btn-info"
               onClick={() => setOpen((prev) => !prev)}
             >
               <img src="/images/information.png" alt="Information" />

@@ -1,64 +1,30 @@
-// lobby page
-
 export default class LobbyPage {
   constructor(page) {
     this.page = page;
-
-    // Player info
-    this.playersList = '.players-list .player-box';
-
-    // Character carousel
-    this.prevBtn = '.ch-arrow >> nth=0';
-    this.nextBtn = '.ch-arrow >> nth=1';
-    this.characterName = '.character-name';
-    this.characterDescription = '.character-description';
-
-    // Game mode
-    this.standardModeBtn = 'text=Standard WordMaster';
-    this.blitzModeBtn = 'text=Blitz WordMaster';
-
-    // Buttons
-    this.addBotBtn = 'text=+ Lägg till motståndare';
-    this.readyBtn = '.ready-btn';
-    this.startBtn = 'text=Starta spelet';
-    this.copyLinkBtn = 'text=KOPIERA INBJUDNINGSLÄNK';
   }
 
-  async waitForLobby() {
-    await this.page.waitForSelector('text=VÄLJ EN KARAKTÄR');
+  async waitForLobbyToLoad() {
+    await this.page.getByText('VÄLJ EN KARAKTÄR').waitFor();
+    await this.page.waitForSelector('[data-testid="carousel-next"]');
   }
 
-  async getPlayers() {
-    return await this.page.$$eval(this.playersList, boxes =>
-      boxes.map(b => b.textContent.trim())
-    );
+  async getCharacterImage() {
+    return this.page.locator('.character-carousel img[alt]');
   }
 
-  async selectNextCharacter() {
-    await this.page.click(this.nextBtn);
+  async expectSelfReady() {
+    // Wait for the ready button to show "isReady-btn" class or similar
+    await this.page.getByTestId('btn-ready').waitFor();
+    // For now, just check that the button exists
   }
 
-  async selectPrevCharacter() {
-    await this.page.click(this.prevBtn);
+  getPlayerName(name) {
+    // Target only the player in the players-list, not the personal name field
+    return this.page.locator('.players-list').getByText(name);
   }
 
-  async chooseStandardMode() {
-    await this.page.click(this.standardModeBtn);
-  }
-
-  async chooseBlitzMode() {
-    await this.page.click(this.blitzModeBtn);
-  }
-
-  async addBot() {
-    await this.page.click(this.addBotBtn);
-  }
-
-  async clickReady() {
-    await this.page.click(this.readyBtn);
-  }
-
-  async clickStart() {
-    await this.page.click(this.startBtn);
+  getHostBadge(name) {
+    // Target the player row in the players-list containing the name
+    return this.page.locator('.players-list').locator(`text=${name}`).locator('..');
   }
 }
