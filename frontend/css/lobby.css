@@ -410,7 +410,7 @@ height: 400px;
 }
 .thought-bubble-text p {
   margin: 0 0 4px 0;
-  font-size: 1rem;
+  font-size: 0.90rem;
   font-style: 'Cinzel', serif;
   font-weight: 700;
 }
