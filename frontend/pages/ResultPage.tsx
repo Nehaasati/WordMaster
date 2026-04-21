@@ -135,7 +135,7 @@ export default function ResultPage() {
                 </>
               ) : (
                 <>
-                  <p className="rp-winner-text">
+                  <p data-testid="winner-text" className="rp-winner-text">
                     {isWinner ? "Du vann! Grattis!" : `${winner.name} vann!`}
                   </p>
                 </>
@@ -170,6 +170,7 @@ export default function ResultPage() {
             </p>
           )}
           <button
+            data-testid="btn-restart"
             className="rp-btn rp-btn--primary"
             onClick={async () => {
               const playerId = localStorage.getItem("wordmaster-player-id");
