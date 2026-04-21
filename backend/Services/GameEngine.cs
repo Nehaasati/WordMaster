@@ -397,6 +397,7 @@ public class Lobby
 public Dictionary<string, Dictionary<string, string>> SubmittedWords { get; set; } = new();
 public Dictionary<string, Dictionary<string, DateTime>> WordTimestamps { get; set; } = new();
 public DateTime? GameStartTime { get; set; }
+}
 
 // Player class to represent a player in the lobby. This can be expanded with more properties as needed.
 public class Player
@@ -442,4 +443,4 @@ public enum GameState
     PlayingRound,
     GameFinished
 }
-}
+
