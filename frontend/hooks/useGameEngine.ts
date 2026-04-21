@@ -9,6 +9,7 @@ import type {
 export function useGameEngine(
   lobbyId?: string,
   submitWord?: (category: string, word: string) => void,
+  applyJokerFn?: (word: string, categoryId: string) => Promise<number>,
 ) {
   // -----------------------------
   // INITIAL CATEGORY SETUP
@@ -57,7 +58,18 @@ export function useGameEngine(
 
   // Refs for scoring + abilities
   const scoreRef = useRef(0);
+  const bonusRef = useRef(0);
 
+  // Track words for scoring
+  const myWordsRef = useRef<Record<string, string>>({});
+  const opponentWordsRef = useRef<Record<string, Set<string>>>({});
+
+  // Track round start time (for abilities)
+  const roundStartTime = useRef(0);
+
+  useEffect(() => {
+    roundStartTime.current = Date.now();
+  }, []);
 
   // -----------------------------
   // TIMER
@@ -90,6 +102,8 @@ export function useGameEngine(
               isExtra: false,
             })),
           );
+
+          roundStartTime.current = Date.now();
         }
       } catch {
         console.error("Failed to fetch letters");
@@ -119,6 +133,40 @@ export function useGameEngine(
     }
 
     return pool;
+  };
+
+  // -----------------------------
+  // CHARACTER ABILITY BONUS
+  // -----------------------------
+  const calculateAbilityBonus = async (word: string): Promise<number> => {
+    try {
+      const secondsTaken = (Date.now() - roundStartTime.current) / 1000;
+      const characterId = localStorage.getItem("characterId");
+
+      if (!characterId) {
+        return 0;
+      }
+
+      const res = await fetch("/api/character/ability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          characterId,
+          word,
+          secondsTaken,
+        }),
+      });
+
+      if (!res.ok) {
+        return 0;
+      }
+
+      const data = await res.json();
+      return data.bonusPoints ?? 0;
+    } catch (err) {
+      console.error("Ability bonus error:", err);
+      return 0;
+    }
   };
 
   // -----------------------------
@@ -158,8 +206,16 @@ export function useGameEngine(
       }
 
       if (data.isValid) {
+        const bonus = data.bonusPoints ?? (await calculateAbilityBonus(word));
+        bonusRef.current += bonus;
 
-        // Update category
+        if (applyJokerFn) {
+          const multiplier = await applyJokerFn(word, categoryId);
+          if (multiplier > 1) {
+            console.log(`Joker triggered for "${word}" in ${categoryId}`);
+          }
+        }
+
         setCategories((prev) => ({
           ...prev,
           [categoryId]: {
@@ -170,7 +226,6 @@ export function useGameEngine(
           },
         }));
 
-        // Submit to SignalR
         submitWord?.(categoryId, word);
       } else {
         setCategories((prev) => ({
@@ -197,10 +252,13 @@ export function useGameEngine(
 
   const resetRound = () => {
     scoreRef.current = 0;
+    bonusRef.current = 0;
     setScore(0);
     setStopped(false);
     setTimeLeft(0);
     setCategoryPoints({});
+    myWordsRef.current = {};
+    opponentWordsRef.current = {};
   };
 
   // -----------------------------
@@ -222,9 +280,13 @@ export function useGameEngine(
     score,
     setScore,
     scoreRef,
+    bonusRef,
 
     categoryPoints,
     setCategoryPoints,
+
+    myWordsRef,
+    opponentWordsRef,
 
     validateWord,
     buildAvailablePool,

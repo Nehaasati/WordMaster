@@ -6,11 +6,13 @@ public class LobbyHub : Hub
 {
   private readonly GameEngine _engine;
   private readonly CharacterService _characterService;
+  private readonly JokerService _jokerService;
 
-  public LobbyHub(GameEngine engine, CharacterService characterService)
+  public LobbyHub(GameEngine engine, CharacterService characterService, JokerService jokerService)
   {
     _engine = engine;
     _characterService = characterService;
+    _jokerService = jokerService;
   }
   public override async Task OnConnectedAsync()
   {
@@ -125,6 +127,7 @@ public class LobbyHub : Hub
 
     var submissions = new Dictionary<string, Dictionary<string, ScoreCalculator.CategorySubmission>>();
     var playerContexts = new Dictionary<string, ScoreCalculator.PlayerContext>();
+    var categoryMultipliers = new Dictionary<string, Dictionary<string, int>>();
     var gameStart = lobby.GameStartTime ?? DateTime.UtcNow;
 
     foreach (var player in lobby.Players)
@@ -136,19 +139,25 @@ public class LobbyHub : Hub
 
       var catSubs = new Dictionary<string, ScoreCalculator.CategorySubmission>();
       var secondsPerCat = new Dictionary<string, double>();
+      var multipliers = new Dictionary<string, int>();
 
       foreach (var kvp in words)
       {
         catSubs[kvp.Key] = new ScoreCalculator.CategorySubmission(kvp.Value, true);
         if (timestamps.TryGetValue(kvp.Key, out var ts))
           secondsPerCat[kvp.Key] = (ts - gameStart).TotalSeconds;
+
+        var multiplier = _jokerService.GetCategoryMultiplier(lobbyId, player.Id, kvp.Key);
+        if (multiplier > 1)
+          multipliers[kvp.Key] = multiplier;
       }
 
       submissions[player.Id] = catSubs;
       playerContexts[player.Id] = new ScoreCalculator.PlayerContext(player.CharacterId, secondsPerCat);
+      categoryMultipliers[player.Id] = multipliers;
     }
 
-    return ScoreCalculator.Calculate(submissions, stopperPlayerId, playerContexts, _characterService);
+    return ScoreCalculator.Calculate(submissions, stopperPlayerId, playerContexts, _characterService, categoryMultipliers);
   }
 
   private void PersistScores(string lobbyId, Dictionary<string, int> scores)
