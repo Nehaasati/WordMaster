@@ -23,7 +23,8 @@ RUN cd backend && dotnet restore
 # Copy backend source
 COPY backend ./backend
 
-
+# Use the frontend assets produced by the frontend build stage.
+COPY --from=frontend-builder /app/backend/wwwroot ./backend/wwwroot
 
 # Publish backend
 RUN cd backend && dotnet publish -c Release -o /app/publish --no-restore
