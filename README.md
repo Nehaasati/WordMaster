@@ -164,7 +164,27 @@ Backend (.NET Minimal API)
         v
 In-memory lagring
 ```
-
+````
+WordMaster/
+│
+├── backend/                 # .NET 8 Minimal API
+│   ├── Data/
+│   │   ├── categories.json  # Kategorier + ord
+│   │   ├── SAOL13_*.txt     # Svenska ordlistor
+│   ├── Services/
+│   │   ├── GameEngine.cs    # Spelmotorn (huvudlogik)
+│   │   ├── WordValidator.cs # SAOL‑validering
+│   │   ├── WordDictionaryLoader.cs
+│   ├── Program.cs           # API‑endpoints
+│
+├── frontend/                # React + Vite + TypeScript
+│   ├── pages/
+│   │   ├── GamePage.tsx     # Huvudsidan
+│   ├── css/
+│   ├── tests/               # Playwright‑tester
+│
+└── README.md
+````
 ### Backend består av:
 
 * Controllers
