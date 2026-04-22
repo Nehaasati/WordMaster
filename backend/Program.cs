@@ -184,7 +184,7 @@ app.MapPost("/api/lobby/{lobbyId}/register-connection", (
 app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
     string lobbyId,
     string playerId,
-    StartGameRequest request,
+    HttpRequest request,
     GameEngine engine,
     IHubContext<LobbyHub> hub
 ) =>
@@ -206,10 +206,25 @@ app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
     if (!engine.CanStartGame(lobbyId))
         return Results.BadRequest("Players not ready");
 
+    StartGameRequest? startRequest = null;
+    if (request.ContentLength > 0)
+    {
+        try
+        {
+            startRequest = await JsonSerializer.DeserializeAsync<StartGameRequest>(
+                request.Body,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch (JsonException)
+        {
+            return Results.BadRequest("Invalid start game request");
+        }
+    }
+
     if (!engine.StartGame(lobbyId, playerId))
         return Results.BadRequest("Failed to start game");
 
-    var gameMode = string.Equals(request.GameMode, "blitz", StringComparison.OrdinalIgnoreCase)
+    var gameMode = string.Equals(startRequest?.GameMode, "blitz", StringComparison.OrdinalIgnoreCase)
         ? "blitz"
         : "standard";
 
