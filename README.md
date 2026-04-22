@@ -1,226 +1,216 @@
-██╗    ██╗ ██████╗ ██████╗ ██████╗ ███╗   ███╗ █████╗ ███████╗████████╗███████╗██████╗
-██║    ██║██╔═══██╗██╔══██╗██╔══██╗████╗ ████║██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗
-██║ █╗ ██║██║   ██║██████╔╝██║  ██║██╔████╔██║███████║███████╗   ██║   █████╗  ██████╔╝
-██║███╗██║██║   ██║██╔══██╗██║  ██║██║╚██╔╝██║██╔══██║╚════██║   ██║   ██╔══╝  ██╔══██╗
-╚███╔███╔╝╚██████╔╝██║  ██║██████╔╝██║ ╚═╝ ██║██║  ██║███████║   ██║   ███████╗██║  ██║
- ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
+WORD MASTER
 
-🎮 WORD MASTER   is a real-time multiplayer word game where players compete to find words across categories using a shared set of letters.
+Word Master är ett realtids multiplayer ordspel där spelare tävlar om att hitta giltiga ord inom olika kategorier med hjälp av ett gemensamt set bokstäver.
 
+Funktioner
+Multiplayer lobby-system
+Slumpmässig bokstavsgenerering
+Ordvalidering (ordbok, kategori och bokstavsregler)
+Poängsystem med bonusar
+In-game shop (bokstäver och power-ups)
+Karaktärer med unika förmågor
+Realtidsspel med SignalR
+Hur spelet fungerar
+Lobby skapelse
 
+En spelare skapar en ny lobby.
+Systemet genererar ett lobby-ID och en inbjudningskod.
 
-🚀 Features
-🎮 Multiplayer lobby system 
-🔤 Random letter generation
-✅ Word validation (dictionary + category + letters)
-🧮 Scoring system with bonuses
-🛒 In-game shop (letters & power-ups)
-🎭 Characters with abilities
-⚡ Real-time gameplay using SignalR
+Karaktärsval
 
+Varje spelare väljer en av fyra karaktärer:
 
-🕹️ How the Game Works
-Host Creates Lobby
-A player (host) creates a new lobby.
-The system generates a lobby ID / invite code.
+Ugglan – +3 bonuspoäng för ord längre än 5 bokstäver
+Leopard – +3 bonuspoäng för ord skickade inom 60 sekunder
+Musen – +1 bonuspoäng för ord kortare än 4 bokstäver
+Björnen – Immun mot Freeze-effekten
+Gå med i spelet
 
-Choose Character
-The host selects one of four characters:
-🦉 Ugglan – +3 bonus points for words longer than 5 letters
-🐆 Leopard – +3 bonus points for words submitted within 60 seconds
-🐭 Musen – +1 bonus point for words shorter than 4 letters
-🐻 Björnen – Immune to the Freeze chaos event
+Den andra spelaren ansluter via:
 
-Second Player Joins
-The second player joins using:
-Invite link or
-Lobby code
-The player also selects a character.
-Game Start
-The host starts the game when both players are ready.
+Inbjudningslänk, eller
+Lobbykod
 
-🔤 Gameplay
-Players receive a shared set of random letters.
-The goal is to:
-Find valid words
-Match categories
-Submit as many correct words as possible
+Båda spelare väljer karaktär.
 
-🛒 Shop & Power-ups
-During the game, players can use points in the shop:
-🔤 Buy extra letters (including Swedish vowels like Å, Ä, Ö)
-❄️ Freeze – temporarily blocks the opponent
-🎴 Joker Card
-Gives a random letter
-If used in a word → double points
+Start av spelet
 
-⚔️ Player Interaction
-Players can:
-Attack each other using power-ups (e.g. Freeze)
-Gain advantages through shop items
-Strategically use Joker cards
+Hosten startar spelet när båda spelare är redo.
 
-🏁 Game End
-The game ends when:
-A player finishes all categories or
-The round is completed
-Final scores are calculated:
-Base points
-Bonus points (character abilities)
-Shop effects
+Gameplay
 
-🧰 Tech Stack
-Layer	Technology
-Frontend	React + TypeScript + Vite
-Backend	.NET Minimal API
-Real-time	SignalR
-Testing	Unit, Integration & API Testing
-CI/CD	GitHub Actions + Render Deployment
-Security	Static analysis & dependency checks
+Spelare får ett gemensamt set slumpmässiga bokstäver.
 
+Målet är att:
 
-🏗️ Architecture
-┌──────────────────────────────────────┐
-│              Frontend                │
-│        React + TypeScript (Vite)     │
-└──────────────────┬───────────────────┘
-                   │ HTTP (REST API)
-┌──────────────────▼───────────────────┐
-│              Backend                 │
-│          .NET Minimal API            │
-│                                     │
-│  Controllers   Services   Models     │
-│                                     │
-│     SignalR (Real-time Hub)          │
-└──────────────────┬───────────────────┘
-                   │
-┌──────────────────▼───────────────────┐
-│          In-Memory Storage           │
-└──────────────────────────────────────┘
-🔌 API Overview
-Property	Value
-Frontend	http://localhost:5173
+Hitta giltiga ord
+Matcha kategorier
+Skicka in så många korrekta ord som möjligt
+Shop och power-ups
 
-Backend	http://localhost:5024
+Spelare kan använda poäng i shoppen:
 
-Format	JSON
-Real-time	/lobbyHub (SignalR)
-🧪 Testing Strategy
+Köpa extra bokstäver (inklusive Å, Ä, Ö)
+Frysa motståndaren temporärt
+Jokerkort:
+Ger en slumpmässig bokstav
+Om det används i ett ord dubbleras poängen
+Spelinteraktion
 
-This project includes:
-✅ Unit Testing (core logic)
-🔗 Integration Testing (services & flows)
-🌐 API Testing (REST endpoints)
+Spelare kan:
 
+Använda power-ups mot motståndaren
+Få fördelar via shop-items
+Använda jokerkort strategiskt
+Spelets slut
 
-Example areas tested:
-Lobby creation & joining
-Word validation
-Score calculation
-Shop transactions
+Spelet avslutas när:
 
+En spelare klarar alla kategorier, eller
+Rundans tid tar slut
 
-⚙️ CI/CD Pipeline
+Slutpoängen beräknas baserat på:
 
-Implemented using GitHub Actions:
+Grundpoäng
+Karaktärsbonusar
+Shop-effekter
+Teknikstack
 
-Pipeline steps:
-Build project
-Run automated tests
-Perform static code analysis
-Security checks (dependencies)
-Deploy to Render
+Frontend: React, TypeScript, Vite
+Backend: .NET Minimal API
+Realtid: SignalR
+Testning: Enhets-, integrations- och API-tester
+CI/CD: GitHub Actions och Render deployment
+Säkerhet: Statisk kodanalys och beroendeskanning
 
-🔐 DevSecOps
+Arkitektur
 
-Security integrated into the pipeline:
+Frontend (React + TypeScript)
+|
+| HTTP (REST API)
+v
+Backend (.NET Minimal API)
+|
+| SignalR (realtid)
+v
+In-memory lagring
 
-Static code analysis
-Dependency vulnerability scanning
-Validation of API inputs
-Error handling strategies
+Backend består av:
 
+Controllers
+Services
+Models
+SignalR Hub
+API-översikt
 
-📦 Installation
+Frontend: http://localhost:5173
+
+Backend: http://localhost:5024
+
+Format: JSON
+Realtid: /lobbyHub (SignalR)
+
+Teststrategi
+
+Projektet innehåller:
+
+Enhetstester (logik)
+Integrationstester (flöden)
+API-tester (REST endpoints)
+
+Testområden:
+
+Lobby skapande och anslutning
+Ordvalidering
+Poängberäkning
+Shop-transaktioner
+CI/CD-pipeline
+
+Implementerad med GitHub Actions.
+
+Steg i pipelinen:
+
+Installera beroenden
+Bygga applikation
+Köra tester (unit, API, UI)
+Säkerhetskontroller (dependency scanning)
+Deploy till Render
+DevSecOps
+
+Säkerhet är integrerad i pipelinen:
+
+Statisk kodanalys
+Skanning av sårbara beroenden
+Validering av API-input
+Felhanteringsstrategier
+Installation
 git clone <https://github.com/Nehaasati/WordMaste>
 cd wordmaster
-Start frontend
-cd frondend
+Frontend
+cd frontend
 npm install
 npm run dev
-
-Start backend
+Backend
 cd backend
 dotnet build
 dotnet run
-
-start test:
+Testning
 cd testing
-ui testing:
-npm run test:ui
-unit testing:
-npm run test:unit
-system testing
+
+API-test:
+
 npm run test:api
 
+UI-test:
 
-📡 Real-time Events (SignalR)
-Event	Description
-PlayerJoined	A player joins lobby
-PlayerReady	Player marked as ready
-GameStarted	Game begins
-InkReceived	Player  hit with ink
-FreezeReceived	Player frozen
+npm run test:ui
 
+Enhetstest:
 
-🧮 Scoring Rules
-Rule	Points
-Unique Word	+10
-Shared Word	+5
-Long Word	+5
-All Categories	+50
+npm run test:unit
+Realtidshändelser (SignalR)
+PlayerJoined – En spelare ansluter till lobbyn
+PlayerReady – Spelaren markerar redo
+GameStarted – Spelet startar
+InkReceived – Spelaren träffas av ink
+FreezeReceived – Spelaren fryses
+Poängsystem
+Unikt ord: +10
+Delat ord: +5
+Långt ord: +5
+Alla kategorier klara: +50
+CI/CD-flöde
 
-
-This project demonstrates:
-
-Test automation (unit, integration, API)
-CI/CD pipeline implementation
 Push / Pull Request
-        │
-        ▼
-┌─────────────────────┐
-│  Install Dependencies│
-└─────────┬───────────┘
-          ▼
-┌─────────────────────┐
-│     Build App        │
-└─────────┬───────────┘
-          ▼
-┌─────────────────────┐
-│   Run Tests          │
-│ (Unit + API+ui)         │
-└─────────┬───────────┘
-          ▼
-┌─────────────────────┐
-│ Security Checks      │
-│ (Dependencies scan)  │
-└─────────┬───────────┘
-          ▼
-┌─────────────────────┐
-│ Deploy to Render     │
-└─────────────────────┘
+→ Installera beroenden
+→ Bygg applikation
+→ Kör tester (unit, API, UI)
+→ Säkerhetskontroller
+→ Deploy till Render
 
-DevSecOps integration
-Analysis of test results and system quality
+Team
 
+Neha Asati
+GitHub: https://github.com/Nehaasati
 
+LinkedIn: https://www.linkedin.com/in/neha-asati-28aab959/
 
-👥 Team
-Neha Asati : https://github.com/Nehaasati / https://www.linkedin.com/in/neha-asati-28aab959/
-Fatima Al-Murtadha : https://github.com/FatimaAlMurtadha / https://www.linkedin.com/in/fatima-al-murtadha-8a19b9294/
-Oskar Gyllenör: https://github.com/OskarUNLEASHED / www.linkedin.com/in/oskar-gyllenör-40778a291
-Ali Reza Merzai: https://github.com/alireza8850 / https://www.linkedin.com/in/ali-reza-merzai-235960190/
-Arbaz Shah: https://github.com/arbazshah52 / http://linkedin.com/in/syed-arbaz-hussain-shah-788921100 
+Fatima Al-Murtadha
+GitHub: https://github.com/FatimaAlMurtadha
 
+LinkedIn: https://www.linkedin.com/in/fatima-al-murtadha-8a19b9294/
 
+Oskar Gyllenör
+GitHub: https://github.com/OskarUNLEASHED
 
+LinkedIn: https://www.linkedin.com/in/oskar-gyllenör-40778a291
+
+Ali Reza Merzai
+GitHub: https://github.com/alireza8850
+
+LinkedIn: https://www.linkedin.com/in/ali-reza-merzai-235960190/
+
+Arbaz Shah
+GitHub: https://github.com/arbazshah52
+
+LinkedIn: https://linkedin.com/in/syed-arbaz-hussain-shah-788921100
