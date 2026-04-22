@@ -1,224 +1,328 @@
-## WORD MASTER
+# WORD MASTER
 
-# Word Master är ett realtids multiplayer ordspel där spelare tävlar om att hitta giltiga ord inom olika kategorier med hjälp av ett gemensamt set bokstäver.
+Word Master är ett realtids multiplayer ordspel där spelare tävlar om att hitta giltiga ord inom olika kategorier med
+hjälp av ett gemensamt set bokstäver.
 
-## Funktioner
-Multiplayer lobby-system
-Slumpmässig bokstavsgenerering
-Ordvalidering (ordbok, kategori och bokstavsregler)
-Poängsystem med bonusar
-In-game shop (bokstäver och power-ups)
-Karaktärer med unika förmågor
-Realtidsspel med SignalR
-Hur spelet fungerar
-Lobby skapelse
+---
 
-En spelare skapar en ny lobby.
-Systemet genererar ett lobby-ID och en inbjudningskod.
+## Features
 
-## Karaktärsval
+* Multiplayer lobby-system
+* Slumpmässig bokstavsgenerering
+* Ordvalidering (ordbok, kategori och bokstavsregler)
+* Poängsystem med bonusar
+* In-game shop (bokstäver och power-ups)
+* Karaktärer med unika förmågor
+* Realtidsspel med SignalR
+
+---
+
+## Hur spelet fungerar
+
+### 1. Lobby skapelse
+
+* En spelare skapar en ny lobby
+* Systemet genererar ett lobby-ID och en inbjudningskod
+
+---
+
+### 2. Karaktärsval
 
 Varje spelare väljer en av fyra karaktärer:
 
-# Ugglan – +3 bonuspoäng för ord längre än 5 bokstäver
-# Leopard – +3 bonuspoäng för ord skickade inom 60 sekunder
-# Musen – +1 bonuspoäng för ord kortare än 4 bokstäver
-# Björnen – Immun mot Freeze-effekten
+* Ugglan – +3 bonuspoäng för ord längre än 5 bokstäver
+* Leopard – +3 bonuspoäng för ord skickade inom 60 sekunder
+* Musen – +1 bonuspoäng för ord kortare än 4 bokstäver
+* Björnen – Immun mot Freeze-effekten
 
-## Gå med i spelet
+---
 
-# Den andra spelaren ansluter via:
+### 3. Gå med i spelet
 
-# Inbjudningslänk, eller
-# Lobbykod
+Den andra spelaren ansluter via:
 
-# Båda spelare väljer karaktär.
+* Inbjudningslänk
+* Lobbykod
 
-# Start av spelet
+Båda spelare väljer karaktär.
 
-# Hosten startar spelet när båda spelare är redo.
+---
 
-### Gameplay
+### 4. Start av spelet
 
-# Spelare får ett gemensamt set slumpmässiga bokstäver.
+* Hosten startar spelet när båda spelare är redo
+
+---
+
+## Gameplay
+
+* Spelare får ett gemensamt set slumpmässiga bokstäver
 
 Målet är att:
 
-# Hitta giltiga ord
-# Matcha kategorier
-# Skicka in så många korrekta ord som möjligt
+* Hitta giltiga ord
+* Matcha kategorier
+* Skicka in så många korrekta ord som möjligt
+
+---
 
 ## Shop och power-ups
 
-# Spelare kan använda poäng i shoppen:
+Spelare kan använda poäng i shoppen:
 
-# Köpa vokala bokstäver (inklusive Å, Ä, Ö)
-# Frysa motståndaren temporärt
-# Jokerkort:
-# Ger en slumpmässig bokstav: Om det används i ett ord dubbleras poängen
+* Köpa vokala bokstäver (inklusive Å, Ä, Ö)
+* Frysa motståndaren temporärt
+* Jokerkort:
+
+    * Ger en slumpmässig bokstav
+    * Om det används i ett ord dubbleras poängen
+
+---
 
 ## Spelinteraktion
 
-### Spelare kan:
+Spelare kan:
 
-# Använda power-ups mot motståndaren
-# Få fördelar via shop-items
-# Använda jokerkort strategiskt
-# Spelets slut
+* Använda power-ups mot motståndaren
+* Få fördelar via shop-items
+* Använda jokerkort strategiskt
 
-### Spelet avslutas när:
+---
 
-# En spelare klarar alla kategorier, eller
-# Rundans tid tar slut
+## Spelets slut
 
-# Slutpoängen beräknas baserat på:
+Spelet avslutas när:
 
-## Grundpoäng
-### Karaktärsbonusar
-### Shop-effekter
-### Teknikstack
+* En spelare klarar alla kategorier, eller
+* Rundans tid tar slut
 
-## Frontend: React, TypeScript, Vite
-## Backend: .NET Minimal API
-## Realtid: SignalR
-## Testning: Enhets-, integrations -API-tester, e2e, K6 prestandatester, mutation testing, load testing.
-## CI/CD: GitHub Actions och Render deployment
-## Säkerhet: Statisk kodanalys och beroendeskanning
+### Poängberäkning
+
+* Grundpoäng
+* Karaktärsbonusar
+* Shop-effekter
+
+Detaljer:
+
+* Unikt ord: +10
+* Delat ord: +5
+* Långt ord: +5
+* Alla kategorier klara: +50
+
+---
+
+## Teknikstack
+
+### Frontend
+
+* React
+* TypeScript
+* Vite
+
+### Backend
+
+* .NET Minimal API
+
+### Realtid
+
+* SignalR
+
+### Testning
+
+* Enhetstester
+* Integrationstester
+* API-tester
+* E2E-tester
+* K6 prestandatester
+* Mutation testing
+* Load testing
+
+### CI/CD
+
+* GitHub Actions
+* Render deployment
+
+### Säkerhet
+
+* Statisk kodanalys
+* Beroendeskanning
+* API-input validering
+* Felhanteringsstrategier
+
+---
 
 ## Arkitektur
 
+```
 Frontend (React + TypeScript)
-|
-| HTTP (REST API)
-v
+        |
+        | HTTP (REST API)
+        v
 Backend (.NET Minimal API)
-|
-| SignalR (realtid)
-v
+        |
+        | SignalR (realtid)
+        v
 In-memory lagring
+```
 
-## Backend består av:
+### Backend består av:
 
-# Controllers
-# Services
-# Models
-# SignalR Hub # Realtid: /lobbyHub (SignalR)
-# API-översikt
+* Controllers
+* Services
+* Models
+* SignalR Hub (/lobbyHub)
 
-# Frontend: http://localhost:5173
+---
 
-# Backend: http://localhost:5024
+## API och endpoints
 
+* Frontend: http://localhost:5173
+* Backend: http://localhost:5024
 
+---
 
 ## Teststrategi
 
 ### Projektet innehåller:
 
-# Enhetstester (logik)
-# Integrationstester (flöden)
-# API-tester (REST endpoints)
+* Enhetstester (logik)
+* Integrationstester (flöden)
+* API-tester (REST endpoints)
 
-## Testområden:
+### Testområden:
 
-# Lobby skapande och anslutning
-# Ordvalidering
-# Poängberäkning
-# Shop-transaktioner
-# CI/CD-pipeline
+* Lobby skapande och anslutning
+* Ordvalidering
+* Poängberäkning
+* Shop-transaktioner
 
-# Implementerad med GitHub Actions.
+---
 
-## Steg i pipelinen:
+## CI/CD Pipeline
 
-# Installera beroenden
-# Bygga applikation
-# Köra tester (unit, API, UI)
-# Säkerhetskontroller (dependency scanning)
-# Deploy till Render
-# DevSecOps
+### Steg i pipelinen:
 
-## Säkerhet är integrerad i pipelinen:
+1. Installera beroenden
+2. Bygga applikation
+3. Köra tester (unit, API, UI)
+4. Säkerhetskontroller
+5. Deploy till Render
 
-# Statisk kodanalys
-# Skanning av sårbara beroenden
-#  Validering av API-input
-# Felhanteringsstrategier
+---
+
+## DevSecOps
+
+Säkerhet är integrerad i pipelinen:
+
+* Statisk kodanalys
+* Skanning av sårbara beroenden
+* Validering av API-input
+* Felhanteringsstrategier
+
+---
 
 ## Installation
-`git` clone https://github.com/Nehaasati/WordMaste
-`git` cd wordmaster
-## Frontend
 
-`git` cd frontend
-`git` npm install
-`git` npm run dev
-## Backend
+```bash
+git clone https://github.com/Nehaasati/WordMaste
+cd wordmaster
+```
 
-`git` cd backend
-`git` dotnet build
-`git` dotnet run
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Backend
+
+```bash
+cd backend
+dotnet build
+dotnet run
+```
+
+---
 
 ## Testning
 
-`git` cd Testing
+```bash
+cd Testing
+```
 
-# API-test:
+### API-test
 
-`git` npm run test:api
+```bash
+npm run test:api
+```
 
-# UI-test:
+### UI-test
 
-`git` npm run test:ui
+```bash
+npm run test:ui
+```
 
-# Enhetstest:
+### Enhetstest
 
-`git` npm run test:unit
+```bash
+npm run test:unit
+```
+
+---
 
 ## Realtidshändelser (SignalR)
-# PlayerJoined – En spelare ansluter till lobbyn
-# PlayerReady – Spelaren markerar redo
-# GameStarted – Spelet startar
-# InkReceived – Spelaren träffas av ink
-# FreezeReceived – Spelaren fryses
-# Poängsystem
-# Unikt ord: +10
-# Delat ord: +5
-# Långt ord: +5
-# Alla kategorier klara: +50
+
+* PlayerJoined – En spelare ansluter till lobbyn
+* PlayerReady – Spelaren markerar redo
+* GameStarted – Spelet startar
+* InkReceived – Spelaren träffas av ink
+* FreezeReceived – Spelaren fryses
+
+---
 
 ## CI/CD-flöde
 
-# Push / Pull Request
-→ Installera beroenden
-→ Bygg applikation
-→ Kör tester (unit, API, UI)
-→ Säkerhetskontroller
-→ Deploy till Render
+```
+Push / Pull Request
+        ->
+Installera beroenden
+        ->
+Bygg applikation
+        ->
+Kör tester (unit, API, UI)
+        ->
+Säkerhetskontroller
+        ->
+Deploy till Render
+```
 
-### Team
+---
 
-Neha Asati
+## Team
+
+### Neha Asati
+
 GitHub: https://github.com/Nehaasati
-
 LinkedIn: https://www.linkedin.com/in/neha-asati-28aab959/
 
-Fatima Al-Murtadha
-GitHub: https://github.com/FatimaAlMurtadha
+### Fatima Al-Murtadha
 
+GitHub: https://github.com/FatimaAlMurtadha
 LinkedIn: https://www.linkedin.com/in/fatima-al-murtadha-8a19b9294/
 
-Oskar Gyllenör
-GitHub: https://github.com/OskarUNLEASHED
+### Oskar Gyllenör
 
+GitHub: https://github.com/OskarUNLEASHED
 LinkedIn: https://www.linkedin.com/in/oskar-gyllenör-40778a291
 
-Ali Reza Merzai
-GitHub: https://github.com/alireza8850
+### Ali Reza Merzai
 
+GitHub: https://github.com/alireza8850
 LinkedIn: https://www.linkedin.com/in/ali-reza-merzai-235960190/
 
-Arbaz Shah
-GitHub: https://github.com/arbazshah52
+### Arbaz Shah
 
+GitHub: https://github.com/arbazshah52
 LinkedIn: https://linkedin.com/in/syed-arbaz-hussain-shah-788921100
