@@ -438,19 +438,7 @@ export default function LobbyPage() {
           <h1 className="title">VÄLJ EN KARAKTÄR</h1>
 
           <div className="player-box" style={{ marginBottom: "20px" }}>
-            <p style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 9px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>Dit namn: {playerName}</p>
-            <p
-              style={{
-                color: "#e6e315",
-                fontWeight: "800",
-                fontFamily: "Inter, sans-serif",
-                textShadow: "0 0 9px rgba(160, 80, 255, 0.8)",
-                fontSize: "1rem",
-                margin: "0px",
-              }}
-            >
-              Dit namn: {playerName}
-            </p>
+            <p style={{ color: "#e6e315", fontWeight: "800", fontFamily: "Inter, sans-serif", textShadow: "0 0 9px rgba(160, 80, 255, 0.8)", fontSize: "1rem", margin: "0px" }}>Ditt namn: {playerName}</p>
           </div>
 
           <div className="players-list">
