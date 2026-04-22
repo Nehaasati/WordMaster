@@ -522,11 +522,6 @@ const GamePage: React.FC = () => {
     handleMix(setAllLetters);
   };
 
-  const handleMixPowerupLocal = async () => {
-    if (!(await consumePowerup("mix"))) return;
-    handleMixLocal();
-  };
-
   const handleRestartLocal = async () => {
     await handleRestart(lobbyId);
   };
@@ -631,11 +626,11 @@ const GamePage: React.FC = () => {
 
         <button
           className="gp-btn gp-btn--mix"
-          onClick={handleMixPowerupLocal}
-          disabled={stopped || getPowerupCount("mix") <= 0}
+          onClick={handleMixLocal}
+          disabled={stopped}
           data-testid="btn-mix"
         >
-          Mix ({getPowerupCount("mix")})
+          Mix
         </button>
 
         {lobbyId && (

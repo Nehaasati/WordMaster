@@ -503,8 +503,6 @@ public class GameEngine
 
         items["freeze"] = new ShopCatalogItem("freeze", "Freeze", ShopItemTypePowerup, 5);
         items["black"] = new ShopCatalogItem("black", "Bläck", ShopItemTypePowerup, 5);
-        items["mix"] = new ShopCatalogItem("mix", "Svenska Alphabet", ShopItemTypePowerup, 100);
-
         return items;
     }
 
