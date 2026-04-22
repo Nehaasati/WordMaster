@@ -12,17 +12,30 @@ builder.Services.AddSignalR();
 builder.Services.AddControllers();                 // ← ADD servicess 
 builder.Services.AddSingleton<CharacterService>();
 builder.Services.AddSingleton<JokerService>();
+var dataDirectory = Path.Combine(builder.Environment.ContentRootPath, "Data");
 // Load the word dictionary
 var wordDictionary = WordDictionaryLoader.LoadFromFiles
     (
-        Path.Combine("Data", "SAOL13_117224_Ord.txt"),
-        Path.Combine("Data", "SAOL13_AND_14.txt")
+        Path.Combine(dataDirectory, "SAOL13_117224_Ord.txt"),
+        Path.Combine(dataDirectory, "SAOL13_AND_14.txt")
     );
 
+if (wordDictionary.Count == 0)
+{
+    throw new InvalidOperationException(
+        $"Word dictionary did not load. Expected SAOL dictionary files in '{dataDirectory}'.");
+}
+
 // Load categories
-var categoriesJson = File.ReadAllText(Path.Combine("Data", "categories.json"));
+var categoriesJson = File.ReadAllText(Path.Combine(dataDirectory, "categories.json"));
 var categories = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(categoriesJson)
                 ?? new Dictionary<string, List<string>>();
+
+if (categories.Count == 0)
+{
+    throw new InvalidOperationException(
+        $"Word categories did not load. Expected categories.json in '{dataDirectory}'.");
+}
 
 builder.Services.AddSingleton(wordDictionary);
 builder.Services.AddSingleton(categories);
