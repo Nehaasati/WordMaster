@@ -346,6 +346,7 @@ export function useGameEngine(
           Word: word.trim(),
           Category: categoryId,
           Letters: selectedLetters,
+          LobbyId: lobbyId,
         }),
       });
 

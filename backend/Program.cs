@@ -63,7 +63,7 @@ app.MapPost("/api/word/validate", (
 {
     var (isValid, message) = engine.ValidateWord(request.Word, request.Category, request.Letters);
     var replacementLetters = isValid
-        ? engine.GenerateLetters(request.Word.Trim().Length)
+        ? engine.GenerateReplacementLetters(request.LobbyId, request.Word.Trim().Length)
         : new List<char>();
 
     return Results.Ok(new { isValid, message, replacementLetters });
@@ -101,7 +101,7 @@ app.MapGet("/api/lobby/{lobbyId}", (string lobbyId, GameEngine engine) =>
 
 app.MapGet("/api/game/letters", (GameEngine engine, int count = 25) =>
 {
-    var letters = engine.GenerateLetters(count);
+    var letters = engine.GenerateInitialLetters(count);
     return Results.Ok(letters);
 });
 // New endpoint to join a lobby using either lobby ID or invite code
@@ -596,7 +596,7 @@ static IResult ToShopResult(ShopOperationResult result)
 app.Run();
 public record ApplyJokerRequest(string Word, string Category = "", bool UsedWildcard=false);
 public record JokerActivateRequest(int CurrentScore);
-public record ValidateRequest(string Word, string Category, List<char> Letters);
+public record ValidateRequest(string Word, string Category, List<char> Letters, string? LobbyId = null);
 public record SubmitWordRequest(string Word);
 public record StartGameRequest(string GameMode);
 public record CategorySubmission(string Id, string Word, bool IsValid);

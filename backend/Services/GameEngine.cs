@@ -1,5 +1,4 @@
-﻿using WordMaster.Services;
-
+using System.Text.Json.Serialization;
 
 namespace WordMaster.Services;
 
@@ -13,14 +12,16 @@ public class GameEngine
     private static readonly string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ";
     private const string ShopItemTypeLetter = "letter";
     private const string ShopItemTypePowerup = "powerup";
-    private readonly object _letterGenerationLock = new();
-    private readonly Queue<char> _demoLetterQueue = new(new[]
+    private static readonly char[] DemoStartingLetters =
     {
         'E', 'M', 'I', 'L', 'S', 'K', 'A', 'L', 'B', 'A',
         'G', 'G', 'E', 'V', 'A', 'K', 'T', 'Z', 'I', 'M',
-        'B', 'A', 'B', 'W', 'E',
+        'B', 'A', 'B', 'W', 'E'
+    };
+    private static readonly char[] DemoReplacementLetters =
+    {
         'G', 'U', 'L', 'H', 'U', 'N', 'D', 'B', 'O', 'R', 'D'
-    });
+    };
 
     private static readonly IReadOnlyDictionary<string, ShopCatalogItem> ShopItems = CreateShopCatalog();
 
@@ -51,7 +52,8 @@ public class GameEngine
         {
             Id = lobbyId,
             InviteCode = inviteCode,
-            Letters = GenerateLetters(),
+            Letters = GenerateInitialLetters(),
+            DemoReplacementLetters = new Queue<char>(DemoReplacementLetters),
             Players = new List<Player> { host }
         };
 
@@ -155,29 +157,60 @@ public class GameEngine
         lobby.WordTimestamps[playerId][category] = DateTime.UtcNow;
     }
 
+    public List<char> GenerateInitialLetters(int count = 25)
+    {
+        var letters = DemoStartingLetters.Take(count).ToList();
+        if (letters.Count < count)
+            letters.AddRange(GenerateLetters(count - letters.Count));
+
+        return letters;
+    }
+
+    public List<char> GenerateReplacementLetters(string? lobbyId, int count)
+    {
+        if (!string.IsNullOrWhiteSpace(lobbyId))
+        {
+            var lobby = GetLobby(lobbyId);
+            if (lobby != null)
+                return GenerateReplacementLetters(lobby, count);
+        }
+
+        return GenerateLetters(count);
+    }
+
+    private List<char> GenerateReplacementLetters(Lobby lobby, int count)
+    {
+        var letters = new List<char>();
+
+        lock (lobby.DemoReplacementLetters)
+        {
+            while (letters.Count < count && lobby.DemoReplacementLetters.Count > 0)
+                letters.Add(lobby.DemoReplacementLetters.Dequeue());
+        }
+
+        if (letters.Count < count)
+            letters.AddRange(GenerateLetters(count - letters.Count));
+
+        return letters;
+    }
+
     public List<char> GenerateLetters(int count = 25)
     {
-        lock (_letterGenerationLock)
+        var random = new Random();
+        var letters = new List<char>();
+
+        var weightedPool = new List<char>();
+        foreach (var c in Alphabet)
         {
-            var random = new Random();
-            var letters = new List<char>();
-
-            var weightedPool = new List<char>();
-            foreach (var c in Alphabet)
-            {
-                int w = Weights.TryGetValue(c, out int weight) ? weight : 2;
-                for (int i = 0; i < w; i++) weightedPool.Add(c);
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                letters.Add(_demoLetterQueue.Count > 0
-                    ? _demoLetterQueue.Dequeue()
-                    : weightedPool[random.Next(weightedPool.Count)]);
-            }
-
-            return letters;
+            int w = Weights.TryGetValue(c, out int weight) ? weight : 2;
+            for (int i = 0; i < w; i++) weightedPool.Add(c);
         }
+
+        for (int i = 0; i < count; i++)
+        {
+            letters.Add(weightedPool[random.Next(weightedPool.Count)]);
+        }
+        return letters;
     }
 
     public (bool IsValid, string Message) ValidateWord(string word, string category, List<char> availableLetters)
@@ -307,7 +340,8 @@ public class GameEngine
         lobby.GameStartTime = null;
 
         // Generate new letters
-        lobby.Letters = GenerateLetters();
+        lobby.Letters = GenerateInitialLetters();
+        lobby.DemoReplacementLetters = new Queue<char>(DemoReplacementLetters);
 
         // Reset players
         foreach (var p in lobby.Players)
@@ -569,6 +603,8 @@ public class Lobby
     public string Id { get; set; } = string.Empty;
     public string InviteCode { get; set; } = string.Empty;
     public List<char> Letters { get; set; } = new();
+    [JsonIgnore]
+    public Queue<char> DemoReplacementLetters { get; set; } = new();
 
     // 2 players max for now, but we can easily expand this to support more players in the future if we want to make it more of a party game or add an AI player.
     // We can add more properties here as needed, like current game state, scores, etc.
