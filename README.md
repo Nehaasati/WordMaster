@@ -97,100 +97,106 @@ Backend (.NET Minimal API)
 v
 In-memory lagring
 
-Backend består av:
+## Backend består av:
 
-Controllers
-Services
-Models
-SignalR Hub
-API-översikt
+# Controllers
+# Services
+# Models
+# SignalR Hub # Realtid: /lobbyHub (SignalR)
+# API-översikt
 
-Frontend: http://localhost:5173
+# Frontend: http://localhost:5173
 
-Backend: http://localhost:5024
+# Backend: http://localhost:5024
 
-Format: JSON
-Realtid: /lobbyHub (SignalR)
 
-Teststrategi
 
-Projektet innehåller:
+## Teststrategi
 
-Enhetstester (logik)
-Integrationstester (flöden)
-API-tester (REST endpoints)
+### Projektet innehåller:
 
-Testområden:
+# Enhetstester (logik)
+# Integrationstester (flöden)
+# API-tester (REST endpoints)
 
-Lobby skapande och anslutning
-Ordvalidering
-Poängberäkning
-Shop-transaktioner
-CI/CD-pipeline
+## Testområden:
 
-Implementerad med GitHub Actions.
+# Lobby skapande och anslutning
+# Ordvalidering
+# Poängberäkning
+# Shop-transaktioner
+# CI/CD-pipeline
 
-Steg i pipelinen:
+# Implementerad med GitHub Actions.
 
-Installera beroenden
-Bygga applikation
-Köra tester (unit, API, UI)
-Säkerhetskontroller (dependency scanning)
-Deploy till Render
-DevSecOps
+## Steg i pipelinen:
 
-Säkerhet är integrerad i pipelinen:
+# Installera beroenden
+# Bygga applikation
+# Köra tester (unit, API, UI)
+# Säkerhetskontroller (dependency scanning)
+# Deploy till Render
+# DevSecOps
 
-Statisk kodanalys
-Skanning av sårbara beroenden
-Validering av API-input
-Felhanteringsstrategier
-Installation
-git clone <https://github.com/Nehaasati/WordMaste>
-cd wordmaster
-Frontend
-cd frontend
-npm install
-npm run dev
-Backend
-cd backend
-dotnet build
-dotnet run
-Testning
-cd testing
+## Säkerhet är integrerad i pipelinen:
 
-API-test:
+# Statisk kodanalys
+# Skanning av sårbara beroenden
+#  Validering av API-input
+# Felhanteringsstrategier
 
-npm run test:api
+## Installation
+`git` clone https://github.com/Nehaasati/WordMaste
+`git` cd wordmaster
+## Frontend
 
-UI-test:
+`git` cd frontend
+`git` npm install
+`git` npm run dev
+## Backend
 
-npm run test:ui
+`git` cd backend
+`git` dotnet build
+`git` dotnet run
 
-Enhetstest:
+## Testning
 
-npm run test:unit
-Realtidshändelser (SignalR)
-PlayerJoined – En spelare ansluter till lobbyn
-PlayerReady – Spelaren markerar redo
-GameStarted – Spelet startar
-InkReceived – Spelaren träffas av ink
-FreezeReceived – Spelaren fryses
-Poängsystem
-Unikt ord: +10
-Delat ord: +5
-Långt ord: +5
-Alla kategorier klara: +50
-CI/CD-flöde
+`git` cd Testing
 
-Push / Pull Request
+# API-test:
+
+`git` npm run test:api
+
+# UI-test:
+
+`git` npm run test:ui
+
+# Enhetstest:
+
+`git` npm run test:unit
+
+## Realtidshändelser (SignalR)
+# PlayerJoined – En spelare ansluter till lobbyn
+# PlayerReady – Spelaren markerar redo
+# GameStarted – Spelet startar
+# InkReceived – Spelaren träffas av ink
+# FreezeReceived – Spelaren fryses
+# Poängsystem
+# Unikt ord: +10
+# Delat ord: +5
+# Långt ord: +5
+# Alla kategorier klara: +50
+
+## CI/CD-flöde
+
+# Push / Pull Request
 → Installera beroenden
 → Bygg applikation
 → Kör tester (unit, API, UI)
 → Säkerhetskontroller
 → Deploy till Render
 
-Team
+### Team
 
 Neha Asati
 GitHub: https://github.com/Nehaasati
