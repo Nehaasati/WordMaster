@@ -184,6 +184,7 @@ app.MapPost("/api/lobby/{lobbyId}/register-connection", (
 app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
     string lobbyId,
     string playerId,
+    HttpRequest request,
     GameEngine engine,
     IHubContext<LobbyHub> hub
 ) =>
@@ -205,11 +206,30 @@ app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
     if (!engine.CanStartGame(lobbyId))
         return Results.BadRequest("Players not ready");
 
+    StartGameRequest? startRequest = null;
+    if (request.ContentLength > 0)
+    {
+        try
+        {
+            startRequest = await JsonSerializer.DeserializeAsync<StartGameRequest>(
+                request.Body,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch (JsonException)
+        {
+            return Results.BadRequest("Invalid start game request");
+        }
+    }
+
     if (!engine.StartGame(lobbyId, playerId))
         return Results.BadRequest("Failed to start game");
 
+    var gameMode = string.Equals(startRequest?.GameMode, "blitz", StringComparison.OrdinalIgnoreCase)
+        ? "blitz"
+        : "standard";
+
     await hub.Clients.Group(lobbyId)
-        .SendAsync("GameStarted", lobbyId);
+        .SendAsync("GameStarted", lobbyId, gameMode);
 
     return Results.Ok();
 });
@@ -430,9 +450,9 @@ app.MapGet("/api/classic/game/suggested-letters",
     if (!categories.ContainsKey(category))
         return Results.BadRequest(new { error = "Invalid category" });
 
-    var words = categories[category];
+    var words = engine.GetPlayableWords(category);
     if (words.Count == 0)
-        return Results.BadRequest(new { error = "Category has no words" });
+        return Results.BadRequest(new { error = "Category has no playable words" });
 
     var requiredLetter = engine.RequiredLetter;
 

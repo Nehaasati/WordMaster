@@ -57,9 +57,33 @@ public class ClassicGameEngine
     {
         // Pick a random word from the current category so the required letter
         // is always guaranteed to have at least one valid word.
-        var words = _categories[CurrentCategory];
+        var words = GetPlayableWords(CurrentCategory);
+        if (words.Count == 0)
+            throw new InvalidOperationException($"No playable words found for category '{CurrentCategory}'.");
+
         var randomWord = words[_random.Next(words.Count)];
         RequiredLetter = char.ToUpperInvariant(randomWord[0]);
+    }
+
+    public List<string> GetPlayableWords(string category)
+    {
+        if (!_categories.TryGetValue(category, out var words))
+            return new List<string>();
+
+        return words
+            .Where(IsPlayableWord)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private bool IsPlayableWord(string word)
+    {
+        if (string.IsNullOrWhiteSpace(word))
+            return false;
+
+        return _validator.IsValidLength(word)
+            && _validator.IsValidCharacters(word)
+            && _validator.IsInDictionary(word, _dictionary);
     }
 
     public (bool IsValid, string Message) SubmitWord(string word)
