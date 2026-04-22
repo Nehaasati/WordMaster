@@ -10,6 +10,7 @@ export interface CategoryData {
   id: string;
   label: string;
   word: string;
+  letterIds: string[];
   valid: boolean;
   feedback: string;
 }

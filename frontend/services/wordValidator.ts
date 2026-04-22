@@ -50,21 +50,34 @@ export const updateUsedLetters = (
   categories: Record<string, CategoryData>,
   setAllLetters: (setter: (prev: Letter[]) => Letter[]) => void,
 ) => {
-  let combinedWord = "";
-
-  // validateWord is called after updating categories state with the new word, so we can be sure that categories state is up to date when this function is called, and we can combine all used words in categories to know which letters should be marked as used
-  for (const catId in categories) {
-    if (!categories[catId].valid) {
-      combinedWord += categories[catId].word;
-    }
-  }
-
-  combinedWord = combinedWord.toUpperCase();
+  const usedLetterIds = new Set<string>();
+  const fallbackUsedWordParts: string[] = [];
 
   setAllLetters((prev) => {
     const next = prev.map((l) => ({ ...l, used: false }));
 
-    for (const char of combinedWord) {
+    for (const catId in categories) {
+      const category = categories[catId];
+      if (category.valid) {
+        continue;
+      }
+
+      if (category.letterIds.length > 0) {
+        for (const id of category.letterIds) {
+          usedLetterIds.add(id);
+        }
+      } else {
+        fallbackUsedWordParts.push(category.word.toUpperCase());
+      }
+    }
+
+    for (const letter of next) {
+      if (usedLetterIds.has(letter.id)) {
+        letter.used = true;
+      }
+    }
+
+    for (const char of fallbackUsedWordParts.join("")) {
       const letter = next.find((l) => !l.used && l.char === char);
       if (letter) {
         letter.used = true;

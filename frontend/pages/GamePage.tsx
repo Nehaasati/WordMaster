@@ -5,6 +5,9 @@ import type { ShopApiResponse, ShopState } from "../interfaces/Shop";
 import { useGameEngine } from "../hooks/useGameEngine";
 import { useSignalRGame } from "../hooks/useSignalRGame";
 import { useSignalR } from "../hooks/SignalRContext";
+ 
+import { useJoker } from "../interfaces/useJoker";
+import JokerButton from "./JokerCard";
 import {
   handleRestart,
   handleFreeze,
@@ -91,12 +94,19 @@ const parseShopApiResponse = async (
 };
 
 const GamePage: React.FC = () => {
+
   const { lobbyId } = useParams<{ lobbyId: string }>();
+  const storedPlayerId = localStorage.getItem('wordmaster-player-id') ?? '';
+  const { joker, jokerMsg, activateJoker, applyJoker } = useJoker(
+  lobbyId,
+  storedPlayerId,
+  );
   const navigate = useNavigate();
 
   // Get the shared SignalR connection
   const connection = useSignalR();
-
+ 
+  
   // Additional state not covered by the hook
   const [frozen, setFrozen] = useState(false);
   const [freezeMsg, setFreezeMsg] = useState("");
@@ -115,6 +125,9 @@ const GamePage: React.FC = () => {
   const [shopError, setShopError] = useState("");
   const shopSyncSeq = useRef(0);
   const earnedScoreRef = useRef(0);
+  const previousValidRef = useRef<Record<string, boolean>>(
+    Object.fromEntries(CATEGORY_LIST.map((cat) => [cat.id, false])),
+  );
 
   // Use SignalR hook for real-time events
   const { submitWord, stopGame } = useSignalRGame(lobbyId, {
@@ -231,8 +244,8 @@ const GamePage: React.FC = () => {
     setCategoryPoints,
     scoreRef,
     validateWord,
-    buildAvailablePool,
-  } = useGameEngine(lobbyId, submitWord);
+    buildLetterSelection,
+  } = useGameEngine(lobbyId, submitWord, applyJoker);
 
   const applyShopState = React.useCallback((state: ShopState) => {
     setShopState(state);
@@ -388,17 +401,32 @@ const GamePage: React.FC = () => {
     });
   }, [purchasedLettersKey, allLetters.length, setAllLetters, shopState.purchasedLetters]);
 
-  // Automatic focus shift to next category when one is completed
-  const validStates = CATEGORY_LIST.map(
-    (cat) => categories[cat.id]?.valid,
-  ).join(",");
-
   useEffect(() => {
-    const nextCat = CATEGORY_LIST.find((cat) => !categories[cat.id]?.valid);
-    if (nextCat) {
-      inputRefs.current[nextCat.id]?.focus();
+    const firstIncomplete = CATEGORY_LIST.find(
+      (cat) => !categories[cat.id]?.valid,
+    );
+
+    if (firstIncomplete) {
+      inputRefs.current[firstIncomplete.id]?.focus();
     }
-  }, [categories, validStates]);
+  }, []);
+  useEffect(() => {
+    const previous = previousValidRef.current;
+
+    const completedCategory = CATEGORY_LIST.find(
+      (cat) => categories[cat.id]?.valid && !previous[cat.id],
+    );
+
+    if (completedCategory) {
+      const nextIncomplete = CATEGORY_LIST.find((cat) => !categories[cat.id]?.valid);
+
+      nextIncomplete?.id && inputRefs.current[nextIncomplete.id]?.focus();
+    }
+
+    previousValidRef.current = Object.fromEntries(
+      CATEGORY_LIST.map((cat) => [cat.id, Boolean(categories[cat.id]?.valid)]),
+    );
+  }, [categories]);
 
   useEffect(() => {
     updateUsedLetters(categories, setAllLetters);
@@ -423,41 +451,20 @@ const GamePage: React.FC = () => {
    if (frozen || stopped) return;
 
    const raw = e.target.value.toUpperCase();
+   const selection = buildLetterSelection(raw, categoryId);
 
-   // Build available pool BEFORE updating state
-   const pool = buildAvailablePool(categoryId);
+   setCategories((prev) => ({
+     ...prev,
+     [categoryId]: {
+       ...prev[categoryId],
+       word: selection.word,
+       letterIds: selection.letterIds,
+       valid: false,
+       feedback: "",
+     },
+   }));
 
-   // Filter out letters not in pool
-   let filtered = "";
-   const tempPool = [...pool];
-
-   for (const char of raw) {
-     const index = tempPool.indexOf(char);
-     if (index !== -1) {
-       filtered += char;
-       tempPool.splice(index, 1); // remove used letter
-     }
-   }
-
-   // Update UI immediately with filtered value
-   setCategories((prev) => {
-     const updated = {
-       ...prev,
-       [categoryId]: {
-         ...prev[categoryId],
-         word: filtered,
-         valid: false,
-         feedback: "",
-       },
-     };
-
-     // Validate AFTER state update
-     setTimeout(() => {
-       validateWord(filtered, categoryId);
-     }, 0);
-
-     return updated;
-   });
+   void validateWord(selection.word, categoryId, selection.letterIds);
   };
 
   const isFreezeImmune = async () => {
@@ -531,6 +538,7 @@ const GamePage: React.FC = () => {
   };
 */
   const allDone = CATEGORY_LIST.every((c) => categories[c.id]?.valid);
+  
 
   //Send all done to backend
   useEffect(() => {
@@ -630,7 +638,28 @@ const GamePage: React.FC = () => {
           Mix ({getPowerupCount("mix")})
         </button>
 
+        {lobbyId && (
+          <JokerButton
+            isActive={joker.isActive}
+            jokerLetter={joker.jokerLetter}
+            score={score}
+            stopped={stopped}
+            onActivate={(currentScore) => {
+              void activateJoker(currentScore).then((newScore) => {
+                if (newScore === null) return;
+                setScore(newScore);
+                scoreRef.current = newScore;
+              });
+            }}
+          />
+        )}
       </div>
+
+      {jokerMsg && (
+        <div className="gp-joker-msg" data-testid="joker-msg">
+          {jokerMsg}
+        </div>
+      )}
 
       {/* Main content */}
       <ShopPanel
@@ -668,10 +697,10 @@ const GamePage: React.FC = () => {
                 />
                 {categories[cat.id].valid && lobbyId && categoryPoints[cat.id] !== undefined && (
                   <span
-                    style={{ color: categoryPoints[cat.id] === 5 ? "#ff8c00" : "#4caf50" }}
-                    title={categoryPoints[cat.id] === 5 ? "Samma ord som motståndaren – 5p" : "Unikt ord – 10p"}
+                    style={{ color: categoryPoints[cat.id] <= 5 ? "#ff8c00" : "#4caf50" }}
+                    title="Poäng för ordet"
                   >
-                    {categoryPoints[cat.id] === 5 ? "5p" : "10p"}
+                    {categoryPoints[cat.id]}p
                   </span>
                 )}
 
@@ -693,14 +722,21 @@ const GamePage: React.FC = () => {
           <div className="gp-letters" data-testid="letters">
             {allLetters.map((letter) => (
               <div
-                key={letter.id}
-                className={`gp-letter ${
-                  letter.isExtra ? "gp-letter--extra" : ""
-                } ${letter.used ? "gp-letter--used" : ""}`}
-                data-testid="letter-tile"
-              >
-                {letter.char}
-              </div>
+                  key={letter.id}
+                  className={`gp-letter ${
+                    letter.isExtra ? 'gp-letter--extra' : ''
+                  } ${letter.used ? 'gp-letter--used' : ''} ${
+                    joker.isActive && letter.char === joker.jokerLetter
+                      ? 'gp-letter--joker'
+                      : ''
+                  }`}
+                  data-testid="letter-tile"
+                >
+                  {letter.char}
+                  {joker.isActive && letter.char === joker.jokerLetter && (
+                    <span className="gp-joker-crown">🃏</span>
+                  )}
+                </div>
             ))}
           </div>
         </div>

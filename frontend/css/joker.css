@@ -1,0 +1,85 @@
+/* ── Add at the bottom of GamePage.css ── */
+
+/* Joker button — normal state */
+.gp-btn--joker {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a0a00;
+  font-weight: 800;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
+}
+
+.gp-btn--joker:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.7);
+}
+
+/* Joker button — while active (pulsing gold) */
+.gp-btn--joker-active {
+  background: linear-gradient(135deg, #ffe066, #ffd700);
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.9);
+  animation: jokerPulse 1.5s ease-in-out infinite;
+}
+
+/* Joker disabled */
+.gp-btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+/* Pulse animation */
+@keyframes jokerPulse {
+  0%,  100% { box-shadow: 0 0 8px  rgba(255, 215, 0, 0.5); }
+  50%        { box-shadow: 0 0 22px rgba(255, 215, 0, 1.0); }
+}
+
+/* Gold letter tile on the board */
+.gp-letter--joker {
+  background: linear-gradient(135deg, #ffd700, #ff8c00) !important;
+  color: #1a0a00 !important;
+  border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.9);
+  animation: jokerPulse 1.5s ease-in-out infinite;
+  position: relative;
+  transform: scale(1.12);
+}
+
+/* Small joker icon on the gold tile */
+.gp-joker-crown {
+  position: absolute;
+  top: -10px;
+  right: -6px;
+  font-size: 0.65rem;
+  pointer-events: none;
+}
+
+/* Joker notification message */
+.gp-joker-msg {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a0a00;
+  font-weight: 800;
+  font-size: 1.15rem;
+  padding: 12px 28px;
+  border-radius: 14px;
+  z-index: 200;
+  white-space: nowrap;
+  box-shadow: 0 4px 24px rgba(255, 215, 0, 0.7);
+  animation: jokerMsgIn 0.3s ease-out;
+  pointer-events: none;
+}
+
+@keyframes jokerMsgIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);     }
+}
