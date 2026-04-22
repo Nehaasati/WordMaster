@@ -9,7 +9,8 @@
 Testing/
 
 # Local frontend dev files — frontend is built in the Docker build stage
-Frontend/node_modules/
+frontend/node_modules/
+frontend/dist/
 
 # .NET build artifacts
 **/bin/

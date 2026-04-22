@@ -138,6 +138,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+#please work..
+backend/wwwroot/assets/*.js
+backend/wwwroot/assets/*.js.map
+
 # .NET
 bin/
 obj/
