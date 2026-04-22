@@ -1,8 +1,8 @@
-WORD MASTER
+## WORD MASTER
 
-Word Master är ett realtids multiplayer ordspel där spelare tävlar om att hitta giltiga ord inom olika kategorier med hjälp av ett gemensamt set bokstäver.
+# Word Master är ett realtids multiplayer ordspel där spelare tävlar om att hitta giltiga ord inom olika kategorier med hjälp av ett gemensamt set bokstäver.
 
-Funktioner
+## Funktioner
 Multiplayer lobby-system
 Slumpmässig bokstavsgenerering
 Ordvalidering (ordbok, kategori och bokstavsregler)
@@ -16,74 +16,76 @@ Lobby skapelse
 En spelare skapar en ny lobby.
 Systemet genererar ett lobby-ID och en inbjudningskod.
 
-Karaktärsval
+## Karaktärsval
 
 Varje spelare väljer en av fyra karaktärer:
 
-Ugglan – +3 bonuspoäng för ord längre än 5 bokstäver
-Leopard – +3 bonuspoäng för ord skickade inom 60 sekunder
-Musen – +1 bonuspoäng för ord kortare än 4 bokstäver
-Björnen – Immun mot Freeze-effekten
-Gå med i spelet
+# Ugglan – +3 bonuspoäng för ord längre än 5 bokstäver
+# Leopard – +3 bonuspoäng för ord skickade inom 60 sekunder
+# Musen – +1 bonuspoäng för ord kortare än 4 bokstäver
+# Björnen – Immun mot Freeze-effekten
 
-Den andra spelaren ansluter via:
+## Gå med i spelet
 
-Inbjudningslänk, eller
-Lobbykod
+# Den andra spelaren ansluter via:
 
-Båda spelare väljer karaktär.
+# Inbjudningslänk, eller
+# Lobbykod
 
-Start av spelet
+# Båda spelare väljer karaktär.
 
-Hosten startar spelet när båda spelare är redo.
+# Start av spelet
 
-Gameplay
+# Hosten startar spelet när båda spelare är redo.
 
-Spelare får ett gemensamt set slumpmässiga bokstäver.
+### Gameplay
+
+# Spelare får ett gemensamt set slumpmässiga bokstäver.
 
 Målet är att:
 
-Hitta giltiga ord
-Matcha kategorier
-Skicka in så många korrekta ord som möjligt
-Shop och power-ups
+# Hitta giltiga ord
+# Matcha kategorier
+# Skicka in så många korrekta ord som möjligt
 
-Spelare kan använda poäng i shoppen:
+## Shop och power-ups
 
-Köpa extra bokstäver (inklusive Å, Ä, Ö)
-Frysa motståndaren temporärt
-Jokerkort:
-Ger en slumpmässig bokstav
-Om det används i ett ord dubbleras poängen
-Spelinteraktion
+# Spelare kan använda poäng i shoppen:
 
-Spelare kan:
+# Köpa vokala bokstäver (inklusive Å, Ä, Ö)
+# Frysa motståndaren temporärt
+# Jokerkort:
+# Ger en slumpmässig bokstav: Om det används i ett ord dubbleras poängen
 
-Använda power-ups mot motståndaren
-Få fördelar via shop-items
-Använda jokerkort strategiskt
-Spelets slut
+## Spelinteraktion
 
-Spelet avslutas när:
+### Spelare kan:
 
-En spelare klarar alla kategorier, eller
-Rundans tid tar slut
+# Använda power-ups mot motståndaren
+# Få fördelar via shop-items
+# Använda jokerkort strategiskt
+# Spelets slut
 
-Slutpoängen beräknas baserat på:
+### Spelet avslutas när:
 
-Grundpoäng
-Karaktärsbonusar
-Shop-effekter
-Teknikstack
+# En spelare klarar alla kategorier, eller
+# Rundans tid tar slut
 
-Frontend: React, TypeScript, Vite
-Backend: .NET Minimal API
-Realtid: SignalR
-Testning: Enhets-, integrations- och API-tester
-CI/CD: GitHub Actions och Render deployment
-Säkerhet: Statisk kodanalys och beroendeskanning
+# Slutpoängen beräknas baserat på:
 
-Arkitektur
+## Grundpoäng
+### Karaktärsbonusar
+### Shop-effekter
+### Teknikstack
+
+## Frontend: React, TypeScript, Vite
+## Backend: .NET Minimal API
+## Realtid: SignalR
+## Testning: Enhets-, integrations -API-tester, e2e, K6 prestandatester, mutation testing, load testing.
+## CI/CD: GitHub Actions och Render deployment
+## Säkerhet: Statisk kodanalys och beroendeskanning
+
+## Arkitektur
 
 Frontend (React + TypeScript)
 |
