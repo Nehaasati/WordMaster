@@ -212,14 +212,11 @@ function readyPlayer(lobbyId, playerId, role) {
 }
 
 function startGame(lobbyId, hostId) {
-  const response = http.post(
+  const response = postJson(
     `${apiBaseUrl}/lobby/${lobbyId}/start/${hostId}`,
-    null,
+    { gameMode: 'standard' },
     {
-      tags: {
-        name: 'start_game',
-        endpoint: 'start_game',
-      },
+      endpoint: 'start_game',
     }
   );
 
