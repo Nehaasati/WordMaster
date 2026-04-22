@@ -184,6 +184,7 @@ app.MapPost("/api/lobby/{lobbyId}/register-connection", (
 app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
     string lobbyId,
     string playerId,
+    StartGameRequest request,
     GameEngine engine,
     IHubContext<LobbyHub> hub
 ) =>
@@ -208,8 +209,12 @@ app.MapPost("/api/lobby/{lobbyId}/start/{playerId}", async (
     if (!engine.StartGame(lobbyId, playerId))
         return Results.BadRequest("Failed to start game");
 
+    var gameMode = string.Equals(request.GameMode, "blitz", StringComparison.OrdinalIgnoreCase)
+        ? "blitz"
+        : "standard";
+
     await hub.Clients.Group(lobbyId)
-        .SendAsync("GameStarted", lobbyId);
+        .SendAsync("GameStarted", lobbyId, gameMode);
 
     return Results.Ok();
 });
@@ -430,9 +435,9 @@ app.MapGet("/api/classic/game/suggested-letters",
     if (!categories.ContainsKey(category))
         return Results.BadRequest(new { error = "Invalid category" });
 
-    var words = categories[category];
+    var words = engine.GetPlayableWords(category);
     if (words.Count == 0)
-        return Results.BadRequest(new { error = "Category has no words" });
+        return Results.BadRequest(new { error = "Category has no playable words" });
 
     var requiredLetter = engine.RequiredLetter;
 
